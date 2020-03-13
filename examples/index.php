@@ -1,11 +1,9 @@
 <?php
 
-use React\EventLoop\Factory;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Factory;
 use React\Http\Response;
 use React\Stream\ThroughStream;
-use Clue\React\SQLite\DatabaseInterface;
-use Clue\React\SQLite\Result;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -13,7 +11,7 @@ $loop = Factory::create();
 $app = new Frugal\App($loop);
 
 $app->get('/', function () {
-    return new \React\Http\Response(200, [], 'Hello wörld!' . "\n");
+    return new React\Http\Response(200, [], 'Hello wörld!' . "\n");
 });
 $app->get('/debug', function (ServerRequestInterface $request) {
     ob_start();
@@ -59,18 +57,13 @@ $app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
     );
 });
 
-$factory = new \Clue\React\SQLite\Factory($loop);
-$promise = $factory->open('count.db');
+$factory = new Clue\React\SQLite\Factory($loop);
+$db = $factory->openLazy('count.db', ['idle' => 0.001]);
+$db->exec('CREATE TABLE IF NOT EXISTS hits (id INTEGER PRIMARY KEY AUTOINCREMENT, datetime STRING)');
 
-$promise->then(function (DatabaseInterface $db) {
-    $db->exec('CREATE TABLE IF NOT EXISTS hits (id INTEGER PRIMARY KEY AUTOINCREMENT, datetime STRING)');
-});
-
-$app->get('/count', function (ServerRequestInterface $request) use ($promise) {
-    return $promise->then(function (DatabaseInterface $db) use ($request) {
-        $db->query('INSERT INTO hits (datetime) VALUES (?)', [date(DATE_RFC3339_EXTENDED) ]);
-        return $db->query('SELECT COUNT(*) AS count FROM hits');
-    })->then(function (Result $result) {
+$app->get('/count', function (ServerRequestInterface $request) use ($db) {
+    $db->query('INSERT INTO hits (datetime) VALUES (?)', [date(DATE_RFC3339_EXTENDED) ]);
+    return $db->query('SELECT COUNT(*) AS count FROM hits')->then(function (Clue\React\SqLite\Result $result) {
         return new Response(200, ['Content-Type' => 'text/plain'], $result->rows[0]['count'] . "\n");
     });
 });
