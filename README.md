@@ -66,7 +66,11 @@ $loop = React\EventLoop\Factory::create();
 $app = new Frugal\App($loop);
 
 $app->get('/', function () {
-    return new React\Http\Response(200, [], 'Hello wörld!' . "\n");
+    return new React\Http\Message\Response(
+        200,
+        [],
+        "Hello wörld!\n"
+    );
 });
 
 $loop->run();
@@ -121,11 +125,19 @@ $loop = React\EventLoop\Factory::create();
 $app = new Frugal\App($loop);
 
 $app->get('/', function () {
-    return new React\Http\Response(200, [], 'Hello wörld!' . "\n");
+    return new React\Http\Message\Response(
+        200,
+        [],
+        "Hello wörld!\n"
+    );
 });
 
 $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $request) {
-    return new React\Http\Response(200, [], 'Hello ' . $request->getParameter('name') . '!' . "\n");
+    return new React\Http\Message\Response(
+        200,
+        [],
+        "Hello " . $request->getParameter('name') . "!\n"
+    );
 });
 
 $loop->run();
@@ -160,7 +172,11 @@ class HelloController
 {
     public function __invoke()
     {
-        return new React\Http\Response(200, [], 'Hello wörld!' . "\n");
+        return new React\Http\Message\Response(
+            200,
+            [],
+            "Hello wörld!\n"
+        );
     }
 }
 ```
@@ -172,7 +188,11 @@ class UserController
 {
     public function __invoke(Psr\Http\Message\ServerRequestInterface $request)
     {
-        return new React\Http\Response(200, [], 'Hello ' . $request->getParameter('name') . '!' . "\n");
+        return new React\Http\Message\Response(
+            200,
+            [],
+            "Hello " . $request->getParameter('name') . "!\n"
+        );
     }
 }
 ```

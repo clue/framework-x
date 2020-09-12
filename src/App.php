@@ -2,19 +2,19 @@
 
 namespace Frugal;
 
-use React\EventLoop\LoopInterface;
+use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use FastRoute\RouteParser\Std;
 use FastRoute\DataGenerator\GroupCountBased;
-use React\Http\Server as HttpServer;
-use React\Socket\Server as SocketServer;
-use Psr\Http\Message\ServerRequestInterface;
-use React\Http\Response;
-use React\Http\Io\ServerRequest;
-use FastRoute\Dispatcher;
 use Psr\Http\Message\ResponseInterface;
-use React\Stream\ReadableStreamInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\LoopInterface;
+use React\Http\Server as HttpServer;
+use React\Http\Message\Response;
+use React\Http\Message\ServerRequest;
 use React\Promise\PromiseInterface;
+use React\Socket\Server as SocketServer;
+use React\Stream\ReadableStreamInterface;
 
 class App
 {
@@ -159,7 +159,7 @@ class App
     {
         $dispatcher = new \FastRoute\Dispatcher\GroupCountBased($this->router->getData());
 
-        $http = new HttpServer(function (ServerRequestInterface $request) use ($dispatcher) {
+        $http = new HttpServer($this->loop, function (ServerRequestInterface $request) use ($dispatcher) {
             $response = $this->handleRequest($request, $dispatcher);
 
             if ($response instanceof ResponseInterface) {
