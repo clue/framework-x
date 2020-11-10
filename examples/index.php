@@ -16,6 +16,15 @@ $app->get('/', function () {
         "Hello wörld!\n"
     );
 });
+
+$app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $request) {
+    return new React\Http\Message\Response(
+        200,
+        [],
+        "Hello " . $request->getAttribute('name') . "!\n"
+    );
+});
+
 $app->get('/debug', function (ServerRequestInterface $request) {
     ob_start();
     var_dump($request);

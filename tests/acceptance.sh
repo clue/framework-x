@@ -17,6 +17,10 @@ out=$(curl -v $base/ 2>&1) &&           match "HTTP/.* 200"
 out=$(curl -v $base/test 2>&1) &&       match -i "Location: /"
 out=$(curl -v $base/invalid 2>&1) &&    match "HTTP/.* 404"
 out=$(curl -v $base/ 2>&1 -X POST) &&   match "HTTP/.* 405"
+out=$(curl -v $base/users/foo 2>&1) &&  match "HTTP/.* 200" && match "Hello foo!"
+out=$(curl -v $base/users 2>&1) &&      match "HTTP/.* 404"
+out=$(curl -v $base/users/ 2>&1) &&     match "HTTP/.* 404"
+out=$(curl -v $base/users/a/b 2>&1) &&  match "HTTP/.* 404"
 
 killall php
 php -S localhost:8080 examples/index.php >/dev/null 2>&1 &
@@ -26,6 +30,10 @@ out=$(curl -v $base/ 2>&1) &&           match "HTTP/.* 200"
 out=$(curl -v $base/test 2>&1) &&       match -i "Location: /"
 out=$(curl -v $base/invalid 2>&1) &&    match "HTTP/.* 404"
 out=$(curl -v $base/ 2>&1 -X POST) &&   match "HTTP/.* 405"
+out=$(curl -v $base/users/foo 2>&1) &&  match "HTTP/.* 200" && match "Hello foo!"
+out=$(curl -v $base/users 2>&1) &&      match "HTTP/.* 404"
+out=$(curl -v $base/users/ 2>&1) &&     match "HTTP/.* 404"
+out=$(curl -v $base/users/a/b 2>&1) &&  match "HTTP/.* 404"
 
 killall php
 echo "OK ($n)"

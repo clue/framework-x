@@ -136,7 +136,7 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
     return new React\Http\Message\Response(
         200,
         [],
-        "Hello " . $request->getParameter('name') . "!\n"
+        "Hello " . $request->getAttribute('name') . "!\n"
     );
 });
 
@@ -164,6 +164,7 @@ $app->get('/users/{name}', new Acme\UserController());
 
 $loop->run();
 ```
+
 ```php
 # src/HelloController.php
 <?php
@@ -180,6 +181,7 @@ class HelloController
     }
 }
 ```
+
 ```php
 # src/UserController.php
 <?php
@@ -191,7 +193,7 @@ class UserController
         return new React\Http\Message\Response(
             200,
             [],
-            "Hello " . $request->getParameter('name') . "!\n"
+            "Hello " . $request->getAttribute('name') . "!\n"
         );
     }
 }
