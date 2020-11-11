@@ -159,8 +159,8 @@ require __DIR__ . '/../vendor/autoload.php';
 $loop = React\EventLoop\Factory::create();
 $app = new Frugal\App($loop);
 
-$app->get('/', new Acme\HelloController());
-$app->get('/users/{name}', new Acme\UserController());
+$app->get('/', new Acme\Todo\HelloController());
+$app->get('/users/{name}', new Acme\Todo\UserController());
 
 $loop->run();
 ```
@@ -169,11 +169,15 @@ $loop->run();
 # src/HelloController.php
 <?php
 
+namespace Acme\Todo;
+
+use React\Http\Message\Response;
+
 class HelloController
 {
     public function __invoke()
     {
-        return new React\Http\Message\Response(
+        return new Response(
             200,
             [],
             "Hello wörld!\n"
@@ -186,11 +190,16 @@ class HelloController
 # src/UserController.php
 <?php
 
+namespace Acme\Todo;
+
+use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
+
 class UserController
 {
-    public function __invoke(Psr\Http\Message\ServerRequestInterface $request)
+    public function __invoke(ServerRequestInterface $request)
     {
-        return new React\Http\Message\Response(
+        return new Response(
             200,
             [],
             "Hello " . $request->getAttribute('name') . "!\n"
@@ -200,14 +209,14 @@ class UserController
 ```
 
 Doesn't look too complex, right? Now, we only need to tell Composer's autoloader
-about our vendor namespace `Acme` in the `src/` folder. Make sure to include the
-following lines in your `composer.json` file:
+about our vendor namespace `Acme\\Todo` in the `src/` folder. Make sure to include
+the following lines in your `composer.json` file:
 
 ```json
 {
     "autoload": {
         "psr-4": {
-            "Acme\\": "src/"
+            "Acme\\Todo\\": "src/"
         }
     }
 }
