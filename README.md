@@ -1,5 +1,7 @@
 # FrugalPHP
 
+[![CI status](https://github.com/clue/frugalphp-incubator/workflows/CI/badge.svg)](https://github.com/clue/frugalphp-incubator/actions)
+
 Lightweight microframework for fast, event-driven and async-first web applications, built on top of ReactPHP.
 
 […]
