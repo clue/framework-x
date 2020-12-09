@@ -1,5 +1,7 @@
 # FrugalPHP
 
+[![CI status](https://github.com/clue/frugalphp-incubator/workflows/CI/badge.svg)](https://github.com/clue/frugalphp-incubator/actions)
+
 Lightweight microframework for fast, event-driven and async-first web applications, built on top of ReactPHP.
 
 […]
@@ -7,7 +9,26 @@ Lightweight microframework for fast, event-driven and async-first web applicatio
 > TODO: Introduction text, start with the why. List some noticeable features.
   Take a look at https://ninenines.eu/docs/en/cowboy/2.6/guide/modern_web/
 
-## Quickstart:
+* [Quickstart](#quickstart)
+* [Basics](#basics)
+    * [Installation](#installation)
+    * [Structure your app (Controllers)](#structure-your-app-controllers)
+    * [Testing your app](#testing-your-app)
+    * [Deployment](#deployment)
+* [Usage](#usage)
+    * [App](#app)
+    * [Request](#request)
+    * [Response](#response)
+    * [Database](#database)
+    * [Filesystem](#filesystem)
+    * [Authentication](#authentication)
+    * [Sessions](#sessions)
+    * [Templates](#templates)
+    * [Queuing](#queuing)
+* [Tests](#tests)
+* [License](#license)
+
+## Quickstart
 
 First manually change your `composer.json` to include these lines:
 
@@ -270,6 +291,15 @@ Runs everywhere:
 
 * Built-in (or module?)
 * Redis built-in, but swappable with real instance (constraints?)
+
+## Tests
+
+You can run some simple acceptance tests to verify the frameworks works
+as expected by running:
+
+```bash
+$ tests/acceptance.sh http://localhost:8080
+```
 
 ## License
 
