@@ -2,7 +2,6 @@
 
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Factory;
-use React\Http\Response;
 use React\Stream\ThroughStream;
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -11,7 +10,11 @@ $loop = Factory::create();
 $app = new Frugal\App($loop);
 
 $app->get('/', function () {
-    return new React\Http\Response(200, [], 'Hello wörld!' . "\n");
+    return new React\Http\Message\Response(
+        200,
+        [],
+        "Hello wörld!\n"
+    );
 });
 $app->get('/debug', function (ServerRequestInterface $request) {
     ob_start();
@@ -22,7 +25,7 @@ $app->get('/debug', function (ServerRequestInterface $request) {
         $info = htmlspecialchars($info, 0, 'utf-8');
     }
 
-    return new Response(
+    return new React\Http\Message\Response(
         200,
         [
             'Content-Type' => 'text/html;charset=utf-8'
@@ -48,7 +51,7 @@ $app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
         $loop->cancelTimer($timeout);
     });
 
-    return new Response(
+    return new React\Http\Message\Response(
         200,
         [
             'Content-Type' => 'text/plain;charset=utf-8'
@@ -58,13 +61,17 @@ $app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
 });
 
 $factory = new Clue\React\SQLite\Factory($loop);
-$db = $factory->openLazy('count.db', ['idle' => 0.001]);
+$db = $factory->openLazy('count.db', null, ['idle' => 0.001]);
 $db->exec('CREATE TABLE IF NOT EXISTS hits (id INTEGER PRIMARY KEY AUTOINCREMENT, datetime STRING)');
 
 $app->get('/count', function (ServerRequestInterface $request) use ($db) {
     $db->query('INSERT INTO hits (datetime) VALUES (?)', [date(DATE_RFC3339_EXTENDED) ]);
     return $db->query('SELECT COUNT(*) AS count FROM hits')->then(function (Clue\React\SqLite\Result $result) {
-        return new Response(200, ['Content-Type' => 'text/plain'], $result->rows[0]['count'] . "\n");
+        return new React\Http\Message\Response(
+            200,
+            ['Content-Type' => 'text/plain'],
+            $result->rows[0]['count'] . "\n"
+        );
     });
 });
 
