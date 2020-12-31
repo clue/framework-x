@@ -86,17 +86,6 @@ class App
         });
     }
 
-    public function fs(string $route, string $path)
-    {
-        $this->get(
-            rtrim($route, '/') . '[/{path:.*}]',
-            new RemoveLeadingPath(
-                $route,
-                new FsHandler($path)
-            )
-        );
-    }
-
     public function cgi(string $route, string $path)
     {
         if (\php_sapi_name() === 'cli') {

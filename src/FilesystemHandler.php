@@ -3,10 +3,12 @@
 namespace Frugal;
 
 use Psr\Http\Message\ServerRequestInterface;
-use React\Http\Response;
+use React\Http\Message\Response;
 
-class FsHandler
+class FilesystemHandler
 {
+    private $root;
+
     public function __construct(string $root)
     {
         $this->root = \rtrim($root, '/');
@@ -14,7 +16,8 @@ class FsHandler
 
     public function __invoke(ServerRequestInterface $request)
     {
-        $path = $this->root . $request->getUri()->getPath();
+        $local = $request->getAttribute('path', '');
+        $path = $this->root . '/' . $local;
 
         \clearstatcache();
         if (\is_dir($path)) {
@@ -27,14 +30,20 @@ class FsHandler
                 );
             }
 
-            $response = '<strong>' . $this->escape($path) . '</strong>' . "\n<ul>\n";
+            $response = '<strong>' . $this->escape($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
+
+            if ($local !== '') {
+                $response .= '    <li><a href="../">../</a></li>' . "\n";
+            }
 
             $files = \scandir($path);
             foreach ($files as $file) {
-                if (\is_dir($path . '/' . $file)) {
-                    $file .= '/';
+                if ($file === '.' || $file === '..') {
+                    continue;
                 }
-                $response .= '    <li><a href="' . $this->escape($file) . '">' . $this->escape($file) . '</a></li>' . "\n";
+
+                $dir = \is_dir($path . '/' . $file) ? '/' : '';
+                $response .= '    <li><a href="' . $this->escape($file) . $dir . '">' . $this->escape($file) . $dir . '</a></li>' . "\n";
             }
             $response .= '</ul>' . "\n";
 
@@ -66,13 +75,15 @@ class FsHandler
             return new Response(
                 200,
                 $header,
-                \fopen($path, 'r')
+                \file_get_contents($path)
             );
         } else {
             return new Response(
                 404,
-                [],
-                $path
+                [
+                    'Content-Type' => 'text/plain; charset=utf-8'
+                ],
+                "File not found: " . $local . "\n"
             );
         }
     }
