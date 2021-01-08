@@ -12,6 +12,8 @@ match() {
 out=$(curl -v $base/ 2>&1);          match "HTTP/.* 200"
 out=$(curl -v $base/test 2>&1);      match -i "Location: /"
 out=$(curl -v $base/invalid 2>&1);   match "HTTP/.* 404"
+out=$(curl -v $base/uri 2>&1);       match "HTTP/.* 200" && match "$base/uri"
+out=$(curl -v $base// 2>&1);         match "HTTP/.* 404"
 out=$(curl -v $base/ 2>&1 -X POST);  match "HTTP/.* 405"
 out=$(curl -v $base/users/foo 2>&1); match "HTTP/.* 200" && match "Hello foo!"
 out=$(curl -v $base/users 2>&1);     match "HTTP/.* 404"

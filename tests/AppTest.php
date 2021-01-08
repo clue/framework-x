@@ -192,6 +192,103 @@ class AppTest extends TestCase
         $this->assertEquals("See /users...\n", (string) $response->getBody());
     }
 
+    public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        // $request = $app->requestFromGlobals();
+        $ref = new ReflectionMethod($app, 'requestFromGlobals');
+        $ref->setAccessible(true);
+        $request = $ref->invoke($app);
+
+        /** @var ServerRequestInterface $request */
+        $this->assertInstanceOf(ServerRequestInterface::class, $request);
+        $this->assertEquals('GET', $request->getMethod());
+        $this->assertEquals('http://localhost/', (string) $request->getUri());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithHeadRequest()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $_SERVER['REQUEST_METHOD'] = 'HEAD';
+        $_SERVER['REQUEST_URI'] = '//';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.0';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+
+        // $request = $app->requestFromGlobals();
+        $ref = new ReflectionMethod($app, 'requestFromGlobals');
+        $ref->setAccessible(true);
+        $request = $ref->invoke($app);
+
+        /** @var ServerRequestInterface $request */
+        $this->assertInstanceOf(ServerRequestInterface::class, $request);
+        $this->assertEquals('HEAD', $request->getMethod());
+        $this->assertEquals('http://example.com//', (string) $request->getUri());
+        $this->assertEquals('1.0', $request->getProtocolVersion());
+        $this->assertEquals('example.com', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithGetRequestOverCustomPort()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/path';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $_SERVER['HTTP_HOST'] = 'localhost:8080';
+
+        // $request = $app->requestFromGlobals();
+        $ref = new ReflectionMethod($app, 'requestFromGlobals');
+        $ref->setAccessible(true);
+        $request = $ref->invoke($app);
+
+        /** @var ServerRequestInterface $request */
+        $this->assertInstanceOf(ServerRequestInterface::class, $request);
+        $this->assertEquals('GET', $request->getMethod());
+        $this->assertEquals('http://localhost:8080/path', (string) $request->getUri());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('localhost:8080', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithGetRequestOverHttps()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $_SERVER['HTTP_HOST'] = 'localhost';
+        $_SERVER['HTTPS'] = 'on';
+
+        // $request = $app->requestFromGlobals();
+        $ref = new ReflectionMethod($app, 'requestFromGlobals');
+        $ref->setAccessible(true);
+        $request = $ref->invoke($app);
+
+        /** @var ServerRequestInterface $request */
+        $this->assertInstanceOf(ServerRequestInterface::class, $request);
+        $this->assertEquals('GET', $request->getMethod());
+        $this->assertEquals('https://localhost/', (string) $request->getUri());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('localhost', $request->getHeaderLine('Host'));
+    }
+
     public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestAreNotAllowed()
     {
         $loop = $this->createMock(LoopInterface::class);

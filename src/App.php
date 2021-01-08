@@ -191,13 +191,18 @@ class App
         });
     }
 
-    private function runOnce()
+    private function requestFromGlobals(): ServerRequestInterface
     {
+        $host = null;
         $headers = array();
         foreach ($_SERVER as $key => $value) {
             if (\strpos($key, 'HTTP_') === 0) {
                 $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
                 $headers[$key] = $value;
+
+                if ($host === null && $key === 'Host') {
+                    $host = $value;
+                }
             }
         }
 
@@ -212,14 +217,24 @@ class App
         $body = file_get_contents('php://input');
 
         $request = new ServerRequest(
-            $_SERVER['REQUEST_METHOD'],
-            $_SERVER['REQUEST_URI'],
+            $_SERVER['REQUEST_METHOD'] ?? 'GET',
+            ($_SERVER['HTTPS'] ?? null === 'on' ? 'https://' : 'http://') . ($host ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/'),
             $headers,
             $body,
-            substr($_SERVER['SERVER_PROTOCOL'], 5),
+            substr($_SERVER['SERVER_PROTOCOL'] ?? 'http/1.1', 5),
             $_SERVER
         );
+        if ($host === null) {
+            $request = $request->withoutHeader('Host');
+        }
         $request = $request->withParsedBody($_POST);
+
+        return $request;
+    }
+
+    private function runOnce()
+    {
+        $request = $this->requestFromGlobals();
 
         $dispatcher = new \FastRoute\Dispatcher\GroupCountBased($this->router->getData());
 
