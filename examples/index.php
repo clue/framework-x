@@ -35,6 +35,19 @@ $app->get('/uri', function (ServerRequestInterface $request) {
     );
 });
 
+$app->get('/query', function (ServerRequestInterface $request) {
+    // Returns a JSON representation of all query params passed to this endpoint.
+    // Note that this assumes UTF-8 data in query params and may break for other encodings,
+    // see also JSON_INVALID_UTF8_SUBSTITUTE (PHP 7.2+) or JSON_THROW_ON_ERROR (PHP 7.3+)
+    return new React\Http\Message\Response(
+        200,
+        [
+            'Content-Type' => 'application/json'
+        ],
+        json_encode((object) $request->getQueryParams(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n"
+    );
+});
+
 $app->get('/debug', function (ServerRequestInterface $request) {
     ob_start();
     var_dump($request);
