@@ -59,7 +59,7 @@ class App
 
     public function options(string $route, callable $handler): void
     {
-        $this->router->options($route, $handler);
+        $this->router->addRoute(['OPTIONS'], $route, $handler);
     }
 
     public function map(array $methods, string $route, callable $handler): void
