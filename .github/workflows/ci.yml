@@ -21,5 +21,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          coverage: xdebug
       - run: composer install
+      - run: vendor/bin/phpunit --coverage-text
+        if: ${{ matrix.php >= 7.3 }}
+      - run: vendor/bin/phpunit --coverage-text -c phpunit.xml.legacy
+        if: ${{ matrix.php < 7.3 }}
       - run: bash tests/acceptance.sh

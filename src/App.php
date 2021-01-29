@@ -311,7 +311,7 @@ class App
 
                 return $handler($request);
         }
-    }
+    } // @codeCoverageIgnore
 
     private function logRequestResponse(ServerRequestInterface $request, ResponseInterface $response): void
     {
