@@ -315,6 +315,11 @@ class App
 
     private function logRequestResponse(ServerRequestInterface $request, ResponseInterface $response): void
     {
+        // only log for built-in webserver and PHP development webserver, others have their own access log
+        if (PHP_SAPI !== 'cli' && PHP_SAPI !== 'cli-server') {
+            return; // @codeCoverageIgnore
+        }
+
         $this->log(
             ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
             '"' . $request->getMethod() . ' ' . $request->getUri()->getPath() . ' HTTP/' . $request->getProtocolVersion() . '" ' .
@@ -331,7 +336,7 @@ class App
         if (\PHP_SAPI === 'cli') {
             echo $log;
         } else {
-            fwrite(fopen('/dev/stderr', 'a'), $log);
+            fwrite(defined('STDERR') ? STDERR : fopen('php://stderr', 'a'), $log);
         }
     }
 

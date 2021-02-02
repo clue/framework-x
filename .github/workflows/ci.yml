@@ -49,6 +49,27 @@ jobs:
       - run: sleep 0.1
       - run: bash tests/acceptance.sh
 
+  Apache-webserver:
+    name: Apache webserver (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php:
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - run: composer install --no-dev
+      - run: docker run -d -p 80:80 -v "$PWD":/home/frugal php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/frugal/examples/apache /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+      - run: sleep 0.1
+      - run: bash tests/acceptance.sh http://localhost
+
   PHP-webserver:
     name: PHP webserver (PHP ${{ matrix.php }})
     runs-on: ubuntu-20.04
