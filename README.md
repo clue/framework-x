@@ -265,7 +265,9 @@ chapter, […]
 Runs everywhere:
 
 * Built-in webserver
-* Apache & nginx
+* nginx with PHP-FPM
+* Apache with mod_fcgid and PHP-FPM
+* Apache with mod_php
 * PHP's development webserver
 
 […]

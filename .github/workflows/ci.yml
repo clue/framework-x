@@ -49,6 +49,28 @@ jobs:
       - run: sleep 0.1
       - run: bash tests/acceptance.sh
 
+  nginx-webserver:
+    name: nginx + PHP-FPM (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php:
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - run: composer install --no-dev
+      - run: docker run -d -v "$PWD":/home/frugal php:${{ matrix.php }}-fpm
+      - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD":/home/frugal -v "$PWD"/examples/nginx/nginx.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
+      - run: sleep 1
+      - run: bash tests/acceptance.sh http://localhost
+
   Apache-webserver:
     name: Apache webserver (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
