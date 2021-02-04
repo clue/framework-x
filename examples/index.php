@@ -69,23 +69,6 @@ $app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
     );
 });
 
-$factory = new Clue\React\SQLite\Factory($loop);
-$db = $factory->openLazy('count.db', null, ['idle' => 0.001]);
-$db->exec('CREATE TABLE IF NOT EXISTS hits (id INTEGER PRIMARY KEY AUTOINCREMENT, datetime STRING)');
-
-$app->get('/count', function (ServerRequestInterface $request) use ($db) {
-    $db->query('INSERT INTO hits (datetime) VALUES (?)', [date(DATE_RFC3339_EXTENDED) ]);
-    return $db->query('SELECT COUNT(*) AS count FROM hits')->then(function (Clue\React\SqLite\Result $result) {
-        return new React\Http\Message\Response(
-            200,
-            ['Content-Type' => 'text/plain'],
-            $result->rows[0]['count'] . "\n"
-        );
-    });
-});
-
-//$app->post('/api/streams/{topic}', new TopicAddController($db));
-
 $app->redirect('/test', '/');
 
 //$app->cgi('/adminer.php', __DIR__ . '/adminer.php');
