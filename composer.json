@@ -22,7 +22,6 @@
         "react/promise": "^2.7"
     },
     "require-dev": {
-        "clue/reactphp-sqlite": "^1.0.0",
         "phpunit/phpunit": "^9.5 || ^7.5"
     }
 }
