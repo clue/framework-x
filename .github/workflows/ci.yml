@@ -6,6 +6,51 @@ on:
 
 jobs:
   PHPUnit:
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        php:
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: xdebug
+      - run: composer install
+      - run: vendor/bin/phpunit --coverage-text
+        if: ${{ matrix.php >= 7.3 }}
+      - run: vendor/bin/phpunit --coverage-text -c phpunit.xml.legacy
+        if: ${{ matrix.php < 7.3 }}
+
+  Built-in-webserver:
+    name: Built-in webserver (PHP ${{ matrix.php }})
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        php:
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - run: composer install --no-dev
+      - run: php examples/index.php &
+      - run: bash tests/await.sh
+      - run: bash tests/acceptance.sh
+
+  nginx-webserver:
+    name: nginx + PHP-FPM (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -17,14 +62,53 @@ jobs:
           - 7.1
     steps:
       - uses: actions/checkout@v2
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: xdebug
-      - run: composer install
-      - run: vendor/bin/phpunit --coverage-text
-        if: ${{ matrix.php >= 7.3 }}
-      - run: vendor/bin/phpunit --coverage-text -c phpunit.xml.legacy
-        if: ${{ matrix.php < 7.3 }}
+      - run: composer install --no-dev
+      - run: docker run -d -v "$PWD":/home/frugal php:${{ matrix.php }}-fpm
+      - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD":/home/frugal -v "$PWD"/examples/nginx/nginx.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
+      - run: bash tests/await.sh http://localhost
+      - run: bash tests/acceptance.sh http://localhost
+
+  Apache-webserver:
+    name: Apache webserver (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php:
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - run: composer install --no-dev
+      - run: docker run -d -p 80:80 -v "$PWD":/home/frugal php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/frugal/examples/apache /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+      - run: bash tests/await.sh http://localhost
+      - run: bash tests/acceptance.sh http://localhost
+
+  PHP-webserver:
+    name: PHP webserver (PHP ${{ matrix.php }})
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        php:
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - run: composer install --no-dev
+      - run: php -S localhost:8080 examples/index.php &
+      - run: bash tests/await.sh
       - run: bash tests/acceptance.sh

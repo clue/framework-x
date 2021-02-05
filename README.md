@@ -265,8 +265,10 @@ chapter, […]
 Runs everywhere:
 
 * Built-in webserver
-* Apache & nginx
-* Standalone
+* nginx with PHP-FPM
+* Apache with mod_fcgid and PHP-FPM
+* Apache with mod_php
+* PHP's development webserver
 
 […]
 
@@ -325,10 +327,26 @@ Runs everywhere:
 
 ## Tests
 
-You can run some simple acceptance tests to verify the frameworks works
-as expected by running:
+To run the test suite, you first need to clone this repo and then install all
+dependencies [through Composer](https://getcomposer.org/):
 
 ```bash
+$ composer install
+```
+
+To run the test suite, go to the project root and run:
+
+```bash
+$ php vendor/bin/phpunit
+```
+
+Additionally, you can run some simple acceptance tests to verify the framework
+examples work as expected behind your web server. Use your web server of choice
+(see [deployment](#deployment)) and execute the tests with the URL to your
+installation like this:
+
+```bash
+$ php examples/index.php
 $ tests/acceptance.sh http://localhost:8080
 ```
 
