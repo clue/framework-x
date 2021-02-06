@@ -25,12 +25,22 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
     );
 });
 
+$app->get('/uri', function (ServerRequestInterface $request) {
+    return new React\Http\Message\Response(
+        200,
+        [
+            'Content-Type' => 'text/plain'
+        ],
+        (string) $request->getUri() . "\n"
+    );
+});
+
 $app->get('/debug', function (ServerRequestInterface $request) {
     ob_start();
     var_dump($request);
     $info = ob_get_clean();
 
-    if (PHP_SAPI !== 'cli' && !xdebug_is_enabled()) {
+    if (PHP_SAPI !== 'cli' && (!function_exists('xdebug_is_enabled') || !xdebug_is_enabled())) {
         $info = htmlspecialchars($info, 0, 'utf-8');
     }
 
