@@ -18,14 +18,21 @@ $app->get('/', function () {
 });
 
 $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $request) {
+    $escape = function (string $str): string {
+        // replace invalid UTF-8 and control bytes with Unicode replacement character (�)
+        return htmlspecialchars_decode(htmlspecialchars($str, ENT_SUBSTITUTE | ENT_DISALLOWED, 'utf-8'));
+    };
+
     return new React\Http\Message\Response(
         200,
-        [],
-        "Hello " . $request->getAttribute('name') . "!\n"
+        [
+            'Content-Type' => 'text/plain'
+        ],
+        "Hello " . $escape($request->getAttribute('name')) . "!\n"
     );
 });
 
-$app->get('/uri', function (ServerRequestInterface $request) {
+$app->get('/uri[/{path:.*}]', function (ServerRequestInterface $request) {
     return new React\Http\Message\Response(
         200,
         [

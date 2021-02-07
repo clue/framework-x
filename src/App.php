@@ -321,7 +321,7 @@ class App
                 $vars = $routeInfo[2];
 
                 foreach ($vars as $key => $value) {
-                    $request = $request->withAttribute($key, $value);
+                    $request = $request->withAttribute($key, rawurldecode($value));
                 }
 
                 return $handler($request);
