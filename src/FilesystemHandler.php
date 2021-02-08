@@ -86,18 +86,20 @@ class FilesystemHandler
                 [
                     'Content-Type' => 'text/plain; charset=utf-8'
                 ],
-                "File not found: " . $this->escapeText($local) . "\n"
+                "Error 404: Not Found\n"
             );
         }
     }
 
-    private function escapeText(string $s): string
-    {
-        return \htmlspecialchars_decode($this->escapeHtml($s));
-    }
-
     private function escapeHtml(string $s): string
     {
-        return \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8');
+        return \addcslashes(
+            \str_replace(
+                ' ',
+                '&nbsp;',
+                \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
+            ),
+            "\0..\032\\"
+        );
     }
 }

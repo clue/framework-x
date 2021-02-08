@@ -23,7 +23,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(file_get_contents(__DIR__ . '/../LICENSE'), (string) $response->getBody());
     }
 
-    public function testInvokeWithInvalidPathWillReturnFileNotFoundResponse()
+    public function testInvokeWithInvalidPathWillReturnNotFoundResponse()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -36,10 +36,10 @@ class FilesystemHandlerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("File not found: invalid\n", (string) $response->getBody());
+        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithDoubleSlashWillReturnFileNotFoundResponse()
+    public function testInvokeWithDoubleSlashWillReturnNotFoundResponse()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -52,10 +52,10 @@ class FilesystemHandlerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("File not found: LICENSE//\n", (string) $response->getBody());
+        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithPathWithLeadingSlashWillReturnFileNotFoundResponse()
+    public function testInvokeWithPathWithLeadingSlashWillReturnNotFoundResponse()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -68,10 +68,10 @@ class FilesystemHandlerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("File not found: /LICENSE\n", (string) $response->getBody());
+        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithPathWithDotSegmentWillReturnFileNotFoundResponse()
+    public function testInvokeWithPathWithDotSegmentWillReturnNotFoundResponse()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -84,10 +84,10 @@ class FilesystemHandlerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("File not found: ./LICENSE\n", (string) $response->getBody());
+        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithPathBelowRootWillReturnFileNotFoundResponse()
+    public function testInvokeWithPathBelowRootWillReturnNotFoundResponse()
     {
         $handler = new FilesystemHandler(__DIR__);
 
@@ -100,10 +100,10 @@ class FilesystemHandlerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("File not found: ../LICENSE\n", (string) $response->getBody());
+        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithBinaryPathWillReturnFileNotFoundResponse()
+    public function testInvokeWithBinaryPathWillReturnNotFoundResponse()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -116,7 +116,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("File not found: bin�ary\n", (string) $response->getBody());
+        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
     }
 
     public function testInvokeWithoutPathWillReturnResponseWithDirectoryListing()
@@ -230,20 +230,28 @@ class FilesystemHandlerTest extends TestCase
             ],
             [
                 'hello world',
-                'hello world'
+                'hello&nbsp;world'
             ],
-//             [
-//                 'hello    world',
-//                 'hello &nbsp; &nbsp;world'
-//             ],
-//             [
-//                 ' hello world ',
-//                 '&nbsp;hello world&nbsp;'
-//             ],
-//             [
-//                 "hello\nworld",
-//                 'hello\nworld'
-//             ],
+            [
+                'hello    world',
+                'hello&nbsp;&nbsp;&nbsp;&nbsp;world'
+            ],
+            [
+                ' hello world ',
+                '&nbsp;hello&nbsp;world&nbsp;'
+            ],
+            [
+                "hello\nworld",
+                'hello\nworld'
+            ],
+            [
+                "hello\tworld",
+                'hello\tworld'
+            ],
+            [
+                "hello\\nworld",
+                'hello\\\\nworld'
+            ],
             [
                 'h<e>llo',
                 'h&lt;e&gt;llo'
