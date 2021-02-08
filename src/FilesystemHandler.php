@@ -20,7 +20,7 @@ class FilesystemHandler
         $path = $this->root . '/' . $local;
 
         \clearstatcache();
-        if (\is_dir($path)) {
+        if (\strpos($path, "\0") === false && \is_dir($path)) {
             if (\substr($path, -1) !== '/') {
                 return new Response(
                     302,
@@ -30,7 +30,7 @@ class FilesystemHandler
                 );
             }
 
-            $response = '<strong>' . $this->escape($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
+            $response = '<strong>' . $this->escapeHtml($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
 
             if ($local !== '') {
                 $response .= '    <li><a href="../">../</a></li>' . "\n";
@@ -43,7 +43,7 @@ class FilesystemHandler
                 }
 
                 $dir = \is_dir($path . '/' . $file) ? '/' : '';
-                $response .= '    <li><a href="' . $this->escape($file) . $dir . '">' . $this->escape($file) . $dir . '</a></li>' . "\n";
+                $response .= '    <li><a href="' . \rawurlencode($file) . $dir . '">' . $this->escapeHtml($file) . $dir . '</a></li>' . "\n";
             }
             $response .= '</ul>' . "\n";
 
@@ -54,8 +54,8 @@ class FilesystemHandler
                 ],
                 $response
             );
-        } elseif (\is_file($path)) {
-            if (false && $this->xAccelSupported) {
+        } elseif (\strpos($path, "\0") === false && \is_file($path)) {
+            if (\substr($path, -1) === '/') {
                 return new Response(
                     200,
                     [
@@ -83,13 +83,18 @@ class FilesystemHandler
                 [
                     'Content-Type' => 'text/plain; charset=utf-8'
                 ],
-                "File not found: " . $local . "\n"
+                "File not found: " . $this->escapeText($local) . "\n"
             );
         }
     }
 
-    private function escape(string $s)
+    private function escapeText(string $s): string
     {
-        return \htmlspecialchars($s, null, 'utf-8');
+        return \htmlspecialchars_decode($this->escapeHtml($s));
+    }
+
+    private function escapeHtml(string $s): string
+    {
+        return \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8');
     }
 }
