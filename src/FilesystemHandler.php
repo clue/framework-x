@@ -19,8 +19,11 @@ class FilesystemHandler
         $local = $request->getAttribute('path', '');
         $path = $this->root . '/' . $local;
 
+        // local path should not contain "./", "../", "//" or null bytes or start with slash
+        $valid = !\preg_match('#(?:^|/)..?(?:$|/)|^/|//|\x00#', $local);
+
         \clearstatcache();
-        if (\strpos($path, "\0") === false && \is_dir($path)) {
+        if ($valid && \is_dir($path)) {
             if (\substr($path, -1) !== '/') {
                 return new Response(
                     302,
@@ -54,7 +57,7 @@ class FilesystemHandler
                 ],
                 $response
             );
-        } elseif (\strpos($path, "\0") === false && \is_file(\rtrim($path, '/'))) {
+        } elseif ($valid && \is_file(\rtrim($path, '/'))) {
             if (\substr($path, -1) === '/') {
                 return new Response(
                     302,

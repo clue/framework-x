@@ -39,6 +39,70 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals("File not found: invalid\n", (string) $response->getBody());
     }
 
+    public function testInvokeWithDoubleSlashWillReturnFileNotFoundResponse()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source/LICENSE//');
+        $request = $request->withAttribute('path', 'LICENSE//');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("File not found: LICENSE//\n", (string) $response->getBody());
+    }
+
+    public function testInvokeWithPathWithLeadingSlashWillReturnFileNotFoundResponse()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source//LICENSE');
+        $request = $request->withAttribute('path', '/LICENSE');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("File not found: /LICENSE\n", (string) $response->getBody());
+    }
+
+    public function testInvokeWithPathWithDotSegmentWillReturnFileNotFoundResponse()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source/./LICENSE');
+        $request = $request->withAttribute('path', './LICENSE');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("File not found: ./LICENSE\n", (string) $response->getBody());
+    }
+
+    public function testInvokeWithPathBelowRootWillReturnFileNotFoundResponse()
+    {
+        $handler = new FilesystemHandler(__DIR__);
+
+        $request = new ServerRequest('GET', '/source/../LICENSE');
+        $request = $request->withAttribute('path', '../LICENSE');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("File not found: ../LICENSE\n", (string) $response->getBody());
+    }
+
     public function testInvokeWithBinaryPathWillReturnFileNotFoundResponse()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
