@@ -121,6 +121,21 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals('.github/', $response->getHeaderLine('Location'));
     }
 
+    public function testInvokeWithValidPathToFileButWithTrailingSlashWillReturnRedirectToPathWithoutSlash()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source/LICENSE/');
+        $request = $request->withAttribute('path', 'LICENSE/');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('../LICENSE', $response->getHeaderLine('Location'));
+    }
+
     /**
      * @dataProvider provideNames
      * @param string $in

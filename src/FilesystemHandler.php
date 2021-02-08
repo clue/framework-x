@@ -25,7 +25,7 @@ class FilesystemHandler
                 return new Response(
                     302,
                     [
-                        'Location' => basename($path) . '/'
+                        'Location' => \basename($path) . '/'
                     ]
                 );
             }
@@ -54,12 +54,12 @@ class FilesystemHandler
                 ],
                 $response
             );
-        } elseif (\strpos($path, "\0") === false && \is_file($path)) {
+        } elseif (\strpos($path, "\0") === false && \is_file(\rtrim($path, '/'))) {
             if (\substr($path, -1) === '/') {
                 return new Response(
-                    200,
+                    302,
                     [
-                        'X-Accel-Redirect' => $path
+                        'Location' => '../' . \basename($path)
                     ]
                 );
             }
