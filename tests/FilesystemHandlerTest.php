@@ -7,7 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 
 class FilesystemHandlerTest extends TestCase
 {
-    public function testInvokeWithValidPathToFileWillReturnResponseWithFileContents()
+    public function testInvokeWithValidPathToLicenseWillReturnResponseWithFileContents()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -21,6 +21,26 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertEquals(file_get_contents(__DIR__ . '/../LICENSE'), (string) $response->getBody());
+    }
+
+    public function testInvokeWithValidPathToComposerJsonAndCachingHeaderWillReturnResponseNotModifiedWithoutContents()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source/composer.json');
+        $request = $request->withAttribute('path', 'composer.json');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $response = $handler($request->withHeader('If-Modified-Since', $response->getHeaderLine('Last-Modified')));
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(304, $response->getStatusCode());
+        $this->assertFalse($response->hasHeader('Content-Type'));
+        $this->assertFalse($response->hasHeader('Last-Modified'));
+        $this->assertEquals('', (string) $response->getBody());
     }
 
     public function testInvokeWithInvalidPathWillReturnNotFoundResponse()

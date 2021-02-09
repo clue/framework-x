@@ -67,17 +67,22 @@ class FilesystemHandler
                 );
             }
 
+            $headers = [
+                'Content-Type' => 'text/plain; charset=utf-8'
+            ];
 
-//             $header = [];
-//             if (substr($path, -4) === '.txt') {
-//                 $header = ['Content-Type' => 'text/plain'];
-//             } elseif (substr($path, -4) === '.php') {
-                $header = ['Content-Type' => 'text/plain; charset=utf-8'];
-//             }
+            $stat = @\stat($path);
+            if ($stat !== false) {
+                $headers['Last-Modified'] = \gmdate('D, d M Y H:i:s', $stat['mtime']) . ' GMT';
+
+                if ($request->getHeaderLine('If-Modified-Since') === $headers['Last-Modified']) {
+                    return new Response(304);
+                }
+            }
 
             return new Response(
                 200,
-                $header,
+                $headers,
                 \file_get_contents($path)
             );
         } else {
