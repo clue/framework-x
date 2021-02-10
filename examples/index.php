@@ -99,12 +99,11 @@ $app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
     );
 });
 
-$app->redirect('/test', '/');
-
 //$app->cgi('/adminer.php', __DIR__ . '/adminer.php');
 
-$app->fs('/source/', __DIR__);
-//$app->redirect('/source', '/source/');
+$app->get('/LICENSE', new Frugal\FilesystemHandler(dirname(__DIR__) . '/LICENSE'));
+$app->get('/source/{path:.*}', new Frugal\FilesystemHandler(dirname(__DIR__)));
+$app->redirect('/source', '/source/');
 
 $app->run();
 $loop->run();
