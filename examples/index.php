@@ -13,7 +13,7 @@ $app->get('/', function () {
     return new React\Http\Message\Response(
         200,
         [],
-        "Hello wörld!\n"
+        "Hello world!\n"
     );
 });
 
@@ -26,7 +26,7 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
     return new React\Http\Message\Response(
         200,
         [
-            'Content-Type' => 'text/plain'
+            'Content-Type' => 'text/plain; charset=utf-8'
         ],
         "Hello " . $escape($request->getAttribute('name')) . "!\n"
     );
