@@ -260,17 +260,21 @@ class App
             $response = $response->withHeader('Content-Length', (string)$response->getBody()->getSize());
         }
 
-        // remove default "Content-Type" header set by PHP
+        // remove default "Content-Type" header set by PHP (default_mimetype)
         if (!$response->hasHeader('Content-Type')) {
             header('Content-Type: foo');
             header_remove('Content-Type');
         }
 
+        // send all headers without applying default "; charset=utf-8" set by PHP (default_charset)
+        $old = ini_get('default_charset');
+        ini_set('default_charset', '');
         foreach ($response->getHeaders() as $name => $values) {
             foreach ($values as $value) {
                 header($name . ': ' . $value);
             }
         }
+        ini_set('default_charset', $old);
 
         $body = $response->getBody();
 

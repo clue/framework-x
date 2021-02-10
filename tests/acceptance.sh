@@ -13,9 +13,9 @@ skipif() {
     echo "$out" | grep "$@" >/dev/null && echo -n S && return 1 || return 0
 }
 
-out=$(curl -v $base/ 2>&1);         match "HTTP/.* 200"
-out=$(curl -v $base/test 2>&1);     match -i "Location: /"
-out=$(curl -v $base/invalid 2>&1);  match "HTTP/.* 404"
+out=$(curl -v $base/ 2>&1);         match "HTTP/.* 200" && match -iv "Content-Type:"
+out=$(curl -v $base/test 2>&1);     match -i "Location: /" && match -iP "Content-Type: text/html[\r\n]"
+out=$(curl -v $base/invalid 2>&1);  match "HTTP/.* 404" && match -iP "Content-Type: text/html[\r\n]"
 out=$(curl -v $base// 2>&1);        match "HTTP/.* 404"
 out=$(curl -v $base/ 2>&1 -X POST); match "HTTP/.* 405"
 
@@ -56,7 +56,7 @@ out=$(curl -v $base/query?q=a%00b 2>&1);                match "HTTP/.* 200" && m
 out=$(curl -v $base/query?q=a\&q=b 2>&1);               match "HTTP/.* 200" && match "{\"q\":\"b\"}"
 out=$(curl -v $base/query?q%5B%5D=a\&q%5B%5D=b 2>&1);   match "HTTP/.* 200" && match "{\"q\":[[]\"a\",\"b\"[]]}"
 
-out=$(curl -v $base/users/foo 2>&1);                    match "HTTP/.* 200" && match "Hello foo!"
+out=$(curl -v $base/users/foo 2>&1);                    match "HTTP/.* 200" && match "Hello foo!" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
 out=$(curl -v $base/users/w%C3%B6rld 2>&1);             match "HTTP/.* 200" && match "Hello wörld!"
 out=$(curl -v $base/users/w%F6rld 2>&1);                match "HTTP/.* 200" && match "Hello w�rld!" # demo expects UTF-8 instead of ISO-8859-1
 out=$(curl -v $base/users/a+b 2>&1);                    match "HTTP/.* 200" && match "Hello a+b!"
