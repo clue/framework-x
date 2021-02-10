@@ -70,7 +70,7 @@ out=$(curl -v $base/users/a/b 2>&1); match "HTTP/.* 404"
 
 out=$(curl -v $base/source 2>&1);           match -i "Location: /source/" && match -iP "Content-Type: text/html[\r\n]"
 out=$(curl -v $base/source/ 2>&1);          match "HTTP/.* 200"
-out=$(curl -v $base/source/LICENSE 2>&1);   match "HTTP/.* 200"
+out=$(curl -v $base/source/LICENSE 2>&1);   match "HTTP/.* 200" && match -iP "Content-Type: text/plain[\r\n]"
 out=$(curl -v $base/source/LICENSE/ 2>&1);  match -i "Location: ../LICENSE"
 out=$(curl -v $base/source/LICENSE// 2>&1); match "HTTP/.* 404"
 out=$(curl -v $base/source//LICENSE 2>&1);  match "HTTP/.* 404"

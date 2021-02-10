@@ -19,7 +19,7 @@ class FilesystemHandlerTest extends TestCase
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('text/plain', $response->getHeaderLine('Content-Type'));
         $this->assertEquals(file_get_contents(__DIR__ . '/../LICENSE'), (string) $response->getBody());
     }
 

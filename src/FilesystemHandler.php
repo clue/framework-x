@@ -67,8 +67,11 @@ class FilesystemHandler
                 );
             }
 
+            // Assign default MIME type here (same as nginx/Apache).
+            // Should use mime database in the future with fallback to given default.
+            // Browers are pretty good at figuring out the correct type if no charset attribute is given.
             $headers = [
-                'Content-Type' => 'text/plain; charset=utf-8'
+                'Content-Type' => 'text/plain'
             ];
 
             $stat = @\stat($path);
