@@ -174,6 +174,21 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringNotContainsString('<a href="../">../</a>', (string) $response->getBody());
     }
 
+    public function testInvokeWithoutPathAndRootIsFileWillReturnResponseWithFileContents()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__) . '/LICENSE');
+
+        $request = new ServerRequest('GET', '/source/');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/plain', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals(file_get_contents(__DIR__ . '/../LICENSE'), (string) $response->getBody());
+    }
+
     public function testInvokeWithValidPathToDirectoryWillReturnResponseWithDirectoryListing()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));

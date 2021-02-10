@@ -101,6 +101,7 @@ $app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
 
 //$app->cgi('/adminer.php', __DIR__ . '/adminer.php');
 
+$app->get('/LICENSE', new Frugal\FilesystemHandler(dirname(__DIR__) . '/LICENSE'));
 $app->get('/source/{path:.*}', new Frugal\FilesystemHandler(dirname(__DIR__)));
 $app->redirect('/source', '/source/');
 

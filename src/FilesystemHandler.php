@@ -11,20 +11,20 @@ class FilesystemHandler
 
     public function __construct(string $root)
     {
-        $this->root = \rtrim($root, '/');
+        $this->root = $root;
     }
 
     public function __invoke(ServerRequestInterface $request)
     {
         $local = $request->getAttribute('path', '');
-        $path = $this->root . '/' . $local;
+        $path = \rtrim($this->root . '/' . $local, '/');
 
         // local path should not contain "./", "../", "//" or null bytes or start with slash
         $valid = !\preg_match('#(?:^|/)..?(?:$|/)|^/|//|\x00#', $local);
 
         \clearstatcache();
         if ($valid && \is_dir($path)) {
-            if (\substr($path, -1) !== '/') {
+            if ($local !== '' && \substr($local, -1) !== '/') {
                 return new Response(
                     302,
                     [
@@ -57,8 +57,8 @@ class FilesystemHandler
                 ],
                 $response
             );
-        } elseif ($valid && \is_file(\rtrim($path, '/'))) {
-            if (\substr($path, -1) === '/') {
+        } elseif ($valid && \is_file($path)) {
+            if ($local !== '' && \substr($local, -1) === '/') {
                 return new Response(
                     302,
                     [
