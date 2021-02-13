@@ -79,4 +79,12 @@ out=$(curl -v $base/source/tests 2>&1);     match -i "Location: tests/"
 out=$(curl -v $base/source/invalid 2>&1);   match "HTTP/.* 404"
 out=$(curl -v $base/source/bin%00ary 2>&1); match "HTTP/.* 40[40]" # expects 404, but not processed with nginx (400) and Apache (404)
 
+out=$(curl -v $base/method 2>&1);               match "HTTP/.* 200" && match "GET"
+out=$(curl -v $base/method -I 2>&1);            match "HTTP/.* 200" && match -iP "Content-Length: 5[\r\n]" # HEAD has no response body
+out=$(curl -v $base/method -X POST 2>&1);       match "HTTP/.* 200" && match "POST"
+out=$(curl -v $base/method -X PUT 2>&1);        match "HTTP/.* 200" && match "PUT"
+out=$(curl -v $base/method -X PATCH 2>&1);      match "HTTP/.* 200" && match "PATCH"
+out=$(curl -v $base/method -X DELETE 2>&1);     match "HTTP/.* 200" && match "DELETE"
+out=$(curl -v $base/method -X OPTIONS 2>&1);    match "HTTP/.* 200" && match "OPTIONS"
+
 echo "OK ($n)"
