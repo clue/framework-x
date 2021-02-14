@@ -129,5 +129,9 @@ $app->map(['GET', 'POST'], '/headers', function (ServerRequestInterface $request
     );
 });
 
+$app->get('/error', function () {
+    return null;
+});
+
 $app->run();
 $loop->run();

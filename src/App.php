@@ -300,7 +300,11 @@ class App
     /**
      * @param ServerRequestInterface $request
      * @param Dispatcher $dispatcher
-     * @return ResponseInterface|PromiseInterface<ResponseInterface>
+     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>
+     *     Returns a response or a Promise which eventually fulfills with a
+     *     response. This method never throws or resolves a rejected promise.
+     *     If the request can not be routed or the handler fails, it will be
+     *     turned into a valid error response before returning.
      */
     private function handleRequest(ServerRequestInterface $request, Dispatcher $dispatcher)
     {
@@ -326,7 +330,29 @@ class App
                     $request = $request->withAttribute($key, rawurldecode($value));
                 }
 
-                return $handler($request);
+                try {
+                    $response = $handler($request);
+                } catch (\Throwable $e) {
+                    return $this->errorHandlerException($e);
+                }
+
+                if ($response instanceof ResponseInterface) {
+                    return $response;
+                } elseif ($response instanceof PromiseInterface) {
+                    return $response->then(function ($response) {
+                        if (!$response instanceof ResponseInterface) {
+                            return $this->errorHandlerResponse($response);
+                        }
+                        return $response;
+                    }, function ($e) {
+                        if (!$e instanceof \Throwable) {
+                            $e = new \UnexpectedValueException('Handler rejected with ' . $this->describeType($e));
+                        }
+                        return $this->errorHandlerException($e);
+                    });
+                } else {
+                    return $this->errorHandlerResponse($response);
+                }
         }
     } // @codeCoverageIgnore
 
@@ -402,5 +428,31 @@ class App
             405,
             implode(', ', $request->getAttribute('allowed'))
         )->withHeader('Allowed', implode(', ', $request->getAttribute('allowed')));
+    }
+
+    private function errorHandlerException(\Throwable $e): ResponseInterface
+    {
+        return $this->error(
+            500,
+            'Uncaught <code>' . get_class($e) . '</code> from handler: ' . $e->getMessage()
+        );
+    }
+
+    private function errorHandlerResponse($value): ResponseInterface
+    {
+        return $this->error(
+            500,
+            'Handler returned invalid value (<code>' . $this->describeType($value) . '</code>)'
+        );
+    }
+
+    private function describeType($value): string
+    {
+        if ($value === null) {
+            return 'null';
+        } elseif (\is_scalar($value) && !\is_string($value)) {
+            return \var_export($value, true);
+        }
+        return \is_object($value) ? \get_class($value) : \gettype($value);
     }
 }
