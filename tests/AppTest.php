@@ -305,8 +305,9 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+
+        $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('/users', $response->getHeaderLine('Location'));
         $this->assertEquals("See /users...\n", (string) $response->getBody());
     }
@@ -334,8 +335,9 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(307, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+
+        $this->assertEquals(307, $response->getStatusCode());
         $this->assertEquals('/users', $response->getHeaderLine('Location'));
         $this->assertEquals("See /users...\n", (string) $response->getBody());
     }

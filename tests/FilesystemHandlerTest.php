@@ -267,6 +267,7 @@ class FilesystemHandlerTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
+
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('.github/', $response->getHeaderLine('Location'));
     }
@@ -282,6 +283,7 @@ class FilesystemHandlerTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
+
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('../LICENSE', $response->getHeaderLine('Location'));
     }
