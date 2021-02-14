@@ -9,6 +9,41 @@ class FilesystemHandler
 {
     private $root;
 
+    /**
+     * Mapping between file extension and MIME type to send in `Content-Type` response header
+     *
+     * @var array<string,string>
+     */
+    private $mimetypes = array(
+        'atom' => 'application/atom+xml',
+        'bz2' => 'application/x-bzip2',
+        'css' => 'text/css',
+        'gif' => 'image/gif',
+        'gz' => 'application/gzip',
+        'htm' => 'text/html',
+        'html' => 'text/html',
+        'ico' => 'image/x-icon',
+        'jpeg' => 'image/jpeg',
+        'jpg' => 'image/jpeg',
+        'js' => 'text/javascript',
+        'json' => 'application/json',
+        'pdf' => 'application/pdf',
+        'png' => 'image/png',
+        'rss' => 'application/rss+xml',
+        'svg' => 'image/svg+xml',
+        'tar' => 'application/x-tar',
+        'xml' => 'application/xml',
+        'zip' => 'application/zip',
+    );
+
+    /**
+     * Assign default MIME type to send in `Content-Type` response header (same as nginx/Apache)
+     *
+     * @var string
+     * @see self::$mimetypes
+     */
+    private $defaultMimetype = 'text/plain';
+
     public function __construct(string $root)
     {
         $this->root = $root;
@@ -67,11 +102,11 @@ class FilesystemHandler
                 );
             }
 
-            // Assign default MIME type here (same as nginx/Apache).
-            // Should use mime database in the future with fallback to given default.
+            // Assign MIME type based on file extension (same as nginx/Apache) or fall back to given default otherwise.
             // Browers are pretty good at figuring out the correct type if no charset attribute is given.
+            $ext = \strtolower(\substr($path, \strrpos($path, '.') + 1));
             $headers = [
-                'Content-Type' => 'text/plain'
+                'Content-Type' => $this->mimetypes[$ext] ?? $this->defaultMimetype
             ];
 
             $stat = @\stat($path);

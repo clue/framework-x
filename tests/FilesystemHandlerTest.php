@@ -7,7 +7,23 @@ use Psr\Http\Message\ResponseInterface;
 
 class FilesystemHandlerTest extends TestCase
 {
-    public function testInvokeWithValidPathToLicenseWillReturnResponseWithFileContents()
+    public function testInvokeWithValidPathToComposerJsonWillReturnResponseWithFileContentsAndContentType()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source/composer.json');
+        $request = $request->withAttribute('path', 'composer.json');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals(file_get_contents(__DIR__ . '/../composer.json'), (string) $response->getBody());
+    }
+
+    public function testInvokeWithValidPathToLicenseWillReturnResponseWithFileContentsAndDefaultContentType()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
