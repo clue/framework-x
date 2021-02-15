@@ -88,4 +88,6 @@ out=$(curl -v $base/method -X PATCH 2>&1);      match "HTTP/.* 200" && match "PA
 out=$(curl -v $base/method -X DELETE 2>&1);     match "HTTP/.* 200" && match "DELETE"
 out=$(curl -v $base/method -X OPTIONS 2>&1);    match "HTTP/.* 200" && match "OPTIONS"
 
+out=$(curl -v $base/headers -H 'DNT: 1' 2>&1);  skipif "Server: nginx" && match "HTTP/.* 200" && match "\"DNT\"" && match -v "\"Dnt\"" # skip nginx which doesn't report original case (DNT->Dnt)
+
 echo "OK ($n)"
