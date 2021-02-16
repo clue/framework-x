@@ -1,9 +1,12 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+namespace Frugal\Tests;
+
 use Frugal\FilesystemHandler;
-use React\Http\Message\ServerRequest;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use React\Http\Message\ServerRequest;
+use ReflectionMethod;
 
 class FilesystemHandlerTest extends TestCase
 {

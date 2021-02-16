@@ -10,11 +10,6 @@
             "email": "christian@clue.engineering"
         }
     ],
-    "autoload": {
-        "psr-4": {
-            "Frugal\\": "src/"
-        }
-    },
     "require": {
         "php": ">=7.1",
         "nikic/fast-route": "^1.3",
@@ -23,5 +18,15 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5 || ^7.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Frugal\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Frugal\\Tests\\": "tests/"
+        }
     }
 }

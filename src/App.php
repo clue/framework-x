@@ -333,25 +333,25 @@ class App
                 try {
                     $response = $handler($request);
                 } catch (\Throwable $e) {
-                    return $this->errorHandlerException($e);
+                    return $this->errorHandlerException($e, $handler);
                 }
 
                 if ($response instanceof ResponseInterface) {
                     return $response;
                 } elseif ($response instanceof PromiseInterface) {
-                    return $response->then(function ($response) {
+                    return $response->then(function ($response) use ($handler) {
                         if (!$response instanceof ResponseInterface) {
-                            return $this->errorHandlerResponse($response);
+                            return $this->errorHandlerResponse($response, $handler);
                         }
                         return $response;
-                    }, function ($e) {
+                    }, function ($e) use ($handler) {
                         if (!$e instanceof \Throwable) {
                             $e = new \UnexpectedValueException('Handler rejected with ' . $this->describeType($e));
                         }
-                        return $this->errorHandlerException($e);
+                        return $this->errorHandlerException($e, $handler);
                     });
                 } else {
-                    return $this->errorHandlerResponse($response);
+                    return $this->errorHandlerResponse($response, $handler);
                 }
         }
     } // @codeCoverageIgnore
@@ -430,19 +430,19 @@ class App
         )->withHeader('Allowed', implode(', ', $request->getAttribute('allowed')));
     }
 
-    private function errorHandlerException(\Throwable $e): ResponseInterface
+    private function errorHandlerException(\Throwable $e, callable $handler): ResponseInterface
     {
         return $this->error(
             500,
-            'Uncaught <code>' . get_class($e) . '</code> from handler: ' . $e->getMessage()
+            'Uncaught <code>' . \get_class($e) . '</code> from ' . \lcfirst($this->describeHandler($handler)) . ': ' . $e->getMessage()
         );
     }
 
-    private function errorHandlerResponse($value): ResponseInterface
+    private function errorHandlerResponse($value, callable $handler): ResponseInterface
     {
         return $this->error(
             500,
-            'Handler returned invalid value (<code>' . $this->describeType($value) . '</code>)'
+            $this->describeHandler($handler) . ' returned invalid value (<code>' . $this->describeType($value) . '</code>)'
         );
     }
 
@@ -454,5 +454,18 @@ class App
             return \var_export($value, true);
         }
         return \is_object($value) ? \get_class($value) : \gettype($value);
+    }
+
+    private function describeHandler(callable $handler): string
+    {
+        if (\is_object($handler) && !$handler instanceof \Closure) {
+            return '<code>' . \get_class($handler) . '</code>';
+        } elseif (\is_string($handler)) {
+            return '<code>' . $handler . '()</code>';
+        } elseif (\is_array($handler)) {
+            return '<code>' . (\is_string($handler[0]) ? $handler[0] : \get_class($handler[0])) . '::' . $handler[1] . '()</code>';
+        }
+
+        return 'Request handler';
     }
 }
