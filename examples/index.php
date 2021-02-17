@@ -130,6 +130,9 @@ $app->map(['GET', 'POST'], '/headers', function (ServerRequestInterface $request
 });
 
 $app->get('/error', function () {
+    throw new RuntimeException('Error');
+});
+$app->get('/error/null', function () {
     return null;
 });
 

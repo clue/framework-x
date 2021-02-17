@@ -490,6 +490,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = __LINE__ + 2;
         $handler = function () {
             throw new \RuntimeException('Foo');
         };
@@ -506,7 +507,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): Uncaught <code>RuntimeException</code> from request handler: Foo\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): Uncaught <code>RuntimeException</code> from request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
@@ -516,6 +517,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = __LINE__ + 2;
         $handler = function () {
             return \React\Promise\reject(new \RuntimeException('Foo'));
         };
@@ -540,7 +542,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): Uncaught <code>RuntimeException</code> from request handler: Foo\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): Uncaught <code>RuntimeException</code> from request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
@@ -550,6 +552,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = __LINE__ + 1;
         $handler = function () {
             return \React\Promise\reject('');
         };
@@ -574,9 +577,8 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): Uncaught <code>UnexpectedValueException</code> from request handler: Handler rejected with string\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): Request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>) returned invalid value (<code>React\Promise\RejectedPromise</code>)\n", (string) $response->getBody());
     }
-
 
     public function provideInvalidReturnValue()
     {
@@ -628,6 +630,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = __LINE__ + 1;
         $handler = function () use ($value) {
             return $value;
         };
@@ -644,7 +647,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): Request handler returned invalid value (<code>$name</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): Request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>) returned invalid value (<code>$name</code>)\n", (string) $response->getBody());
     }
 
     /**
@@ -659,6 +662,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = __LINE__ + 1;
         $handler = function () use ($value) {
             return \React\Promise\resolve($value);
         };
@@ -683,7 +687,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): Request handler returned invalid value (<code>$name</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): Request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>) returned invalid value (<code>$name</code>)\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenClassHandlerReturnsStringValue()
@@ -693,6 +697,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = 7;
         $handler = new InvalidHandlerStub();
 
         $dispatcher = $this->createMock(Dispatcher::class);
@@ -707,7 +712,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub</code> returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenClassMethodHandlerReturnsStringValue()
@@ -717,6 +722,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = 12;
         $handler = [new InvalidHandlerStub(), 'index'];
 
         $dispatcher = $this->createMock(Dispatcher::class);
@@ -731,7 +737,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::index()</code> returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::index()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenStaticClassMethodHandlerReturnsStringValue()
@@ -741,6 +747,7 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
+        $line = 17;
         $handler = [InvalidHandlerStub::class, 'static'];
 
         $dispatcher = $this->createMock(Dispatcher::class);
@@ -755,7 +762,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::static()</code> returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::static()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenGlobalFunctionHandlerReturnsStringValue()

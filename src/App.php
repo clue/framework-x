@@ -345,10 +345,11 @@ class App
                         }
                         return $response;
                     }, function ($e) use ($handler) {
-                        if (!$e instanceof \Throwable) {
-                            $e = new \UnexpectedValueException('Handler rejected with ' . $this->describeType($e));
+                        if ($e instanceof \Throwable) {
+                            return $this->errorHandlerException($e, $handler);
+                        } else {
+                            return $this->errorHandlerResponse(\React\Promise\reject($e), $handler);
                         }
-                        return $this->errorHandlerException($e, $handler);
                     });
                 } else {
                     return $this->errorHandlerResponse($response, $handler);
@@ -432,9 +433,11 @@ class App
 
     private function errorHandlerException(\Throwable $e, callable $handler): ResponseInterface
     {
+        $where = ' (<code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>)';
+
         return $this->error(
             500,
-            'Uncaught <code>' . \get_class($e) . '</code> from ' . \lcfirst($this->describeHandler($handler)) . ': ' . $e->getMessage()
+            'Uncaught <code>' . \get_class($e) . '</code> from ' . \lcfirst($this->describeHandler($handler, false)) . $where . ': ' . $e->getMessage()
         );
     }
 
@@ -442,7 +445,7 @@ class App
     {
         return $this->error(
             500,
-            $this->describeHandler($handler) . ' returned invalid value (<code>' . $this->describeType($value) . '</code>)'
+            $this->describeHandler($handler, true) . ' returned invalid value (<code>' . $this->describeType($value) . '</code>)'
         );
     }
 
@@ -456,16 +459,26 @@ class App
         return \is_object($value) ? \get_class($value) : \gettype($value);
     }
 
-    private function describeHandler(callable $handler): string
+    private function describeHandler(callable $handler, bool $linkSourceFile): string
     {
         if (\is_object($handler) && !$handler instanceof \Closure) {
-            return '<code>' . \get_class($handler) . '</code>';
+            $ref = new \ReflectionMethod($handler, '__invoke');
+            $name = '<code>' . \get_class($handler) . '</code>';
         } elseif (\is_string($handler)) {
-            return '<code>' . $handler . '()</code>';
+            $ref = new \ReflectionFunction($handler);
+            $name = '<code>' . $handler . '()</code>';
         } elseif (\is_array($handler)) {
-            return '<code>' . (\is_string($handler[0]) ? $handler[0] : \get_class($handler[0])) . '::' . $handler[1] . '()</code>';
+            $ref = new \ReflectionMethod($handler[0], $handler[1]);
+            $name = '<code>' . (\is_string($handler[0]) ? $handler[0] : \get_class($handler[0])) . '::' . $handler[1] . '()</code>';
+        } else {
+            $ref = new \ReflectionFunction($handler);
+            $name = 'Request handler';
         }
 
-        return 'Request handler';
+        if ($linkSourceFile && !$ref->isInternal()) {
+            $name .= ' (<code title="See ' . $ref->getFileName() .' line ' . $ref->getStartLine() .'">' . \basename($ref->getFileName()) . ':' . $ref->getStartLine() . '</code>)';
+        }
+
+        return $name;
     }
 }
