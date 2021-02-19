@@ -117,6 +117,21 @@ class AppTest extends TestCase
         $app->options('/', function () { });
     }
 
+    public function testAnyMethodAddsRouteOnRouter()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $router = $this->createMock(RouteCollector::class);
+        $router->expects($this->once())->method('addRoute')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->anything());
+
+        $ref = new ReflectionProperty($app, 'router');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $router);
+
+        $app->any('/', function () { });
+    }
+
     public function testMapMethodAddsRouteOnRouter()
     {
         $loop = $this->createMock(LoopInterface::class);

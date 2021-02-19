@@ -105,5 +105,13 @@ $app->get('/LICENSE', new Frugal\FilesystemHandler(dirname(__DIR__) . '/LICENSE'
 $app->get('/source/{path:.*}', new Frugal\FilesystemHandler(dirname(__DIR__)));
 $app->redirect('/source', '/source/');
 
+$app->any('/method', function (ServerRequestInterface $request) {
+    return new React\Http\Message\Response(
+        200,
+        [],
+        $request->getMethod() . "\n"
+    );
+});
+
 $app->run();
 $loop->run();

@@ -62,6 +62,11 @@ class App
         $this->router->addRoute(['OPTIONS'], $route, $handler);
     }
 
+    public function any(string $route, callable $handler): void
+    {
+        $this->router->addRoute(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $route, $handler);
+    }
+
     public function map(array $methods, string $route, callable $handler): void
     {
         $this->router->addRoute($methods, $route, $handler);
@@ -92,8 +97,7 @@ class App
             throw new \BadMethodCallException();
         }
 
-        $this->router->addRoute(
-            ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        $this->any(
             $route,
             function (ServerRequestInterface $request) use ($path){
                 $body = '';
