@@ -219,6 +219,14 @@ class App
         }
         $request = $request->withParsedBody($_POST);
 
+        // Content-Length / Content-Type are special <3
+        if ($request->getHeaderLine('Content-Length') === '') {
+            $request = $request->withoutHeader('Content-Length');
+        }
+        if ($request->getHeaderLine('Content-Type') === '' && !isset($_SERVER['HTTP_CONTENT_TYPE'])) {
+            $request = $request->withoutHeader('Content-Type');
+        }
+
         return $request;
     }
 
