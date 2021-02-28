@@ -88,6 +88,9 @@ out=$(curl -v $base/method -X PATCH 2>&1);      match "HTTP/.* 200" && match "PA
 out=$(curl -v $base/method -X DELETE 2>&1);     match "HTTP/.* 200" && match "DELETE"
 out=$(curl -v $base/method -X OPTIONS 2>&1);    match "HTTP/.* 200" && match "OPTIONS"
 
+out=$(curl -v $base/headers -H 'Accept: text/html' 2>&1);   match "HTTP/.* 200" && match "\"Accept\": \"text/html\""
+out=$(curl -v $base/headers -d 'name=Alice' 2>&1);          match "HTTP/.* 200" && match "\"Content-Type\": \"application/x-www-form-urlencoded\"" && match "\"Content-Length\": \"10\""
+out=$(curl -v $base/headers -u user:pass 2>&1);             match "HTTP/.* 200" && match "\"Authorization\": \"Basic dXNlcjpwYXNz\""
 out=$(curl -v $base/headers 2>&1);                          match "HTTP/.* 200" && match -iv "\"Content-Type\"" && match -iv "\"Content-Length\""
 out=$(curl -v $base/headers -H User-Agent: -H Accept: -H Host: -10 2>&1);   skipf "Server: ReactPHP" && match "HTTP/.* 200" && match "{}" # skip built-in webserver (always includes Host)
 out=$(curl -v $base/headers -H 'Content-Length: 0' 2>&1);   match "HTTP/.* 200" && match "\"Content-Length\": \"0\""
