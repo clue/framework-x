@@ -97,5 +97,6 @@ out=$(curl -v $base/headers -H 'Content-Length: 0' 2>&1);   match "HTTP/.* 200" 
 out=$(curl -v $base/headers -H 'Empty;' 2>&1);              match "HTTP/.* 200" && match "\"Empty\": \"\""
 out=$(curl -v $base/headers -H 'Content-Type;' 2>&1);       skipif "Server: Apache" && match "HTTP/.* 200" && match "\"Content-Type\": \"\"" # skip Apache (discards empty Content-Type)
 out=$(curl -v $base/headers -H 'DNT: 1' 2>&1);              skipif "Server: nginx" && match "HTTP/.* 200" && match "\"DNT\"" && match -v "\"Dnt\"" # skip nginx which doesn't report original case (DNT->Dnt)
+out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: nginx" && skipif -v "Server:" && match "HTTP/.* 200" && match "\"V\": \"a, b\"" # skip nginx (last only) and PHP webserver (first only)
 
 echo "OK ($n)"

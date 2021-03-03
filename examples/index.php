@@ -123,7 +123,7 @@ $app->map(['GET', 'POST'], '/headers', function (ServerRequestInterface $request
             'Content-Type' => 'application/json'
         ],
         json_encode(
-            (object) array_map(function (array $headers) { return isset($headers[1]) ? $headers : $headers[0]; }, $request->getHeaders()),
+            (object) array_map(function (array $headers) { return implode(', ', $headers); }, $request->getHeaders()),
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_SLASHES
         ) . "\n"
     );
