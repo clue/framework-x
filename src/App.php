@@ -188,23 +188,20 @@ class App
     {
         $host = null;
         $headers = array();
-        foreach ($_SERVER as $key => $value) {
-            if (\strpos($key, 'HTTP_') === 0) {
-                $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
-                $headers[$key] = $value;
+        if (\function_exists('getallheaders')) {
+            $headers = \getallheaders();
+            $host = \array_change_key_case($headers, \CASE_LOWER)['host'] ?? null;
+        } else {
+            foreach ($_SERVER as $key => $value) {
+                if (\strpos($key, 'HTTP_') === 0) {
+                    $key = str_replace(' ', '-', \ucwords(\strtolower(\str_replace('_', ' ', \substr($key, 5)))));
+                    $headers[$key] = $value;
 
-                if ($host === null && $key === 'Host') {
-                    $host = $value;
+                    if ($host === null && $key === 'Host') {
+                        $host = $value;
+                    }
                 }
             }
-        }
-
-        // Content-Length / Content-Type are special <3
-        if (!isset($headers['Content-Length']) && isset($_SERVER['CONTENT_LENGTH'])) {
-            $headers['Content-Length'] = $_SERVER['CONTENT_LENGTH'];
-        }
-        if (!isset($headers['Content-Type']) && isset($_SERVER['CONTENT_TYPE'])) {
-            $headers['Content-Type'] = $_SERVER['CONTENT_TYPE'];
         }
 
         $body = file_get_contents('php://input');
@@ -221,6 +218,14 @@ class App
             $request = $request->withoutHeader('Host');
         }
         $request = $request->withParsedBody($_POST);
+
+        // Content-Length / Content-Type are special <3
+        if ($request->getHeaderLine('Content-Length') === '') {
+            $request = $request->withoutHeader('Content-Length');
+        }
+        if ($request->getHeaderLine('Content-Type') === '' && !isset($_SERVER['HTTP_CONTENT_TYPE'])) {
+            $request = $request->withoutHeader('Content-Type');
+        }
 
         return $request;
     }

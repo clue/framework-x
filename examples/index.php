@@ -113,5 +113,21 @@ $app->any('/method', function (ServerRequestInterface $request) {
     );
 });
 
+$app->map(['GET', 'POST'], '/headers', function (ServerRequestInterface $request) {
+    // Returns a JSON representation of all request headers passed to this endpoint.
+    // Note that this assumes UTF-8 data in request headers and may break for other encodings,
+    // see also JSON_INVALID_UTF8_SUBSTITUTE (PHP 7.2+) or JSON_THROW_ON_ERROR (PHP 7.3+)
+    return new React\Http\Message\Response(
+        200,
+        [
+            'Content-Type' => 'application/json'
+        ],
+        json_encode(
+            (object) array_map(function (array $headers) { return implode(', ', $headers); }, $request->getHeaders()),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_SLASHES
+        ) . "\n"
+    );
+});
+
 $app->run();
 $loop->run();
