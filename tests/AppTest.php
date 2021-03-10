@@ -1,5 +1,7 @@
 <?php
 
+namespace Frugal\Tests;
+
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use Frugal\App;
@@ -9,6 +11,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\LoopInterface;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Promise\PromiseInterface;
+use ReflectionMethod;
+use ReflectionProperty;
+use Frugal\Tests\Stub\InvalidHandlerStub;
 
 class AppTest extends TestCase
 {
@@ -403,6 +409,46 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $handler = function () {
+            return \React\Promise\resolve(new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            ));
+        };
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $promise = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
     public function testHandleRequestWithDispatcherWithRouteFoundAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
     {
         $loop = $this->createMock(LoopInterface::class);
@@ -435,6 +481,312 @@ class AppTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("Hello alice\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenHandlerThrowsException()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = __LINE__ + 2;
+        $handler = function () {
+            throw new \RuntimeException('Foo');
+        };
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $response = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): Uncaught <code>RuntimeException</code> from request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = __LINE__ + 2;
+        $handler = function () {
+            return \React\Promise\reject(new \RuntimeException('Foo'));
+        };
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $promise = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): Uncaught <code>RuntimeException</code> from request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = __LINE__ + 1;
+        $handler = function () {
+            return \React\Promise\reject('');
+        };
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $promise = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): Request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>) returned invalid value (<code>React\Promise\RejectedPromise</code>)\n", (string) $response->getBody());
+    }
+
+    public function provideInvalidReturnValue()
+    {
+        return [
+            [
+                null,
+                'null',
+            ],
+            [
+                'hello',
+                'string'
+            ],
+            [
+                42,
+                '42'
+            ],
+            [
+                1.0,
+                '1.0'
+            ],
+            [
+                false,
+                'false'
+            ],
+            [
+                [],
+                'array'
+            ],
+            [
+                (object)[],
+                'stdClass'
+            ],
+            [
+                tmpfile(),
+                'resource'
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider provideInvalidReturnValue
+     * @param mixed $value
+     * @param string $name
+     */
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue($value, $name)
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = __LINE__ + 1;
+        $handler = function () use ($value) {
+            return $value;
+        };
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $response = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): Request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>) returned invalid value (<code>$name</code>)\n", (string) $response->getBody());
+    }
+
+    /**
+     * @dataProvider provideInvalidReturnValue
+     * @param mixed $value
+     * @param string $name
+     */
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue($value, $name)
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = __LINE__ + 1;
+        $handler = function () use ($value) {
+            return \React\Promise\resolve($value);
+        };
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $promise = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): Request handler (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>) returned invalid value (<code>$name</code>)\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenClassHandlerReturnsStringValue()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = 7;
+        $handler = new InvalidHandlerStub();
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $response = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenClassMethodHandlerReturnsStringValue()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = 12;
+        $handler = [new InvalidHandlerStub(), 'index'];
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $response = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::index()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenStaticClassMethodHandlerReturnsStringValue()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $line = 17;
+        $handler = [InvalidHandlerStub::class, 'static'];
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $response = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::static()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenGlobalFunctionHandlerReturnsStringValue()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $handler = 'gettype';
+
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+
+        // $response = $app->handleRequest($request, $dispatcher);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request, $dispatcher);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("500 (Internal Server Error): <code>gettype()</code> returned invalid value (<code>string</code>)\n", (string) $response->getBody());
     }
 
     public function testLogRequestResponsePrintsRequestLogWithCurrentDateAndTime()

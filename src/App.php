@@ -300,7 +300,11 @@ class App
     /**
      * @param ServerRequestInterface $request
      * @param Dispatcher $dispatcher
-     * @return ResponseInterface|PromiseInterface<ResponseInterface>
+     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>
+     *     Returns a response or a Promise which eventually fulfills with a
+     *     response. This method never throws or resolves a rejected promise.
+     *     If the request can not be routed or the handler fails, it will be
+     *     turned into a valid error response before returning.
      */
     private function handleRequest(ServerRequestInterface $request, Dispatcher $dispatcher)
     {
@@ -326,7 +330,30 @@ class App
                     $request = $request->withAttribute($key, rawurldecode($value));
                 }
 
-                return $handler($request);
+                try {
+                    $response = $handler($request);
+                } catch (\Throwable $e) {
+                    return $this->errorHandlerException($e, $handler);
+                }
+
+                if ($response instanceof ResponseInterface) {
+                    return $response;
+                } elseif ($response instanceof PromiseInterface) {
+                    return $response->then(function ($response) use ($handler) {
+                        if (!$response instanceof ResponseInterface) {
+                            return $this->errorHandlerResponse($response, $handler);
+                        }
+                        return $response;
+                    }, function ($e) use ($handler) {
+                        if ($e instanceof \Throwable) {
+                            return $this->errorHandlerException($e, $handler);
+                        } else {
+                            return $this->errorHandlerResponse(\React\Promise\reject($e), $handler);
+                        }
+                    });
+                } else {
+                    return $this->errorHandlerResponse($response, $handler);
+                }
         }
     } // @codeCoverageIgnore
 
@@ -402,5 +429,56 @@ class App
             405,
             implode(', ', $request->getAttribute('allowed'))
         )->withHeader('Allowed', implode(', ', $request->getAttribute('allowed')));
+    }
+
+    private function errorHandlerException(\Throwable $e, callable $handler): ResponseInterface
+    {
+        $where = ' (<code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>)';
+
+        return $this->error(
+            500,
+            'Uncaught <code>' . \get_class($e) . '</code> from ' . \lcfirst($this->describeHandler($handler, false)) . $where . ': ' . $e->getMessage()
+        );
+    }
+
+    private function errorHandlerResponse($value, callable $handler): ResponseInterface
+    {
+        return $this->error(
+            500,
+            $this->describeHandler($handler, true) . ' returned invalid value (<code>' . $this->describeType($value) . '</code>)'
+        );
+    }
+
+    private function describeType($value): string
+    {
+        if ($value === null) {
+            return 'null';
+        } elseif (\is_scalar($value) && !\is_string($value)) {
+            return \var_export($value, true);
+        }
+        return \is_object($value) ? \get_class($value) : \gettype($value);
+    }
+
+    private function describeHandler(callable $handler, bool $linkSourceFile): string
+    {
+        if (\is_object($handler) && !$handler instanceof \Closure) {
+            $ref = new \ReflectionMethod($handler, '__invoke');
+            $name = '<code>' . \get_class($handler) . '</code>';
+        } elseif (\is_string($handler)) {
+            $ref = new \ReflectionFunction($handler);
+            $name = '<code>' . $handler . '()</code>';
+        } elseif (\is_array($handler)) {
+            $ref = new \ReflectionMethod($handler[0], $handler[1]);
+            $name = '<code>' . (\is_string($handler[0]) ? $handler[0] : \get_class($handler[0])) . '::' . $handler[1] . '()</code>';
+        } else {
+            $ref = new \ReflectionFunction($handler);
+            $name = 'Request handler';
+        }
+
+        if ($linkSourceFile && !$ref->isInternal()) {
+            $name .= ' (<code title="See ' . $ref->getFileName() .' line ' . $ref->getStartLine() .'">' . \basename($ref->getFileName()) . ':' . $ref->getStartLine() . '</code>)';
+        }
+
+        return $name;
     }
 }
