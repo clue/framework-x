@@ -12,6 +12,7 @@ use React\EventLoop\LoopInterface;
 use React\Http\Server as HttpServer;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Socket\Server as SocketServer;
 use React\Stream\ReadableStreamInterface;
@@ -336,6 +337,10 @@ class App
                     return $this->errorHandlerException($e, $handler);
                 }
 
+                if ($response instanceof \Generator) {
+                    $response = $this->coroutine($response, $handler);
+                }
+
                 if ($response instanceof ResponseInterface) {
                     return $response;
                 } elseif ($response instanceof PromiseInterface) {
@@ -356,6 +361,39 @@ class App
                 }
         }
     } // @codeCoverageIgnore
+
+    private function coroutine(\Generator $generator, callable $handler): PromiseInterface
+    {
+        $next = null;
+        $deferred = new Deferred();
+        $next = function () use ($generator, &$next, $deferred, $handler) {
+            if (!$generator->valid()) {
+                $deferred->resolve($generator->getReturn());
+                return;
+            }
+
+            $step = $generator->current();
+            if (!$step instanceof PromiseInterface) {
+                $generator = $next = null;
+                $deferred->resolve($this->errorHandlerCoroutine($step, $handler));
+                return;
+            }
+
+            $step->then(function ($value) use ($generator, $next) {
+                $generator->send($value);
+                $next();
+            }, function ($reason) use ($generator, $next) {
+                $generator->throw($reason);
+                $next();
+            })->then(null, function ($e) use ($handler, $deferred) {
+                $deferred->reject($e);
+            });
+        };
+
+        $next();
+
+        return $deferred->promise();
+    }
 
     private function logRequestResponse(ServerRequestInterface $request, ResponseInterface $response): void
     {
@@ -446,6 +484,14 @@ class App
         return $this->error(
             500,
             $this->describeHandler($handler, true) . ' returned invalid value (<code>' . $this->describeType($value) . '</code>)'
+        );
+    }
+
+    private function errorHandlerCoroutine($value, callable $handler): ResponseInterface
+    {
+        return $this->error(
+            500,
+            $this->describeHandler($handler, true) . ' expected coroutine to yield React\Promise\PromiseInterface but got <code>' . $this->describeType($value) . '</code>'
         );
     }
 
