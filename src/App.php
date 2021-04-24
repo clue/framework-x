@@ -132,54 +132,6 @@ class App
         });
     }
 
-    public function cgi(string $route, string $path)
-    {
-        if (\php_sapi_name() === 'cli') {
-            throw new \BadMethodCallException();
-        }
-
-        $this->any(
-            $route,
-            function (ServerRequestInterface $request) use ($path){
-                $body = '';
-                set_error_handler(function ($errno, $errstr, $errfile, $errline) use (&$body) {
-                    if ($errno === E_WARNING) {
-                        $body .= 'PHP Warning: ';
-                    } elseif ($errno === E_NOTICE) {
-                        $body .= 'PHP Notice: ';
-                    } else {
-                        $body .= 'PHP Error: ';
-                    }
-                    $body .= $errstr . ' in ' . $errfile . ' on line ' . $errline . PHP_EOL;
-
-                    ob_start();
-                    debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-                    $body .= addslashes(ob_get_clean());
-                });
-                ob_start();
-                $ret = include $path;
-                $body .= ob_get_clean();
-
-                $headers = array();
-                foreach (headers_list() as $line) {
-                    $parts = explode(': ', $line, 2);
-                    $headers[$parts[0]] = $parts[1];
-                }
-
-                return new Response(
-                    $ret === false ? 500 : http_response_code(),
-                    $headers,
-                    $body
-                );
-            }
-        );
-    }
-
-    public function fastcgi(string $route, string $socket)
-    {
-        throw new \BadMethodCallException();
-    }
-
     public function run()
     {
         if (\php_sapi_name() === 'cli') {
