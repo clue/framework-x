@@ -113,11 +113,6 @@ class App
         $this->router->addRoute($methods, $route, $handler);
     }
 
-    public function group($prefix, $cb)
-    {
-        throw new \BadMethodCallException();
-    }
-
     public function redirect($route, $target, $code = 302)
     {
         return $this->get($route, function () use ($target, $code) {
