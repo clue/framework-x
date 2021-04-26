@@ -89,6 +89,30 @@ Hello wörld!
 Hooked?
 See [full documentation](docs/) for more details.
 
+>   We use [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) to
+>   render our documentation to a pretty HTML version.
+>
+>   If you want to contribute to the documentation, it's easiest to just run
+>   this in a Docker container like this:
+>
+>   ```bash
+>   $ docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material
+>   ```
+>
+>   You can access the documentation via `http://localhost:8000`.
+>   If you want to generate a static HTML folder for deployment, you can again
+>   use a Docker container like this:
+>
+>   ```bash
+>   $ docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material build
+>   ```
+>
+>   The resulting `build/docs/` should then be deployed behind a web server (tbd).
+>   If you want to add a new documentation file and/or change the page order, make sure the [`mkdocs.yml`](mkdocs.yml)
+>   file contains an up-to-date list of all pages.
+>
+>   Happy hacking!
+
 ## Tests
 
 To run the test suite, you first need to clone this repo and then install all

@@ -1,4 +1,4 @@
-### Controller classes to structure your app
+# Controller classes to structure your app
 
 Once everything is up and running, we can take a look at how to best structure
 our actual web application.
