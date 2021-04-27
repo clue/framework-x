@@ -16,12 +16,12 @@ markdown_extensions:
 
 nav:
   - Getting Started:
+#   - "Why?": ""
     - getting-started/quickstart.md
-    - getting-started/installation.md
-    - getting-started/deployment.md
   - Best Practices:
     - best-practices/controllers.md
     - best-practices/testing.md
+    - best-practices/deployment.md
   - API:
     - api/app.md
     - api/middleware.md

@@ -1,4 +1,4 @@
-# Deployment
+# Production deployment
 
 One of the nice properties of this project is that is works both behind
 traditional web server setups as well as in a stand-alone environment.
