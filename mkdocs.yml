@@ -19,7 +19,7 @@ nav:
 #   - "Why?": ""
     - getting-started/quickstart.md
   - Best Practices:
-    - best-practices/controllers.md
+    - "Controller classes": best-practices/controllers.md
     - best-practices/testing.md
     - best-practices/deployment.md
   - API:
