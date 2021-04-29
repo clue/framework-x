@@ -32,14 +32,14 @@ nav:
     - async/coroutines.md
     - async/fibers.md
     - async/streaming.md
-    - async/child-processes.md
+    - "Child processes": async/child-processes.md
   - Integrations:
     - integrations/database.md
     - integrations/filesystem.md
     - integrations/authentication.md
     - integrations/sessions.md
     - integrations/templates.md
-    - integrations/queuing.md
+    - integrations/queueing.md
   - More:
     - more/philosophy.md
     - more/architecture.md
