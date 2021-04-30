@@ -1,4 +1,4 @@
-# FrugalPHP
+# Frugal
 
 [![CI status](https://github.com/clue/frugalphp-incubator/workflows/CI/badge.svg)](https://github.com/clue/frugalphp-incubator/actions)
 
@@ -10,21 +10,7 @@ Lightweight microframework for fast, event-driven and async-first web applicatio
   Take a look at https://ninenines.eu/docs/en/cowboy/2.6/guide/modern_web/
 
 * [Quickstart](#quickstart)
-* [Basics](#basics)
-    * [Installation](#installation)
-    * [Structure your app (Controllers)](#structure-your-app-controllers)
-    * [Testing your app](#testing-your-app)
-    * [Deployment](#deployment)
-* [Usage](#usage)
-    * [App](#app)
-    * [Request](#request)
-    * [Response](#response)
-    * [Database](#database)
-    * [Filesystem](#filesystem)
-    * [Authentication](#authentication)
-    * [Sessions](#sessions)
-    * [Templates](#templates)
-    * [Queuing](#queuing)
+* [Documentation](#documentation)
 * [Tests](#tests)
 * [License](#license)
 
@@ -38,7 +24,7 @@ First manually change your `composer.json` to include these lines:
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/clue/frugalphp"
+            "url": "https://github.com/clue-engineering/frugal"
         }
     ]
 }
@@ -49,7 +35,7 @@ First manually change your `composer.json` to include these lines:
 Simply install FrugalPHP:
 
 ```bash
-$ composer require clue/frugal:dev-master
+$ composer require clue/frugal:dev-main
 ```
 
 > TODO: Tagged release.
@@ -98,232 +84,34 @@ HTTP/1.1 200 OK
 Hello wörld!
 ```
 
-## Basics
-
-### Installation
-
-* Runs everywhere
-* Requires only PHP 7.1+, no extensions required
-* Can run behind existing web servers or locally with built-in webserver (see deployment)
-
-[…]
-
-### Structure your app (Controllers)
-
-Once everything is up and running, we can take a look at how to best structure
-our actual web application.
-
-To get started, it's often easiest to start with simple closure definitions
-like the following:
-
-```php
-<?php
-
-require __DIR__ . '/../vendor/autoload.php';
-
-$loop = React\EventLoop\Factory::create();
-$app = new Frugal\App($loop);
-
-$app->get('/', function () {
-    return new React\Http\Message\Response(
-        200,
-        [],
-        "Hello wörld!\n"
-    );
-});
-
-$app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $request) {
-    return new React\Http\Message\Response(
-        200,
-        [],
-        "Hello " . $request->getAttribute('name') . "!\n"
-    );
-});
-
-$loop->run();
-```
-
-While easy to get started, this will easily get out of hand for more complex
-business domains when you have more than a couple of routes registered.
-
-For real-world applications, we highly recommend structuring your application
-into invidividual controller classes. This way, we can break up the above
-definition into three even simpler files:
-
-```php
-# main.php
-<?php
-
-require __DIR__ . '/../vendor/autoload.php';
-
-$loop = React\EventLoop\Factory::create();
-$app = new Frugal\App($loop);
-
-$app->get('/', new Acme\Todo\HelloController());
-$app->get('/users/{name}', new Acme\Todo\UserController());
-
-$loop->run();
-```
-
-```php
-# src/HelloController.php
-<?php
-
-namespace Acme\Todo;
-
-use React\Http\Message\Response;
-
-class HelloController
-{
-    public function __invoke()
-    {
-        return new Response(
-            200,
-            [],
-            "Hello wörld!\n"
-        );
-    }
-}
-```
-
-```php
-# src/UserController.php
-<?php
-
-namespace Acme\Todo;
-
-use Psr\Http\Message\ServerRequestInterface;
-use React\Http\Message\Response;
-
-class UserController
-{
-    public function __invoke(ServerRequestInterface $request)
-    {
-        return new Response(
-            200,
-            [],
-            "Hello " . $request->getAttribute('name') . "!\n"
-        );
-    }
-}
-```
-
-Doesn't look too complex, right? Now, we only need to tell Composer's autoloader
-about our vendor namespace `Acme\\Todo` in the `src/` folder. Make sure to include
-the following lines in your `composer.json` file:
-
-```json
-{
-    "autoload": {
-        "psr-4": {
-            "Acme\\Todo\\": "src/"
-        }
-    }
-}
-```
-
-When we're doing this the first time, we have to update Composer's generated
-autoloader classes:
-
-```bash
-$ composer dump-autoload
-```
-
-Don't worry, that's a one-time setup only. If you're used to working with
-Composer, this shouldn't be too surprising. If this sounds new to you, rest
-assured this is the only time you have to worry about this, new classes can
-simply be added without having to run Composer again.
-
-Again, let's see our web application still works by using your favorite
-webbrowser or command line tool:
-
-```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
-Hello wörld!
-```
-
-### Testing your app
-
-**We ❤️ TDD and DDD!**
-
-New to testing your web application? While we don't want to *force* you to test
-your app, we want to emphasize the importance of automated test suits and try hard
-to make testing your web application as easy as possible.
-
-Once your app is structured into dedicated controller classes as per the previous
-chapter, […]
-
-> TODO: PHPUnit setup basics and first test cases.
-
-> TODO: Higher-level functional tests.
-
-### Deployment
-
-Runs everywhere:
-
-* Built-in webserver
-* nginx with PHP-FPM
-* Apache with mod_fcgid and PHP-FPM
-* Apache with mod_php
-* PHP's development webserver
-
-[…]
-
-## Usage
-
-### App
-
-* Batteries included, but swappable
-* Providing HTTP routing (RESTful applications)
-
-### Request
-
-* PSR-7
-
-### Response
-
-* PSR-7
-
-### Database
-
-* Async
-* No PDO, no Doctrine and family
-* Easy to spot, harder to replace
-* MySQL, Postgres and SQLite supported
-* ORM
-* Redis
-
-### Filesystem
-
-* Async
-* No `fopen()`, `file_get_contents()` and family
-* Easy to overlook
-* Few blocking calls *can* be acceptable
-
-### Authentication
-
-* Basic auth easy
-* HTTP middleware better
-* JWT and oauth possible
-
-### Sessions
-
-* Built-in (or module?)
-* HTTP middleware
-* Persistence via database/ORM or other mechanism?
-
-### Templates
-
-* Any template language possible
-* Twig recommended?
-
-### Queuing
-
-* Built-in (or module?)
-* Redis built-in, but swappable with real instance (constraints?)
+## Documentation
+
+Hooked?
+See [full documentation](docs/) for more details.
+
+>   We use [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) to
+>   render our documentation to a pretty HTML version.
+>
+>   If you want to contribute to the documentation, it's easiest to just run
+>   this in a Docker container like this:
+>
+>   ```bash
+>   $ docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material
+>   ```
+>
+>   You can access the documentation via `http://localhost:8000`.
+>   If you want to generate a static HTML folder for deployment, you can again
+>   use a Docker container like this:
+>
+>   ```bash
+>   $ docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material build
+>   ```
+>
+>   The resulting `build/docs/` should then be deployed behind a web server (tbd).
+>   If you want to add a new documentation file and/or change the page order, make sure the [`mkdocs.yml`](mkdocs.yml)
+>   file contains an up-to-date list of all pages.
+>
+>   Happy hacking!
 
 ## Tests
 
@@ -342,7 +130,7 @@ $ php vendor/bin/phpunit
 
 Additionally, you can run some simple acceptance tests to verify the framework
 examples work as expected behind your web server. Use your web server of choice
-(see [deployment](#deployment)) and execute the tests with the URL to your
+(see deployment documentation) and execute the tests with the URL to your
 installation like this:
 
 ```bash

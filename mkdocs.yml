@@ -1,0 +1,46 @@
+site_name: Documentation
+site_dir: build/docs
+extra:
+  homepage: ../
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+nav:
+  - Getting Started:
+#   - "Why?": ""
+    - getting-started/quickstart.md
+  - Best Practices:
+    - "Controller classes": best-practices/controllers.md
+    - best-practices/testing.md
+    - best-practices/deployment.md
+  - API:
+    - api/app.md
+    - api/middleware.md
+    - api/request.md
+    - api/response.md
+  - Async:
+    - async/promises.md
+    - async/coroutines.md
+    - async/fibers.md
+    - async/streaming.md
+    - "Child processes": async/child-processes.md
+  - Integrations:
+    - integrations/database.md
+    - integrations/filesystem.md
+    - integrations/authentication.md
+    - integrations/sessions.md
+    - integrations/templates.md
+    - integrations/queueing.md
+  - More:
+    - more/philosophy.md
+    - more/architecture.md
+    - more/community.md
