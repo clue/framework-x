@@ -1,6 +1,6 @@
 <?php
 
-namespace Frugal;
+namespace FrameworkX;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;

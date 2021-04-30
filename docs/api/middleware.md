@@ -75,7 +75,7 @@ use Acme\Todo\AdminMiddleware;
 use Acme\Todo\UserController;
 
 $loop = React\EventLoop\Factory::create();
-$app = new 🚀🚀🚀\App($loop, new AdminMiddleware());
+$app = new FrameworkX\App($loop, new AdminMiddleware());
 
 $app->get('/user', new UserController());
 

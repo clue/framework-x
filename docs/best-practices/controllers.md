@@ -14,7 +14,7 @@ To get started, let's take a look at the following simple closure definitions:
 require __DIR__ . '/vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
-$app = new Frugal\App($loop);
+$app = new FrameworkX\App($loop);
 
 $app->get('/', function () {
     return new React\Http\Message\Response(
@@ -50,7 +50,7 @@ definition into three even simpler files:
 require __DIR__ . '/vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
-$app = new Frugal\App($loop);
+$app = new FrameworkX\App($loop);
 
 $app->get('/', new Acme\Todo\HelloController());
 $app->get('/users/{name}', new Acme\Todo\UserController());

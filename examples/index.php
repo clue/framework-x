@@ -7,7 +7,7 @@ use React\Stream\ThroughStream;
 require __DIR__ . '/../vendor/autoload.php';
 
 $loop = Factory::create();
-$app = new Frugal\App($loop);
+$app = new FrameworkX\App($loop);
 
 $app->get('/', function () {
     return new React\Http\Message\Response(
@@ -101,8 +101,8 @@ $app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
 
 //$app->cgi('/adminer.php', __DIR__ . '/adminer.php');
 
-$app->get('/LICENSE', new Frugal\FilesystemHandler(dirname(__DIR__) . '/LICENSE'));
-$app->get('/source/{path:.*}', new Frugal\FilesystemHandler(dirname(__DIR__)));
+$app->get('/LICENSE', new FrameworkX\FilesystemHandler(dirname(__DIR__) . '/LICENSE'));
+$app->get('/source/{path:.*}', new FrameworkX\FilesystemHandler(dirname(__DIR__)));
 $app->redirect('/source', '/source/');
 
 $app->any('/method', function (ServerRequestInterface $request) {

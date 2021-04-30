@@ -1,13 +1,8 @@
-# Frugal
+# Framework X
 
-[![CI status](https://github.com/clue/frugalphp-incubator/workflows/CI/badge.svg)](https://github.com/clue/frugalphp-incubator/actions)
+[![CI status](https://github.com/clue-access/framework-x/workflows/CI/badge.svg)](https://github.com/clue-access/framework-x/actions)
 
-Lightweight microframework for fast, event-driven and async-first web applications, built on top of ReactPHP.
-
-[…]
-
-> TODO: Introduction text, start with the why. List some noticeable features.
-  Take a look at https://ninenines.eu/docs/en/cowboy/2.6/guide/modern_web/
+Framework X – the simple and fast micro framework for building reactive web applications that run anywhere.
 
 * [Quickstart](#quickstart)
 * [Documentation](#documentation)
@@ -20,25 +15,20 @@ First manually change your `composer.json` to include these lines:
 
 ```json
 {
-    …,
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/clue-engineering/frugal"
+            "url": "https://github.com/clue-access/framework-x"
         }
     ]
 }
 ```
 
-> TODO: Change package name and register on Packagist.
-
-Simply install FrugalPHP:
+Simply install Framework X:
 
 ```bash
-$ composer require clue/frugal:dev-main
+$ composer require clue/framework-x:dev-main
 ```
-
-> TODO: Tagged release.
 
 Once everything is installed, you can now use this example to get started with
 a new `app.php` file:
@@ -49,7 +39,7 @@ a new `app.php` file:
 require __DIR__ . '/../vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
-$app = new Frugal\App($loop);
+$app = new FrameworkX\App($loop);
 
 $app->get('/', function () {
     return new React\Http\Message\Response(

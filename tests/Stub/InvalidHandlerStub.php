@@ -1,6 +1,6 @@
 <?php
 
-namespace Frugal\Tests\Stub;
+namespace FrameworkX\Tests\Stub;
 
 class InvalidHandlerStub
 {

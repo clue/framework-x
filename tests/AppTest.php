@@ -1,10 +1,11 @@
 <?php
 
-namespace Frugal\Tests;
+namespace FrameworkX\Tests;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use Frugal\App;
+use FrameworkX\App;
+use FrameworkX\Tests\Stub\InvalidHandlerStub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,7 +15,6 @@ use React\Http\Message\ServerRequest;
 use React\Promise\PromiseInterface;
 use ReflectionMethod;
 use ReflectionProperty;
-use Frugal\Tests\Stub\InvalidHandlerStub;
 
 class AppTest extends TestCase
 {
@@ -712,7 +712,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): <code>FrameworkX\Tests\Stub\InvalidHandlerStub</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenClassMethodHandlerReturnsStringValue()
@@ -737,7 +737,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::index()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): <code>FrameworkX\Tests\Stub\InvalidHandlerStub::index()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenStaticClassMethodHandlerReturnsStringValue()
@@ -762,7 +762,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): <code>Frugal\Tests\Stub\InvalidHandlerStub::static()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
+        $this->assertEquals("500 (Internal Server Error): <code>FrameworkX\Tests\Stub\InvalidHandlerStub::static()</code> (<code title=\"See " . __DIR__ . DIRECTORY_SEPARATOR . "Stub" . DIRECTORY_SEPARATOR . "InvalidHandlerStub.php line $line\">InvalidHandlerStub.php:$line</code>) returned invalid value (<code>null</code>)\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenGlobalFunctionHandlerReturnsStringValue()

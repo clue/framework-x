@@ -66,8 +66,8 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
       - run: composer install --no-dev
-      - run: docker run -d -v "$PWD":/home/frugal php:${{ matrix.php }}-fpm
-      - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD":/home/frugal -v "$PWD"/examples/nginx/nginx.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
+      - run: docker run -d -v "$PWD":/home/framework-x php:${{ matrix.php }}-fpm
+      - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD":/home/framework-x -v "$PWD"/examples/nginx/nginx.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
       - run: bash tests/await.sh http://localhost
       - run: bash tests/acceptance.sh http://localhost
 
@@ -88,7 +88,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
       - run: composer install --no-dev
-      - run: docker run -d -p 80:80 -v "$PWD":/home/frugal php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/frugal/examples/apache /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+      - run: docker run -d -p 80:80 -v "$PWD":/home/framework-x php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/framework-x/examples/apache /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
       - run: bash tests/await.sh http://localhost
       - run: bash tests/acceptance.sh http://localhost
 

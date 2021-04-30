@@ -1,8 +1,8 @@
 {
-    "name": "clue/frugal",
-    "description": "Lightweight microframework for fast, event-driven and async-first web applications, built on top of ReactPHP.",
-    "keywords": ["microframework", "web", "event-driven", "async", "ReactPHP"],
-    "homepage": "https://github.com/clue/frugalphp-incubator",
+    "name": "clue/framework-x",
+    "description": "Framework X – the simple and fast micro framework for building reactive web applications that run anywhere.",
+    "keywords": ["microframework", "micro", "framework", "web", "http", "event-driven", "async", "ReactPHP"],
+    "homepage": "https://framework-x.clue.engineering/",
     "license": "MIT",
     "authors": [
         {
@@ -21,12 +21,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Frugal\\": "src/"
+            "FrameworkX\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Frugal\\Tests\\": "tests/"
+            "FrameworkX\\Tests\\": "tests/"
         }
     }
 }

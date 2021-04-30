@@ -1,6 +1,6 @@
 <?php
 
-namespace Frugal;
+namespace FrameworkX;
 
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
