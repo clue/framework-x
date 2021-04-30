@@ -1,6 +1,12 @@
 # Streaming
 
-Processing large amounts of data or when data arrives at future time
+> ⚠️ **Documentation still under construction**
+>
+> You're seeing an early draft of the documentation that is still in the works.
+> Give feedback to help us prioritize.
+> We also welcome [contributors](../more/community.md) to help out!
+
+Processing large amounts of data or when data arrives at future time.
 
 ## Streaming downloads
 
@@ -14,6 +20,6 @@ Processing large amounts of data or when data arrives at future time
 
 ## WebSockets
 
-* HTML5 WebSockets integration supported with Ratchet
+* HTML5 WebSockets integration supported with [Ratchet](http://socketo.me/)
 * See also EventSource as alternative
 * Bidirectional communication
