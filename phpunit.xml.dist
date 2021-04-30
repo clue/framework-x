@@ -7,7 +7,7 @@
          colors="true"
          cacheResult="false">
     <testsuites>
-        <testsuite name="Frugal test suite">
+        <testsuite name="Framework X test suite">
             <directory>./tests/</directory>
         </testsuite>
     </testsuites>

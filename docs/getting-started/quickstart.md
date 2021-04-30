@@ -23,7 +23,7 @@ You can use this example to get started by creating a new `app.php` file in your
 require __DIR__ . '/vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
-$app = new Frugal\App($loop);
+$app = new FrameworkX\App($loop);
 
 $app->get('/', function () {
     return new React\Http\Message\Response(
@@ -57,7 +57,7 @@ Next, we need to install X and its dependencies to actually run this project.
 >     "repositories": [
 >         {
 >             "type": "vcs",
->             "url": "https://github.com/clue-engineering/frugal"
+>             "url": "https://github.com/clue-access/framework-x"
 >         }
 >     ]
 > }
@@ -79,7 +79,7 @@ Thanks to [Composer](https://getcomposer.org/), this installation only requires 
 In your project directory, simply run the following command:
 
 ```bash
-$ composer require clue/frugal:dev-main
+$ composer require clue/framework-x:-main
 ```
 
 This isn't NPM, so this should only take a moment or two.

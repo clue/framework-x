@@ -1,8 +1,8 @@
 <?php
 
-namespace Frugal\Tests;
+namespace FrameworkX\Tests;
 
-use Frugal\FilesystemHandler;
+use FrameworkX\FilesystemHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use React\Http\Message\ServerRequest;
