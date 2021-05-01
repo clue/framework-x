@@ -103,7 +103,7 @@ class UserController
 ```
 
 Doesn't look too complex, right? Now, we only need to tell Composer's autoloader
-about our vendor namespace `Acme\\Todo` in the `src/` folder. Make sure to include
+about our vendor namespace `Acme\Todo` in the `src/` folder. Make sure to include
 the following lines in your `composer.json` file:
 
 ```json
