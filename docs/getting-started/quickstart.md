@@ -100,10 +100,7 @@ You can now use your favorite web browser or command line tool to check your web
 application responds as expected:
 
 ```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
+$ curl http://localhost:8080/
 Hello wörld!
 ```
 

@@ -7,6 +7,7 @@ Internally, the `App` object builds on top of [ReactPHP](https://reactphp.org/)
 to do its magic, hence you have to create it like this:
 
 ```php
+# app.php
 <?php
 
 require __DIR__ . '/vendor/autoload.php';
@@ -26,6 +27,7 @@ $loop->run();
 > libraries to make sure this can look like this in the near future:
 >
 > ```php
+> # app.php
 > <?php
 >
 > require __DIR__ . '/vendor/autoload.php';
@@ -113,7 +115,7 @@ For this reason, we recommend using [controller classes](../best-practices/contr
 for production use-cases like this:
 
 ```php
-# main.php
+# app.php
 $app->get('/', new Acme\Todo\HelloController());
 ```
 

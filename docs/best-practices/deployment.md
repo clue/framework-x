@@ -27,10 +27,7 @@ $ php -S 0.0.0.0:8080 app.php
 In order to check your web application responds as expected, you can use your favorite webbrowser or command line tool:
 
 ```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
+$ curl http://localhost:8080/
 Hello wörld!
 ```
 
@@ -50,10 +47,7 @@ $ php app.php
 Let's take a look and see this works just like before:
 
 ```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
+$ curl http://localhost:8080/
 Hello wörld!
 ```
 

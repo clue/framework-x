@@ -134,10 +134,7 @@ Again, let's see our web application still works by using your favorite
 webbrowser or command line tool:
 
 ```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
+$ curl http://localhost:8080/
 Hello wörld!
 ```
 
