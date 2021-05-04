@@ -7,7 +7,7 @@ Start your timer and here we go!
 ## Code
 
 In order to first start using X, let's start with an entirely empty project directory.
-This shouldn't be too confusing, but here's how you can do so on the common line:
+This shouldn't be too confusing, but here's how you can do so on the command line:
 
 ```bash
 $ mkdir ~/projects/acme
@@ -79,36 +79,33 @@ Thanks to [Composer](https://getcomposer.org/), this installation only requires 
 In your project directory, simply run the following command:
 
 ```bash
-$ composer require clue/framework-x:-main
+$ composer require clue/framework-x:dev-main
 ```
 
 This isn't NPM, so this should only take a moment or two.
 
 ## Running
 
-The next step after installing all dependencies is now serve this web application.
-One of the nice properties of this project is that is *runs anywhere* (provided you have PHP installed of course).
+The next step after installing all dependencies is now to serve this web application.
+One of the nice properties of this project is that it *runs anywhere* (provided you have PHP installed of course).
 
-For example, you can run the above example using PHP's built-in webserver for
+For example, you can run the above example using PHP's built-in web server for
 testing purposes like this:
 
 ```bash
 $ php -S 0.0.0.0:8080 app.php
 ```
 
-You can now use your favorite webbrowser or command line tool to check your web
+You can now use your favorite web browser or command line tool to check your web
 application responds as expected:
 
 ```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
+$ curl http://localhost:8080/
 Hello wörld!
 ```
 
 And that's it already, you can now stop your timer.
-If you've made it this far, you should have an understanding why X is so exciting.
+If you've made it this far, you should have an understanding of why X is so exciting.
 As a next step, we would recommend checking out the [best practices](../../best-practices/) in order to deploy this to production.
 
 Happy hacking!

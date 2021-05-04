@@ -151,11 +151,11 @@ $app->get('/user/{id}', function (Psr\Http\Message\ServerRequestInterface $reque
 An HTTP request can be sent like this:
 
 ```bash hl_lines="2 6"
-$ curl http://localhost:8080/user/Alice -I
+$ curl -I http://localhost:8080/user/Alice
 HTTP/1.1 200 OK
 …
 
-$ curl http://localhost:8080/user/admin -I
+$ curl -I http://localhost:8080/user/admin
 HTTP/1.1 403 Forbidden
 …
 ```
@@ -183,7 +183,7 @@ $app->get('/user', function () {
     return new React\Http\Message\Response(
         200,
         ['Content-Type' => 'text/plain; charset=utf-8'],
-        "Hello $id"
+        "Hello wörld"
     );
 });
 ```
@@ -191,13 +191,10 @@ $app->get('/user', function () {
 An HTTP request can be sent like this:
 
 ```bash  hl_lines="3"
-$ curl http://localhost:8080/user -I
+$ curl -I http://localhost:8080/user
 HTTP/1.1 200 OK
 Content-Type: text/plain; charset=utf-8
-Server: ReactPHP/1
-Date: Fri, 30 Apr 2021 08:51:04 GMT
-Content-Length: 88
-Connection: close
+…
 ```
 
 Each HTTP response message can contain an arbitrary number of response headers.
@@ -218,7 +215,6 @@ HTTP error response:
 
 ```php
 $app->get('/user', function () {
-    // TODO: load data
     throw new BadMethodCallException();
 });
 ```
@@ -226,7 +222,7 @@ $app->get('/user', function () {
 An HTTP request can be sent like this:
 
 ```bash hl_lines="2"
-$ curl http://localhost:8080/user -I
+$ curl -I http://localhost:8080/user
 HTTP/1.1 500 Internal Server Error
 …
 ```

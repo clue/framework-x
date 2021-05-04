@@ -103,7 +103,7 @@ class UserController
 ```
 
 Doesn't look too complex, right? Now, we only need to tell Composer's autoloader
-about our vendor namespace `Acme\\Todo` in the `src/` folder. Make sure to include
+about our vendor namespace `Acme\Todo` in the `src/` folder. Make sure to include
 the following lines in your `composer.json` file:
 
 ```json
@@ -134,10 +134,7 @@ Again, let's see our web application still works by using your favorite
 webbrowser or command line tool:
 
 ```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
+$ curl http://localhost:8080/
 Hello wörld!
 ```
 

@@ -7,6 +7,7 @@ Internally, the `App` object builds on top of [ReactPHP](https://reactphp.org/)
 to do its magic, hence you have to create it like this:
 
 ```php
+# app.php
 <?php
 
 require __DIR__ . '/vendor/autoload.php';
@@ -26,6 +27,7 @@ $loop->run();
 > libraries to make sure this can look like this in the near future:
 >
 > ```php
+> # app.php
 > <?php
 >
 > require __DIR__ . '/vendor/autoload.php';
@@ -113,7 +115,7 @@ For this reason, we recommend using [controller classes](../best-practices/contr
 for production use-cases like this:
 
 ```php
-# main.php
+# app.php
 $app->get('/', new Acme\Todo\HelloController());
 ```
 
@@ -150,4 +152,4 @@ See [controller classes](../best-practices/controllers.md) for more details.
 One of the main features of the `App` is middleware support.
 Middleware allows you to extract common functionality such as HTTP login, session handling or logging into reusable components.
 These middleware components can be added to both individual routes or globally to all registered routes.
-See [middleware documentation](../04-middleware.md) for more details.
+See [middleware documentation](middleware.md) for more details.

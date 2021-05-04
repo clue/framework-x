@@ -33,7 +33,7 @@ For this reason, we recommend using middleware classes for production use-cases
 like this:
 
 ```php  hl_lines="8"
-# main.php
+# app.php
 
 use Acme\Todo\AdminMiddleware;
 use Acme\Todo\UserController;
@@ -68,7 +68,8 @@ directly returning an error response if the request should not be processed.
 Additionally, you can also add middleware to the `App` object itself to register
 a global middleware handler for all registered routes:
 
-```php hl_lines="7"
+```php hl_lines="8"
+# app.php
 <?php
 
 use Acme\Todo\AdminMiddleware;
