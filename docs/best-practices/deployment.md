@@ -52,23 +52,8 @@ Hello wörld!
 ```
 
 You may be wondering how fast a pure PHP web server implementation could possibly be.
-
-```
-$ ab -n10000 -c10 http://localhost:8080/
-…
-Concurrency Level:      10
-Time taken for tests:   0.991 seconds
-Complete requests:      10000
-Failed requests:        0
-Total transferred:      1090000 bytes
-HTML transferred:       130000 bytes
-Requests per second:    10095.17 [#/sec] (mean)
-Time per request:       0.991 [ms] (mean)
-Time per request:       0.099 [ms] (mean, across all concurrent requests)
-Transfer rate:          1074.58 [Kbytes/sec] received
-```
-
-The answer: Very fast!
+In fact, in benchmarks this setup outperforms any traditional PHP stack by orders of magnitude.
+The answer: [Lightning fast!](https://framework-x.clue.engineering/#lightning-fast)
 
 If you're going to use this in production, we still recommend running this
 behind a reverse proxy such as nginx, HAproxy, etc. for TLS termination
