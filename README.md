@@ -11,27 +11,10 @@ Framework X – the simple and fast micro framework for building reactive web ap
 
 ## Quickstart
 
-First manually change your `composer.json` to include these lines:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/clue-access/framework-x"
-        }
-    ]
-}
-```
-
-Simply install Framework X:
-
-```bash
-$ composer require clue/framework-x:dev-main
-```
-
-Once everything is installed, you can now use this example to get started with
-a new `app.php` file:
+Start by creating an empty project directory.
+Next, we can start by taking a look at a simple example application.
+You can use this example to get started by creating a new `app.php` file in your
+empty project directory:
 
 ```php
 <?php
@@ -49,7 +32,36 @@ $app->get('/', function () {
     );
 });
 
+$app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $request) {
+    return new React\Http\Message\Response(
+        200,
+        [],
+        "Hello " . $request->getAttribute('name') . "!\n"
+    );
+});
+
+$app->run();
 $loop->run();
+```
+
+Next, we need to install X and its dependencies to actually run this project.
+Start by creating a new `composer.json` in the project directory with the following contents:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/clue-access/framework-x"
+        }
+    ]
+}
+```
+
+Finally, simply install Framework X:
+
+```bash
+$ composer require clue/framework-x:dev-main
 ```
 
 That's it already! The next step is now to serve this web application.
@@ -67,41 +79,18 @@ You can now use your favorite webbrowser or command line tool to check your web
 application responds as expected:
 
 ```bash
-$ curl -v http://localhost:8080/
-HTTP/1.1 200 OK
-…
-
+$ curl http://localhost:8080/
 Hello wörld!
 ```
 
 ## Documentation
 
 Hooked?
-See [full documentation](docs/) for more details.
+See [website](https://framework-x.clue.engineering/) for full documentation.
 
->   We use [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) to
->   render our documentation to a pretty HTML version.
->
->   If you want to contribute to the documentation, it's easiest to just run
->   this in a Docker container like this:
->
->   ```bash
->   $ docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material
->   ```
->
->   You can access the documentation via `http://localhost:8000`.
->   If you want to generate a static HTML folder for deployment, you can again
->   use a Docker container like this:
->
->   ```bash
->   $ docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material build
->   ```
->
->   The resulting `build/docs/` should then be deployed behind a web server (tbd).
->   If you want to add a new documentation file and/or change the page order, make sure the [`mkdocs.yml`](mkdocs.yml)
->   file contains an up-to-date list of all pages.
->
->   Happy hacking!
+Found a typo or want to contribute?
+The website documentation is build from the source documentation files in
+the [docs/](docs/) folder.
 
 ## Tests
 

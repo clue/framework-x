@@ -1,7 +1,9 @@
 /.gitattributes export-ignore
 /.github/workflows/ export-ignore
 /.gitignore export-ignore
+/docs/ export-ignore
 /examples/ export-ignore
+/mkdocs.yml export-ignore
 /phpunit.xml.dist export-ignore
 /phpunit.xml.legacy export-ignore
 /tests/ export-ignore
