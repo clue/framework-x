@@ -16,6 +16,7 @@ theme:
     repo: fontawesome/brands/github
 
 markdown_extensions:
+  - pymdownx.tabbed
   - pymdownx.highlight
   - pymdownx.superfences
   - toc:
