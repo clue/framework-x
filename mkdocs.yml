@@ -1,4 +1,5 @@
-site_name: Documentation
+site_name: Framework X documentation
+site_url: https://framework-x.clue.engineering/docs/
 site_dir: build/docs
 extra:
   homepage: ../
