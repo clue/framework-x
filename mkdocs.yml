@@ -3,10 +3,16 @@ site_dir: build/docs
 extra:
   homepage: ../
 
+repo_url: https://github.com/clue/framework-x
+repo_name: clue/framework-x
+edit_uri: "" # not publicly accessible while in early access
+
 theme:
   name: material
   features:
     - navigation.sections
+  icon:
+    repo: fontawesome/brands/github
 
 markdown_extensions:
   - pymdownx.highlight
