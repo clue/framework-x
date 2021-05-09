@@ -28,49 +28,53 @@ class App
         $this->router = new RouteCollector(new Std(), new GroupCountBased());
     }
 
-    public function get(string $route, callable $handler): void
+    public function get(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->get($route, $handler);
+        $this->map(['GET'], $route, $handler, ...$handlers);
     }
 
-    public function head(string $route, callable $handler): void
+    public function head(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->head($route, $handler);
+        $this->map(['HEAD'], $route, $handler, ...$handlers);
     }
 
-    public function post(string $route, callable $handler): void
+    public function post(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->post($route, $handler);
+        $this->map(['POST'], $route, $handler, ...$handlers);
     }
 
-    public function put(string $route, callable $handler): void
+    public function put(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->put($route, $handler);
+        $this->map(['PUT'], $route, $handler, ...$handlers);
     }
 
-    public function patch(string $route, callable $handler): void
+    public function patch(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->patch($route, $handler);
+        $this->map(['PATCH'], $route, $handler, ...$handlers);
     }
 
-    public function delete(string $route, callable $handler): void
+    public function delete(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->delete($route, $handler);
+        $this->map(['DELETE'], $route, $handler, ...$handlers);
     }
 
-    public function options(string $route, callable $handler): void
+    public function options(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->addRoute(['OPTIONS'], $route, $handler);
+        $this->map(['OPTIONS'], $route, $handler, ...$handlers);
     }
 
-    public function any(string $route, callable $handler): void
+    public function any(string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->addRoute(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $route, $handler);
+        $this->map(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $route, $handler, ...$handlers);
     }
 
-    public function map(array $methods, string $route, callable $handler): void
+    public function map(array $methods, string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->addRoute($methods, $route, $handler);
+        if ($handlers !== []) {
+            throw new \BadMethodCallException('Single request handler supported only');
+        }
+
+        $this->router->addRoute($methods, $route, [$handler, ...$handlers]);
     }
 
     public function group($prefix, $cb)
@@ -324,7 +328,7 @@ class App
                     $request->withAttribute('allowed', $allowedMethods)
                 );
             case \FastRoute\Dispatcher::FOUND:
-                $handler = $routeInfo[1];
+                $handler = $routeInfo[1][0];
                 $vars = $routeInfo[2];
 
                 foreach ($vars as $key => $value) {

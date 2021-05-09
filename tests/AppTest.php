@@ -24,7 +24,7 @@ class AppTest extends TestCase
         $app = new App($loop);
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('get')->with('/', $this->anything());
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -39,7 +39,7 @@ class AppTest extends TestCase
         $app = new App($loop);
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('head')->with('/', $this->anything());
+        $router->expects($this->once())->method('addRoute')->with(['HEAD'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -54,7 +54,7 @@ class AppTest extends TestCase
         $app = new App($loop);
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('post')->with('/', $this->anything());
+        $router->expects($this->once())->method('addRoute')->with(['POST'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -69,7 +69,7 @@ class AppTest extends TestCase
         $app = new App($loop);
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('put')->with('/', $this->anything());
+        $router->expects($this->once())->method('addRoute')->with(['PUT'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -84,7 +84,7 @@ class AppTest extends TestCase
         $app = new App($loop);
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('patch')->with('/', $this->anything());
+        $router->expects($this->once())->method('addRoute')->with(['PATCH'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -99,7 +99,7 @@ class AppTest extends TestCase
         $app = new App($loop);
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('delete')->with('/', $this->anything());
+        $router->expects($this->once())->method('addRoute')->with(['DELETE'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -160,8 +160,9 @@ class AppTest extends TestCase
 
         $handler = null;
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('get')->with('/', $this->callback(function ($fn) use (&$handler) {
-            $handler = $fn;
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $this->callback(function ($fns) use (&$handler) {
+            $this->assertCount(1, $fns);
+            $handler = $fns[0];
             return true;
         }));
 
@@ -190,8 +191,9 @@ class AppTest extends TestCase
 
         $handler = null;
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('get')->with('/', $this->callback(function ($fn) use (&$handler) {
-            $handler = $fn;
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $this->callback(function ($fns) use (&$handler) {
+            $this->assertCount(1, $fns);
+            $handler = $fns[0];
             return true;
         }));
 
@@ -395,7 +397,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -427,7 +429,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -461,7 +463,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -501,7 +503,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -548,7 +550,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -582,7 +584,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -622,7 +624,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users/alice')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, ['name' => 'alice']]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users/alice')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], ['name' => 'alice']]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -649,7 +651,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -676,7 +678,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -711,7 +713,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -746,7 +748,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -782,7 +784,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -818,7 +820,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -853,7 +855,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -931,7 +933,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
@@ -963,7 +965,7 @@ class AppTest extends TestCase
         };
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, [$handler], []]);
 
         // $promise = $app->handleRequest($request, $dispatcher);
         $ref = new ReflectionMethod($app, 'handleRequest');
