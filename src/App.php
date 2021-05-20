@@ -334,39 +334,39 @@ class App
                 try {
                     $response = $handler($request);
                 } catch (\Throwable $e) {
-                    return $this->errorHandlerException($e, $handler);
+                    return $this->errorHandlerException($e);
                 }
 
                 if ($response instanceof \Generator) {
-                    $response = $this->coroutine($response, $handler);
+                    $response = $this->coroutine($response);
                 }
 
                 if ($response instanceof ResponseInterface) {
                     return $response;
                 } elseif ($response instanceof PromiseInterface) {
-                    return $response->then(function ($response) use ($handler) {
+                    return $response->then(function ($response) {
                         if (!$response instanceof ResponseInterface) {
-                            return $this->errorHandlerResponse($response, $handler);
+                            return $this->errorHandlerResponse($response);
                         }
                         return $response;
-                    }, function ($e) use ($handler) {
+                    }, function ($e) {
                         if ($e instanceof \Throwable) {
-                            return $this->errorHandlerException($e, $handler);
+                            return $this->errorHandlerException($e);
                         } else {
-                            return $this->errorHandlerResponse(\React\Promise\reject($e), $handler);
+                            return $this->errorHandlerResponse(\React\Promise\reject($e));
                         }
                     });
                 } else {
-                    return $this->errorHandlerResponse($response, $handler);
+                    return $this->errorHandlerResponse($response);
                 }
         }
     } // @codeCoverageIgnore
 
-    private function coroutine(\Generator $generator, callable $handler): PromiseInterface
+    private function coroutine(\Generator $generator): PromiseInterface
     {
         $next = null;
         $deferred = new Deferred();
-        $next = function () use ($generator, &$next, $deferred, $handler) {
+        $next = function () use ($generator, &$next, $deferred) {
             if (!$generator->valid()) {
                 $deferred->resolve($generator->getReturn());
                 return;
@@ -375,7 +375,7 @@ class App
             $step = $generator->current();
             if (!$step instanceof PromiseInterface) {
                 $generator = $next = null;
-                $deferred->resolve($this->errorHandlerCoroutine($step, $handler));
+                $deferred->resolve($this->errorHandlerCoroutine($step));
                 return;
             }
 
@@ -385,7 +385,7 @@ class App
             }, function ($reason) use ($generator, $next) {
                 $generator->throw($reason);
                 $next();
-            })->then(null, function ($e) use ($handler, $deferred) {
+            })->then(null, function ($e) use ($deferred) {
                 $deferred->reject($e);
             });
         };
@@ -469,29 +469,29 @@ class App
         )->withHeader('Allowed', implode(', ', $request->getAttribute('allowed')));
     }
 
-    private function errorHandlerException(\Throwable $e, callable $handler): ResponseInterface
+    private function errorHandlerException(\Throwable $e): ResponseInterface
     {
         $where = ' (<code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>)';
 
         return $this->error(
             500,
-            'Uncaught <code>' . \get_class($e) . '</code> from ' . \lcfirst($this->describeHandler($handler, false)) . $where . ': ' . $e->getMessage()
+            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code>' . $where . ': ' . $e->getMessage()
         );
     }
 
-    private function errorHandlerResponse($value, callable $handler): ResponseInterface
+    private function errorHandlerResponse($value): ResponseInterface
     {
         return $this->error(
             500,
-            $this->describeHandler($handler, true) . ' returned invalid value (<code>' . $this->describeType($value) . '</code>)'
+            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>'
         );
     }
 
-    private function errorHandlerCoroutine($value, callable $handler): ResponseInterface
+    private function errorHandlerCoroutine($value): ResponseInterface
     {
         return $this->error(
             500,
-            $this->describeHandler($handler, true) . ' expected coroutine to yield React\Promise\PromiseInterface but got <code>' . $this->describeType($value) . '</code>'
+            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>'
         );
     }
 
@@ -503,28 +503,5 @@ class App
             return \var_export($value, true);
         }
         return \is_object($value) ? \get_class($value) : \gettype($value);
-    }
-
-    private function describeHandler(callable $handler, bool $linkSourceFile): string
-    {
-        if (\is_object($handler) && !$handler instanceof \Closure) {
-            $ref = new \ReflectionMethod($handler, '__invoke');
-            $name = '<code>' . \get_class($handler) . '</code>';
-        } elseif (\is_string($handler)) {
-            $ref = new \ReflectionFunction($handler);
-            $name = '<code>' . $handler . '()</code>';
-        } elseif (\is_array($handler)) {
-            $ref = new \ReflectionMethod($handler[0], $handler[1]);
-            $name = '<code>' . (\is_string($handler[0]) ? $handler[0] : \get_class($handler[0])) . '::' . $handler[1] . '()</code>';
-        } else {
-            $ref = new \ReflectionFunction($handler);
-            $name = 'Request handler';
-        }
-
-        if ($linkSourceFile && !$ref->isInternal()) {
-            $name .= ' (<code title="See ' . $ref->getFileName() .' line ' . $ref->getStartLine() .'">' . \basename($ref->getFileName()) . ':' . $ref->getStartLine() . '</code>)';
-        }
-
-        return $name;
     }
 }
