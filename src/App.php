@@ -70,10 +70,6 @@ class App
 
     public function map(array $methods, string $route, callable $handler, callable ...$handlers): void
     {
-        if ($handlers !== []) {
-            throw new \BadMethodCallException('Single request handler supported only');
-        }
-
         $this->router->addRoute($methods, $route, [$handler, ...$handlers]);
     }
 
@@ -328,11 +324,17 @@ class App
                     $request->withAttribute('allowed', $allowedMethods)
                 );
             case \FastRoute\Dispatcher::FOUND:
-                $handler = $routeInfo[1][0];
+                $handlers = $routeInfo[1];
                 $vars = $routeInfo[2];
 
                 foreach ($vars as $key => $value) {
                     $request = $request->withAttribute($key, rawurldecode($value));
+                }
+
+                if (count($handlers) === 1) {
+                    $handler = $handlers[0];
+                } else {
+                    $handler = new MiddlewareHandler($handlers);
                 }
 
                 try {
