@@ -71,7 +71,7 @@ class App
     public function map(array $methods, string $route, callable $handler, callable ...$handlers): void
     {
         if ($handlers) {
-            $handler = new MiddlewareHandler([$handler, ...$handlers]);
+            $handler = new MiddlewareHandler(array_merge([$handler], $handlers));
         }
 
         $this->router->addRoute($methods, $route, $handler);
