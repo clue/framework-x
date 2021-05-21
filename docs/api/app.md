@@ -144,11 +144,6 @@ See [controller classes](../best-practices/controllers.md) for more details.
 
 ## Middleware
 
-> ℹ️ **Feature preview**
->
-> This is a feature preview, i.e. it might not have made it into the current beta.
-> Give feedback to help us prioritize.
-
 One of the main features of the `App` is middleware support.
 Middleware allows you to extract common functionality such as HTTP login, session handling or logging into reusable components.
 These middleware components can be added to both individual routes or globally to all registered routes.
