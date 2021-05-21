@@ -25,8 +25,8 @@ class MiddlewareHandler
 
     private function call(ServerRequestInterface $request, int $position)
     {
-        if (!isset($this->handlers[$position + 1])) {
-            return $this->handlers[$position]($request);
+        if (!isset($this->handlers[$position + 2])) {
+            return $this->handlers[$position]($request, $this->handlers[$position + 1]);
         }
 
         return $this->handlers[$position]($request, function (ServerRequestInterface $request) use ($position) {

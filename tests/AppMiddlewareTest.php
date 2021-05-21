@@ -5,6 +5,7 @@ namespace FrameworkX\Tests;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use FrameworkX\App;
+use FrameworkX\MiddlewareHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -25,7 +26,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -43,7 +44,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['HEAD'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['HEAD'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -61,7 +62,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['POST'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['POST'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -79,7 +80,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['PUT'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['PUT'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -97,7 +98,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['PATCH'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['PATCH'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -115,7 +116,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['DELETE'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['DELETE'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -133,7 +134,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['OPTIONS'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['OPTIONS'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -151,7 +152,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -169,7 +170,7 @@ class AppMiddlewareTest extends TestCase
         $controller = function () { };
 
         $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET', 'POST'], '/', [$middleware, $controller]);
+        $router->expects($this->once())->method('addRoute')->with(['GET', 'POST'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -201,7 +202,7 @@ class AppMiddlewareTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, [$middleware, $handler], []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new \ReflectionMethod($app, 'handleRequest');
@@ -238,7 +239,7 @@ class AppMiddlewareTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, [$middleware, $handler], []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new \ReflectionMethod($app, 'handleRequest');
@@ -276,7 +277,7 @@ class AppMiddlewareTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, [$middleware, $handler], []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new \ReflectionMethod($app, 'handleRequest');
@@ -316,7 +317,7 @@ class AppMiddlewareTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, [$middleware, $handler], []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new \ReflectionMethod($app, 'handleRequest');
@@ -366,7 +367,7 @@ class AppMiddlewareTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, [$middleware, $handler], []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new \ReflectionMethod($app, 'handleRequest');
@@ -406,7 +407,7 @@ class AppMiddlewareTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, [$middleware, $handler], []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new \ReflectionMethod($app, 'handleRequest');
@@ -436,7 +437,7 @@ class AppMiddlewareTest extends TestCase
         $request = new ServerRequest('GET', 'http://localhost/');
 
         $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, [$middleware, $handler], []]);
+        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
 
         // $response = $app->handleRequest($request, $dispatcher);
         $ref = new \ReflectionMethod($app, 'handleRequest');

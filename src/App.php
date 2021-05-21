@@ -70,7 +70,11 @@ class App
 
     public function map(array $methods, string $route, callable $handler, callable ...$handlers): void
     {
-        $this->router->addRoute($methods, $route, [$handler, ...$handlers]);
+        if ($handlers) {
+            $handler = new MiddlewareHandler([$handler, ...$handlers]);
+        }
+
+        $this->router->addRoute($methods, $route, $handler);
     }
 
     public function group($prefix, $cb)
@@ -324,17 +328,11 @@ class App
                     $request->withAttribute('allowed', $allowedMethods)
                 );
             case \FastRoute\Dispatcher::FOUND:
-                $handlers = $routeInfo[1];
+                $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
 
                 foreach ($vars as $key => $value) {
                     $request = $request->withAttribute($key, rawurldecode($value));
-                }
-
-                if (count($handlers) === 1) {
-                    $handler = $handlers[0];
-                } else {
-                    $handler = new MiddlewareHandler($handlers);
                 }
 
                 try {
