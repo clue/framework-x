@@ -13,7 +13,7 @@ to do its magic, hence you have to create it like this:
 require __DIR__ . '/vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
-$app = FrameworkX\App($loop);
+$app = new FrameworkX\App($loop);
 
 // Register routes here, see routing…
 
@@ -32,7 +32,7 @@ $loop->run();
 >
 > require __DIR__ . '/vendor/autoload.php';
 >
-> $app = FrameworkX\App();
+> $app = new FrameworkX\App();
 >
 > // Register routes here, see routing…
 >
