@@ -316,6 +316,38 @@ class App
      */
     private function handleRequest(ServerRequestInterface $request)
     {
+        try {
+            $response = $this->routeRequest($request);
+        } catch (\Throwable $e) {
+            return $this->errorHandlerException($e);
+        }
+
+        if ($response instanceof \Generator) {
+            $response = $this->coroutine($response);
+        }
+
+        if ($response instanceof ResponseInterface) {
+            return $response;
+        } elseif ($response instanceof PromiseInterface) {
+            return $response->then(function ($response) {
+                if (!$response instanceof ResponseInterface) {
+                    return $this->errorHandlerResponse($response);
+                }
+                return $response;
+            }, function ($e) {
+                if ($e instanceof \Throwable) {
+                    return $this->errorHandlerException($e);
+                } else {
+                    return $this->errorHandlerResponse(\React\Promise\reject($e));
+                }
+            });
+        } else {
+            return $this->errorHandlerResponse($response);
+        }
+    }
+
+    private function routeRequest(ServerRequestInterface $request)
+    {
         if (\strpos($request->getRequestTarget(), '://') !== false || $request->getMethod() === 'CONNECT') {
             return $this->errorProxy($request);
         }
@@ -342,34 +374,7 @@ class App
                     $request = $request->withAttribute($key, rawurldecode($value));
                 }
 
-                try {
-                    $response = $handler($request);
-                } catch (\Throwable $e) {
-                    return $this->errorHandlerException($e);
-                }
-
-                if ($response instanceof \Generator) {
-                    $response = $this->coroutine($response);
-                }
-
-                if ($response instanceof ResponseInterface) {
-                    return $response;
-                } elseif ($response instanceof PromiseInterface) {
-                    return $response->then(function ($response) {
-                        if (!$response instanceof ResponseInterface) {
-                            return $this->errorHandlerResponse($response);
-                        }
-                        return $response;
-                    }, function ($e) {
-                        if ($e instanceof \Throwable) {
-                            return $this->errorHandlerException($e);
-                        } else {
-                            return $this->errorHandlerResponse(\React\Promise\reject($e));
-                        }
-                    });
-                } else {
-                    return $this->errorHandlerResponse($response);
-                }
+                return $handler($request);
         }
     } // @codeCoverageIgnore
 
