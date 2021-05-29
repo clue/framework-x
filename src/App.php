@@ -21,15 +21,34 @@ use React\Stream\ReadableStreamInterface;
 class App
 {
     private $loop;
+    private $middleware;
     private $router;
     private $routeDispatcher;
 
-    public function __construct(LoopInterface $loop = null)
+    /**
+     * Instantiate new X application
+     *
+     * ```php
+     * // instantiate
+     * $app = new App();
+     *
+     * // instantiate with global middleware
+     * $app = new App(null, $middleware);
+     * $app = new App(null, $middleware1, $middleware2);
+     *
+     * // instantiate with optional $loop
+     * $app = new App($loop);
+     * $app = new App($loop, $middleware);
+     * $app = new App($loop, $middleware1, $middleware2);
+     * ```
+     *
+     * @param ?LoopInterface $loop
+     * @param callable ...$middleware
+     */
+    public function __construct(LoopInterface $loop = null, callable ...$middleware)
     {
-        if ($loop === null) {
-            $loop = Loop::get();
-        }
-        $this->loop = $loop;
+        $this->loop = $loop ?? Loop::get();
+        $this->middleware = $middleware;
         $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());
     }
 
@@ -316,8 +335,15 @@ class App
      */
     private function handleRequest(ServerRequestInterface $request)
     {
+        $handler = function (ServerRequestInterface $request) {
+            return $this->routeRequest($request);
+        };
+        if ($this->middleware) {
+            $handler = new MiddlewareHandler(array_merge($this->middleware, [$handler]));
+        }
+
         try {
-            $response = $this->routeRequest($request);
+            $response = $handler($request);
         } catch (\Throwable $e) {
             return $this->errorHandlerException($e);
         }

@@ -41,6 +41,25 @@ class AppTest extends TestCase
         $this->assertSame(Loop::get(), $ret);
     }
 
+    public function testConstructWithLoopAndMiddlewareAssignsGivenLoopInstanceAndMiddleware()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $middleware = function () { };
+        $app = new App($loop, $middleware);
+
+        $ref = new ReflectionProperty($app, 'loop');
+        $ref->setAccessible(true);
+        $ret = $ref->getValue($app);
+
+        $this->assertSame($loop, $ret);
+
+        $ref = new ReflectionProperty($app, 'middleware');
+        $ref->setAccessible(true);
+        $ret = $ref->getValue($app);
+
+        $this->assertSame([$middleware], $ret);
+    }
+
     public function testRunWillRunGivenLoopInstanceAndReportListeningAddress()
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
