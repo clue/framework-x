@@ -421,7 +421,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsResponseFromController()
     {
-        $app = new App(null, function (ServerRequestInterface $request, callable $next) {
+        $app = new App(function (ServerRequestInterface $request, callable $next) {
             return $next($request);
         });
 
@@ -451,7 +451,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextWithModifiedRequestWillBeUsedForRouting()
     {
-        $app = new App(null, function (ServerRequestInterface $request, callable $next) {
+        $app = new App(function (ServerRequestInterface $request, callable $next) {
             return $next($request->withUri($request->getUri()->withPath('/users')));
         });
 
@@ -481,7 +481,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsModifiedResponseWhenModifyingResponseFromRouter()
     {
-        $app = new App(null, function (ServerRequestInterface $request, callable $next) {
+        $app = new App(function (ServerRequestInterface $request, callable $next) {
             $response = $next($request);
             assert($response instanceof ResponseInterface);
 
@@ -512,7 +512,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
     {
-        $app = new App(null, function () {
+        $app = new App(function () {
             return new Response(
                 200,
                 [
@@ -545,7 +545,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareReturnsPromiseWhichResolvesWithResponseWithoutCallingNextDoesNotCallRouter()
     {
-        $app = new App(null, function () {
+        $app = new App(function () {
             return resolve(new Response(
                 200,
                 [
@@ -586,7 +586,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingPromiseWhichResolvesToResponseFromRouter()
     {
-        $app = new App(null, function (ServerRequestInterface $request, callable $next) {
+        $app = new App(function (ServerRequestInterface $request, callable $next) {
             return $next($request)->then(function (ResponseInterface $response) {
                 return $response->withHeader('Content-Type', 'text/html');
             });
@@ -624,7 +624,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingCoroutineWhichYieldsResponseFromRouter()
     {
-        $app = new App(null, function (ServerRequestInterface $request, callable $next) {
+        $app = new App(function (ServerRequestInterface $request, callable $next) {
             $generator = $next($request);
             assert($generator instanceof \Generator);
 

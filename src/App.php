@@ -33,20 +33,31 @@ class App
      * $app = new App();
      *
      * // instantiate with global middleware
-     * $app = new App(null, $middleware);
-     * $app = new App(null, $middleware1, $middleware2);
+     * $app = new App($middleware);
+     * $app = new App($middleware1, $middleware2);
      *
      * // instantiate with optional $loop
      * $app = new App($loop);
      * $app = new App($loop, $middleware);
      * $app = new App($loop, $middleware1, $middleware2);
+     *
+     * // invalid $loop argument
+     * $app = new App(null);
+     * $app = new App(null, $middleware);
      * ```
      *
-     * @param ?LoopInterface $loop
+     * @param callable|LoopInterface|null $loop
      * @param callable ...$middleware
+     * @throws \TypeError if given $loop argument is invalid
      */
-    public function __construct(LoopInterface $loop = null, callable ...$middleware)
+    public function __construct($loop = null, callable ...$middleware)
     {
+        if (\is_callable($loop)) {
+            \array_unshift($middleware, $loop);
+            $loop = null;
+        } elseif (\func_num_args() !== 0 && !$loop instanceof LoopInterface) {
+            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $this->describeType($loop) . ' given');
+        }
         $this->loop = $loop ?? Loop::get();
         $this->middleware = $middleware;
         $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());

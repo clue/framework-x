@@ -60,6 +60,20 @@ class AppTest extends TestCase
         $this->assertSame([$middleware], $ret);
     }
 
+    public function testConstructWithInvalidLoopThrows()
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument 1 ($loop) must be callable|React\EventLoop\LoopInterface, stdClass given');
+        new App((object)[]);
+    }
+
+    public function testConstructWithNullLoopButMiddlwareThrows()
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument 1 ($loop) must be callable|React\EventLoop\LoopInterface, null given');
+        new App(null, function () { });
+    }
+
     public function testRunWillRunGivenLoopInstanceAndReportListeningAddress()
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
