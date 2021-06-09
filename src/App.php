@@ -2,10 +2,10 @@
 
 namespace FrameworkX;
 
-use FastRoute\Dispatcher;
+use FastRoute\DataGenerator\GroupCountBased as RouteGenerator;
+use FastRoute\Dispatcher\GroupCountBased as RouteDispatcher;
 use FastRoute\RouteCollector;
-use FastRoute\RouteParser\Std;
-use FastRoute\DataGenerator\GroupCountBased;
+use FastRoute\RouteParser\Std as RouteParser;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\LoopInterface;
@@ -21,11 +21,12 @@ class App
 {
     private $loop;
     private $router;
+    private $routeDispatcher;
 
     public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
-        $this->router = new RouteCollector(new Std(), new GroupCountBased());
+        $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());
     }
 
     public function get(string $route, callable $handler, callable ...$handlers): void
@@ -74,6 +75,7 @@ class App
             $handler = new MiddlewareHandler(array_merge([$handler], $handlers));
         }
 
+        $this->routeDispatcher = null;
         $this->router->addRoute($methods, $route, $handler);
     }
 
@@ -155,10 +157,8 @@ class App
 
     private function runLoop()
     {
-        $dispatcher = new \FastRoute\Dispatcher\GroupCountBased($this->router->getData());
-
-        $http = new HttpServer($this->loop, function (ServerRequestInterface $request) use ($dispatcher) {
-            $response = $this->handleRequest($request, $dispatcher);
+        $http = new HttpServer($this->loop, function (ServerRequestInterface $request) {
+            $response = $this->handleRequest($request);
 
             if ($response instanceof ResponseInterface) {
                 $this->logRequestResponse($request, $response);
@@ -239,9 +239,7 @@ class App
     {
         $request = $this->requestFromGlobals();
 
-        $dispatcher = new \FastRoute\Dispatcher\GroupCountBased($this->router->getData());
-
-        $response = $this->handleRequest($request, $dispatcher);
+        $response = $this->handleRequest($request);
 
         if ($response instanceof ResponseInterface) {
             $this->sendResponse($request, $response);
@@ -304,20 +302,23 @@ class App
 
     /**
      * @param ServerRequestInterface $request
-     * @param Dispatcher $dispatcher
      * @return ResponseInterface|PromiseInterface<ResponseInterface,void>
      *     Returns a response or a Promise which eventually fulfills with a
      *     response. This method never throws or resolves a rejected promise.
      *     If the request can not be routed or the handler fails, it will be
      *     turned into a valid error response before returning.
      */
-    private function handleRequest(ServerRequestInterface $request, Dispatcher $dispatcher)
+    private function handleRequest(ServerRequestInterface $request)
     {
         if (\strpos($request->getRequestTarget(), '://') !== false || $request->getMethod() === 'CONNECT') {
             return $this->errorProxy($request);
         }
 
-        $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
+        if ($this->routeDispatcher === null) {
+            $this->routeDispatcher = new RouteDispatcher($this->router->getData());
+        }
+
+        $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
                 return $this->errorNotFound($request);
