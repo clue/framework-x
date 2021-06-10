@@ -2,7 +2,6 @@
 
 namespace FrameworkX\Tests;
 
-use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use FrameworkX\App;
 use PHPUnit\Framework\TestCase;
@@ -318,12 +317,10 @@ class AppTest extends TestCase
         $request = new ServerRequest('GET', 'http://google.com/');
         $request = $request->withRequestTarget('http://google.com/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -332,20 +329,17 @@ class AppTest extends TestCase
         $this->assertEquals("400 (Bad Request): Proxy requests not allowed\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithFileNotFoundReturnsResponseWithFileNotFoundMessage()
+    public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
         $request = new ServerRequest('GET', 'http://localhost/invalid');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/invalid')->willReturn([\FastRoute\Dispatcher::NOT_FOUND]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -354,20 +348,20 @@ class AppTest extends TestCase
         $this->assertEquals("404 (Not Found)\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithMethodNotAllowedReturnsResponseWithMethodNotAllowedMessage()
+    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMethodNotAllowedMessage()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $app->get('/users', function () { });
+        $app->post('/users', function () { });
+
         $request = new ServerRequest('DELETE', 'http://localhost/users');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('DELETE', '/users')->willReturn([\FastRoute\Dispatcher::METHOD_NOT_ALLOWED, ['GET', 'POST']]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -377,14 +371,12 @@ class AppTest extends TestCase
         $this->assertEquals("405 (Method Not Allowed): GET, POST\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsResponseFromHandlerReturnedFromDispatcher()
+    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
-        $request = new ServerRequest('GET', 'http://localhost/users');
-
-        $handler = function () {
+        $app->get('/users', function () {
             return new Response(
                 200,
                 [
@@ -392,15 +384,14 @@ class AppTest extends TestCase
                 ],
                 "OK\n"
             );
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -409,14 +400,12 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
-        $request = new ServerRequest('GET', 'http://localhost/users');
-
-        $handler = function () {
+        $app->get('/users', function () {
             return \React\Promise\resolve(new Response(
                 200,
                 [
@@ -424,15 +413,14 @@ class AppTest extends TestCase
                 ],
                 "OK\n"
             ));
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -449,24 +437,21 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPendingPromiseWhenHandlerReturnsPendingPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsPendingPromise()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $app->get('/users', function () {
+            return new Promise(function () { });
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $handler = function () {
-            return new Promise(function () { });
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -481,14 +466,12 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
-        $request = new ServerRequest('GET', 'http://localhost/users');
-
-        $handler = function () {
+        $app->get('/users', function () {
             $body = yield \React\Promise\resolve("OK\n");
 
             return new Response(
@@ -498,15 +481,14 @@ class AppTest extends TestCase
                 ],
                 $body
             );
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -523,14 +505,12 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
-        $request = new ServerRequest('GET', 'http://localhost/users');
-
-        $handler = function () {
+        $app->get('/users', function () {
             $body = '';
             try {
                 yield \React\Promise\reject(new \RuntimeException("OK\n"));
@@ -545,15 +525,14 @@ class AppTest extends TestCase
                 ],
                 $body
             );
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -570,24 +549,21 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPendingPromiseWhenHandlerReturnsCoroutineThatYieldsPendingPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsCoroutineThatYieldsPendingPromise()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $app->get('/users', function () {
+            yield new Promise(function () { });
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $handler = function () {
-            yield new Promise(function () { });
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -602,14 +578,12 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
+    public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
-        $request = new ServerRequest('GET', 'http://localhost/users/alice');
-
-        $handler = function (ServerRequestInterface $request) {
+        $app->get('/users/{name}', function (ServerRequestInterface $request) {
             $name = $request->getAttribute('name');
 
             return new Response(
@@ -619,15 +593,14 @@ class AppTest extends TestCase
                 ],
                 "Hello $name\n"
             );
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users/alice')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, ['name' => 'alice']]);
+        $request = new ServerRequest('GET', 'http://localhost/users/alice');
 
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -636,25 +609,22 @@ class AppTest extends TestCase
         $this->assertEquals("Hello alice\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenHandlerThrowsException()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $line = __LINE__ + 2;
+        $app->get('/users', function () {
+            throw new \RuntimeException('Foo');
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $line = __LINE__ + 2;
-        $handler = function () {
-            throw new \RuntimeException('Foo');
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -663,25 +633,22 @@ class AppTest extends TestCase
         $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $line = __LINE__ + 2;
+        $app->get('/users', function () {
+            return \React\Promise\reject(new \RuntimeException('Foo'));
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $line = __LINE__ + 2;
-        $handler = function () {
-            return \React\Promise\reject(new \RuntimeException('Foo'));
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -698,25 +665,21 @@ class AppTest extends TestCase
         $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $app->get('/users', function () {
+            return \React\Promise\reject(null);
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $line = __LINE__ + 1;
-        $handler = function () {
-            return \React\Promise\reject(null);
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -733,25 +696,22 @@ class AppTest extends TestCase
         $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>React\Promise\RejectedPromise</code>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
-
-        $request = new ServerRequest('GET', 'http://localhost/users');
 
         $line = __LINE__ + 2;
-        $handler = function () {
+        $app->get('/users', function () {
             yield \React\Promise\reject(new \RuntimeException('Foo'));
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -768,26 +728,23 @@ class AppTest extends TestCase
         $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
-
-        $request = new ServerRequest('GET', 'http://localhost/users');
 
         $line = __LINE__ + 3;
-        $handler = function () {
+        $app->get('/users', function () {
             yield \React\Promise\resolve(null);
             throw new \RuntimeException('Foo');
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -804,26 +761,22 @@ class AppTest extends TestCase
         $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> (<code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>): Foo\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
-        $request = new ServerRequest('GET', 'http://localhost/users');
-
-        $line = __LINE__ + 1;
-        $handler = function () {
+        $app->get('/users', function () {
             $value = yield \React\Promise\resolve(null);
             return $value;
-        };
+        });
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
+        $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -840,25 +793,21 @@ class AppTest extends TestCase
         $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNull()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNull()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $app->get('/users', function () {
+            yield null;
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $line = __LINE__ + 1;
-        $handler = function () {
-            yield null;
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -918,25 +867,21 @@ class AppTest extends TestCase
      * @param mixed $value
      * @param string $name
      */
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue($value, $name)
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue($value, $name)
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $app->get('/users', function () use ($value) {
+            return $value;
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $line = __LINE__ + 1;
-        $handler = function () use ($value) {
-            return $value;
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -950,25 +895,21 @@ class AppTest extends TestCase
      * @param mixed $value
      * @param string $name
      */
-    public function testHandleRequestWithDispatcherWithRouteFoundReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue($value, $name)
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue($value, $name)
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
 
+        $app->get('/users', function () use ($value) {
+            return \React\Promise\resolve($value);
+        });
+
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        $line = __LINE__ + 1;
-        $handler = function () use ($value) {
-            return \React\Promise\resolve($value);
-        };
-
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/users')->willReturn([\FastRoute\Dispatcher::FOUND, $handler, []]);
-
-        // $promise = $app->handleRequest($request, $dispatcher);
+        // $promise = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);

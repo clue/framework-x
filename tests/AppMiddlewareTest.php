@@ -2,7 +2,6 @@
 
 namespace FrameworkX\Tests;
 
-use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use FrameworkX\App;
 use FrameworkX\MiddlewareHandler;
@@ -199,15 +198,14 @@ class AppMiddlewareTest extends TestCase
             );
         };
 
+        $app->get('/', $middleware, $handler);
+
         $request = new ServerRequest('GET', 'http://localhost/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new \ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -236,15 +234,14 @@ class AppMiddlewareTest extends TestCase
             );
         };
 
+        $app->get('/', $middleware, $handler);
+
         $request = new ServerRequest('GET', 'http://localhost/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new \ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -274,15 +271,14 @@ class AppMiddlewareTest extends TestCase
             );
         };
 
+        $app->get('/', $middleware, $handler);
+
         $request = new ServerRequest('GET', 'http://localhost/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new \ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -314,15 +310,14 @@ class AppMiddlewareTest extends TestCase
             ));
         };
 
+        $app->get('/', $middleware, $handler);
+
         $request = new ServerRequest('GET', 'http://localhost/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new \ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -364,15 +359,14 @@ class AppMiddlewareTest extends TestCase
             );
         };
 
+        $app->get('/', $middleware, $handler);
+
         $request = new ServerRequest('GET', 'http://localhost/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new \ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request, $dispatcher);
+        $promise = $ref->invoke($app, $request);
 
         /** @var PromiseInterface $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
@@ -404,15 +398,14 @@ class AppMiddlewareTest extends TestCase
             throw new \RuntimeException('Foo');
         };
 
+        $app->get('/', $middleware, $handler);
+
         $request = new ServerRequest('GET', 'http://localhost/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new \ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -434,15 +427,14 @@ class AppMiddlewareTest extends TestCase
 
         $handler = function () { };
 
+        $app->get('/', $middleware, $handler);
+
         $request = new ServerRequest('GET', 'http://localhost/');
 
-        $dispatcher = $this->createMock(Dispatcher::class);
-        $dispatcher->expects($this->once())->method('dispatch')->with('GET', '/')->willReturn([\FastRoute\Dispatcher::FOUND, new MiddlewareHandler([$middleware, $handler]), []]);
-
-        // $response = $app->handleRequest($request, $dispatcher);
+        // $response = $app->handleRequest($request);
         $ref = new \ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request, $dispatcher);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
