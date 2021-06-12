@@ -8,6 +8,7 @@ use FastRoute\RouteCollector;
 use FastRoute\RouteParser\Std as RouteParser;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Http\Server as HttpServer;
 use React\Http\Message\Response;
@@ -23,8 +24,11 @@ class App
     private $router;
     private $routeDispatcher;
 
-    public function __construct(LoopInterface $loop)
+    public function __construct(LoopInterface $loop = null)
     {
+        if ($loop === null) {
+            $loop = Loop::get();
+        }
         $this->loop = $loop;
         $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());
     }
@@ -153,6 +157,8 @@ class App
         } else {
             $this->runOnce();
         }
+
+        $this->loop->run();
     }
 
     private function runLoop()
