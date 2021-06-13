@@ -22,8 +22,7 @@ You can use this example to get started by creating a new `app.php` file in your
 
 require __DIR__ . '/vendor/autoload.php';
 
-$loop = React\EventLoop\Factory::create();
-$app = new FrameworkX\App($loop);
+$app = new FrameworkX\App();
 
 $app->get('/', function () {
     return new React\Http\Message\Response(
@@ -42,7 +41,6 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
 });
 
 $app->run();
-$loop->run();
 ```
 
 On a code level, this is everything you need to get started.

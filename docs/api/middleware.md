@@ -257,13 +257,11 @@ a global middleware handler for all registered routes:
 use Acme\Todo\AdminMiddleware;
 use Acme\Todo\UserController;
 
-$loop = React\EventLoop\Factory::create();
-$app = new FrameworkX\App($loop, new AdminMiddleware());
+$app = new FrameworkX\App(new AdminMiddleware());
 
 $app->get('/user', new UserController());
 
 $app->run();
-$loop->run();
 ```
 
 You can also combine global middleware handlers (think logging) with additional
