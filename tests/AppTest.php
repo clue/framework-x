@@ -7,6 +7,7 @@ use FrameworkX\App;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
@@ -17,10 +18,48 @@ use ReflectionProperty;
 
 class AppTest extends TestCase
 {
-    public function testGetMethodAddsGetRouteOnRouter()
+    public function testConstructWithLoopAssignsGivenLoopInstance()
     {
         $loop = $this->createMock(LoopInterface::class);
         $app = new App($loop);
+
+        $ref = new ReflectionProperty($app, 'loop');
+        $ref->setAccessible(true);
+        $ret = $ref->getValue($app);
+
+        $this->assertSame($loop, $ret);
+    }
+
+    public function testConstructWithoutLoopAssignsGlobalLoopInstance()
+    {
+        $app = new App();
+
+        $ref = new ReflectionProperty($app, 'loop');
+        $ref->setAccessible(true);
+        $ret = $ref->getValue($app);
+
+        $this->assertSame(Loop::get(), $ret);
+    }
+
+    public function testRunWillRunGivenLoopInstanceAndReportListeningAddress()
+    {
+        $socket = @stream_socket_server('127.0.0.1:8080');
+        if ($socket === false) {
+            $this->markTestSkipped('Listen address :8080 already in use');
+        }
+        fclose($socket);
+
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->once())->method('run');
+        $app = new App($loop);
+
+        $this->expectOutputRegex('/' . preg_quote('Listening on tcp://127.0.0.1:8080' . PHP_EOL, '/') . '$/');
+        $app->run();
+    }
+
+    public function testGetMethodAddsGetRouteOnRouter()
+    {
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $this->anything());
@@ -34,8 +73,7 @@ class AppTest extends TestCase
 
     public function testHeadMethodAddsHeadRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['HEAD'], '/', $this->anything());
@@ -49,8 +87,7 @@ class AppTest extends TestCase
 
     public function testPostMethodAddsPostRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['POST'], '/', $this->anything());
@@ -64,8 +101,7 @@ class AppTest extends TestCase
 
     public function testPutMethodAddsPutRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['PUT'], '/', $this->anything());
@@ -79,8 +115,7 @@ class AppTest extends TestCase
 
     public function testPatchMethodAddsPatchRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['PATCH'], '/', $this->anything());
@@ -94,8 +129,7 @@ class AppTest extends TestCase
 
     public function testDeleteMethodAddsDeleteRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['DELETE'], '/', $this->anything());
@@ -109,8 +143,7 @@ class AppTest extends TestCase
 
     public function testOptionsMethodAddsOptionsRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['OPTIONS'], '/', $this->anything());
@@ -124,8 +157,7 @@ class AppTest extends TestCase
 
     public function testAnyMethodAddsRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->anything());
@@ -139,8 +171,7 @@ class AppTest extends TestCase
 
     public function testMapMethodAddsRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['GET', 'POST'], '/', $this->anything());
@@ -154,8 +185,7 @@ class AppTest extends TestCase
 
     public function testRedirectMethodAddsGetRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $handler = null;
         $router = $this->createMock(RouteCollector::class);
@@ -184,8 +214,7 @@ class AppTest extends TestCase
 
     public function testRedirectMethodWithCustomRedirectCodeAddsGetRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $handler = null;
         $router = $this->createMock(RouteCollector::class);
@@ -214,8 +243,7 @@ class AppTest extends TestCase
 
     public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         // $request = $app->requestFromGlobals();
         $ref = new ReflectionMethod($app, 'requestFromGlobals');
@@ -235,8 +263,7 @@ class AppTest extends TestCase
      */
     public function testRequestFromGlobalsWithHeadRequest()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['REQUEST_URI'] = '//';
@@ -261,8 +288,7 @@ class AppTest extends TestCase
      */
     public function testRequestFromGlobalsWithGetRequestOverCustomPort()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/path';
@@ -287,8 +313,7 @@ class AppTest extends TestCase
      */
     public function testRequestFromGlobalsWithGetRequestOverHttps()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/';
@@ -311,8 +336,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestAreNotAllowed()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $request = new ServerRequest('GET', 'http://google.com/');
         $request = $request->withRequestTarget('http://google.com/');
@@ -331,8 +355,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $request = new ServerRequest('GET', 'http://localhost/invalid');
 
@@ -350,8 +373,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMethodNotAllowedMessage()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () { });
         $app->post('/users', function () { });
@@ -373,8 +395,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             return new Response(
@@ -402,8 +423,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             return \React\Promise\resolve(new Response(
@@ -439,8 +459,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsPendingPromise()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             return new Promise(function () { });
@@ -468,8 +487,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             $body = yield \React\Promise\resolve("OK\n");
@@ -507,8 +525,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             $body = '';
@@ -551,8 +568,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsCoroutineThatYieldsPendingPromise()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             yield new Promise(function () { });
@@ -580,8 +596,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users/{name}', function (ServerRequestInterface $request) {
             $name = $request->getAttribute('name');
@@ -611,8 +626,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
@@ -635,8 +649,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
@@ -667,8 +680,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             return \React\Promise\reject(null);
@@ -698,8 +710,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
@@ -730,8 +741,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $line = __LINE__ + 3;
         $app->get('/users', function () {
@@ -763,8 +773,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             $value = yield \React\Promise\resolve(null);
@@ -795,8 +804,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNull()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () {
             yield null;
@@ -869,8 +877,7 @@ class AppTest extends TestCase
      */
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue($value, $name)
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () use ($value) {
             return $value;
@@ -897,8 +904,7 @@ class AppTest extends TestCase
      */
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue($value, $name)
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $app->get('/users', function () use ($value) {
             return \React\Promise\resolve($value);
@@ -928,8 +934,7 @@ class AppTest extends TestCase
 
     public function testLogRequestResponsePrintsRequestLogWithCurrentDateAndTime()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 200 6\n
         $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 6\n$/");
@@ -945,8 +950,7 @@ class AppTest extends TestCase
 
     public function testLogRequestResponseWithoutRemoteAddressPrintsRequestLogWithDashAsPlaceholder()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         // 2021-01-29 12:22:01.717 - "GET /users HTTP/1.1" 200 6\n
         $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} - \"GET \/users HTTP\/1\.1\" 200 6\n$/");
@@ -962,8 +966,7 @@ class AppTest extends TestCase
 
     public function testLogPrintsMessageWithCurrentDateAndTime()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         // 2021-01-29 12:22:01.717 Hello\n
         $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} Hello\n$/");

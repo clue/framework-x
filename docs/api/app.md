@@ -3,41 +3,18 @@
 The `App` class is your main entrypoint to any application that builds on top of X.
 It provides a simple API for routing HTTP requests as commonly used in RESTful applications.
 
-Internally, the `App` object builds on top of [ReactPHP](https://reactphp.org/)
-to do its magic, hence you have to create it like this:
-
 ```php
 # app.php
 <?php
 
 require __DIR__ . '/vendor/autoload.php';
 
-$loop = React\EventLoop\Factory::create();
-$app = new FrameworkX\App($loop);
+$app = new FrameworkX\App();
 
 // Register routes here, see routing…
 
 $app->run();
-$loop->run();
 ```
-
-> ℹ️ **Heads up!**
->
-> Major improvements upcoming! We're actively contributing to our underlying
-> libraries to make sure this can look like this in the near future:
->
-> ```php
-> # app.php
-> <?php
->
-> require __DIR__ . '/vendor/autoload.php';
->
-> $app = new FrameworkX\App();
->
-> // Register routes here, see routing…
->
-> $app->run();
-> ```
 
 ## Routing
 

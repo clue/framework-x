@@ -13,8 +13,7 @@ To get started, let's take a look at the following simple closure definitions:
 
 require __DIR__ . '/vendor/autoload.php';
 
-$loop = React\EventLoop\Factory::create();
-$app = new FrameworkX\App($loop);
+$app = new FrameworkX\App();
 
 $app->get('/', function () {
     return new React\Http\Message\Response(
@@ -33,7 +32,6 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
 });
 
 $app->run();
-$loop->run();
 ```
 
 While easy to get started, it's also easy to see how this will get out of hand for more complex
@@ -49,14 +47,12 @@ definition into three even simpler files:
 
 require __DIR__ . '/vendor/autoload.php';
 
-$loop = React\EventLoop\Factory::create();
-$app = new FrameworkX\App($loop);
+$app = new FrameworkX\App();
 
 $app->get('/', new Acme\Todo\HelloController());
 $app->get('/users/{name}', new Acme\Todo\UserController());
 
 $app->run();
-$loop->run();
 ```
 
 ```php

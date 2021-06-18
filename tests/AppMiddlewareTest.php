@@ -8,7 +8,6 @@ use FrameworkX\MiddlewareHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\LoopInterface;
 use React\Http\Message\ServerRequest;
 use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
@@ -18,8 +17,7 @@ class AppMiddlewareTest extends TestCase
 {
     public function testGetMethodWithMiddlewareAddsGetRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -36,8 +34,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testHeadMethodWithMiddlewareAddsHeadRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -54,8 +51,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testPostMethodWithMiddlewareAddsPostRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -72,8 +68,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testPutMethodWithMiddlewareAddsPutRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -90,8 +85,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testPatchMethodWithMiddlewareAddsPatchRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -108,8 +102,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testDeleteMethodWithMiddlewareAddsDeleteRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -126,8 +119,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testOptionsMethodWithMiddlewareAddsOptionsRouteOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -144,8 +136,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testAnyMethodWithMiddlewareAddsAllHttpMethodsOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -162,8 +153,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMapMethodWithMiddlewareAddsGivenMethodsOnRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function () {};
         $controller = function () { };
@@ -180,9 +170,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsResponseFromRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request);
@@ -216,9 +204,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextWithModifiedRequestReturnsResponseFromRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request->withAttribute('name', 'Alice'));
@@ -252,9 +238,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsResponseModifiedInMiddlewareFromRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $response = $next($request);
@@ -289,9 +273,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsDeferredResponseModifiedInMiddlewareFromRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $promise = $next($request);
@@ -336,9 +318,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsCoroutineResponseModifiedInMiddlewareFromRouter()
     {
-        $loop = $this->createMock(LoopInterface::class);
-
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $generator = $next($request);
@@ -385,9 +365,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextWhichThrowsExceptionReturnsInternalServerErrorResponse()
     {
-        $loop = $this->createMock(LoopInterface::class);
-
-        $app = new App($loop);
+        $app = new App();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request);
@@ -416,9 +394,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareWhichThrowsExceptionReturnsInternalServerErrorResponse()
     {
-        $loop = $this->createMock(LoopInterface::class);
-
-        $app = new App($loop);
+        $app = new App();
 
         $line = __LINE__ + 2;
         $middleware = function (ServerRequestInterface $request, callable $next) {

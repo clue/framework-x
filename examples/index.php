@@ -1,13 +1,11 @@
 <?php
 
 use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\Factory;
 use React\Stream\ThroughStream;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$loop = Factory::create();
-$app = new FrameworkX\App($loop);
+$app = new FrameworkX\App();
 
 $app->get('/', function () {
     return new React\Http\Message\Response(
@@ -73,9 +71,10 @@ $app->get('/debug', function (ServerRequestInterface $request) {
     );
 });
 
-$app->get('/stream', function (ServerRequestInterface $request) use ($loop) {
+$app->get('/stream', function (ServerRequestInterface $request) {
     $stream = new ThroughStream();
 
+    $loop = React\EventLoop\Loop::get();
     $timer = $loop->addPeriodicTimer(0.5, function () use ($stream) {
         $stream->write(microtime(true) . ' hi!' . PHP_EOL);
     });
@@ -137,4 +136,3 @@ $app->get('/error/null', function () {
 });
 
 $app->run();
-$loop->run();
