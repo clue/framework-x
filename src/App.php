@@ -21,15 +21,45 @@ use React\Stream\ReadableStreamInterface;
 class App
 {
     private $loop;
+    private $middleware;
     private $router;
     private $routeDispatcher;
 
-    public function __construct(LoopInterface $loop = null)
+    /**
+     * Instantiate new X application
+     *
+     * ```php
+     * // instantiate
+     * $app = new App();
+     *
+     * // instantiate with global middleware
+     * $app = new App($middleware);
+     * $app = new App($middleware1, $middleware2);
+     *
+     * // instantiate with optional $loop
+     * $app = new App($loop);
+     * $app = new App($loop, $middleware);
+     * $app = new App($loop, $middleware1, $middleware2);
+     *
+     * // invalid $loop argument
+     * $app = new App(null);
+     * $app = new App(null, $middleware);
+     * ```
+     *
+     * @param callable|LoopInterface|null $loop
+     * @param callable ...$middleware
+     * @throws \TypeError if given $loop argument is invalid
+     */
+    public function __construct($loop = null, callable ...$middleware)
     {
-        if ($loop === null) {
-            $loop = Loop::get();
+        if (\is_callable($loop)) {
+            \array_unshift($middleware, $loop);
+            $loop = null;
+        } elseif (\func_num_args() !== 0 && !$loop instanceof LoopInterface) {
+            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $this->describeType($loop) . ' given');
         }
-        $this->loop = $loop;
+        $this->loop = $loop ?? Loop::get();
+        $this->middleware = $middleware;
         $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());
     }
 
@@ -316,6 +346,45 @@ class App
      */
     private function handleRequest(ServerRequestInterface $request)
     {
+        $handler = function (ServerRequestInterface $request) {
+            return $this->routeRequest($request);
+        };
+        if ($this->middleware) {
+            $handler = new MiddlewareHandler(array_merge($this->middleware, [$handler]));
+        }
+
+        try {
+            $response = $handler($request);
+        } catch (\Throwable $e) {
+            return $this->errorHandlerException($e);
+        }
+
+        if ($response instanceof \Generator) {
+            $response = $this->coroutine($response);
+        }
+
+        if ($response instanceof ResponseInterface) {
+            return $response;
+        } elseif ($response instanceof PromiseInterface) {
+            return $response->then(function ($response) {
+                if (!$response instanceof ResponseInterface) {
+                    return $this->errorHandlerResponse($response);
+                }
+                return $response;
+            }, function ($e) {
+                if ($e instanceof \Throwable) {
+                    return $this->errorHandlerException($e);
+                } else {
+                    return $this->errorHandlerResponse(\React\Promise\reject($e));
+                }
+            });
+        } else {
+            return $this->errorHandlerResponse($response);
+        }
+    }
+
+    private function routeRequest(ServerRequestInterface $request)
+    {
         if (\strpos($request->getRequestTarget(), '://') !== false || $request->getMethod() === 'CONNECT') {
             return $this->errorProxy($request);
         }
@@ -342,34 +411,7 @@ class App
                     $request = $request->withAttribute($key, rawurldecode($value));
                 }
 
-                try {
-                    $response = $handler($request);
-                } catch (\Throwable $e) {
-                    return $this->errorHandlerException($e);
-                }
-
-                if ($response instanceof \Generator) {
-                    $response = $this->coroutine($response);
-                }
-
-                if ($response instanceof ResponseInterface) {
-                    return $response;
-                } elseif ($response instanceof PromiseInterface) {
-                    return $response->then(function ($response) {
-                        if (!$response instanceof ResponseInterface) {
-                            return $this->errorHandlerResponse($response);
-                        }
-                        return $response;
-                    }, function ($e) {
-                        if ($e instanceof \Throwable) {
-                            return $this->errorHandlerException($e);
-                        } else {
-                            return $this->errorHandlerResponse(\React\Promise\reject($e));
-                        }
-                    });
-                } else {
-                    return $this->errorHandlerResponse($response);
-                }
+                return $handler($request);
         }
     } // @codeCoverageIgnore
 

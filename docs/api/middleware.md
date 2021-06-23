@@ -36,7 +36,7 @@ $app->get(
     },
     function (Psr\Http\Message\ServerRequestInterface $request) {
         $role = $request->getAttribute('admin') ? 'admin' : 'user';
-        return new React\Http\Message\Response(200, [], "hello $role!");
+        return new React\Http\Message\Response(200, [], "Hello $role!\n");
     }
 );
 ```
@@ -58,6 +58,7 @@ like this:
 
 namespace Acme\Todo;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class DemoMiddleware
@@ -72,7 +73,7 @@ class DemoMiddleware
 
         // call next handler in chain
         $response = $next($request);
-        assert($response instanceof Psr\Http\Message\ResponseInterface);
+        assert($response instanceof ResponseInterface);
 
         // optionally modify response before returning to previous handler
         // $response = $response->withHeader('Content-Type', 'text/plain');
@@ -136,13 +137,14 @@ class AdminMiddleware
 namespace Acme\Todo;
 
 use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
 
 class UserController
 {
     public function __invoke(ServerRequestInterface $request)
     {
         $role = $request->getAttribute('admin') ? 'admin' : 'user';
-        return new React\Http\Message\Response(200, [], "hello $role!");
+        return new Response(200, [], "Hello $role!\n");
     }
 }
 ```
@@ -156,7 +158,7 @@ use Acme\Todo\UserController;
 
 // …
 
-$app->get('/user/', new AdminMiddleware(), new UserController());
+$app->get('/user', new AdminMiddleware(), new UserController());
 ```
 
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which then modifies this request and passes the modified request to the next controller function.
@@ -172,7 +174,7 @@ Likewise, we can add an example middleware handler that can modify the outgoing 
 
 namespace Acme\Todo;
 
-use Psr\Http\Message\ResponseInterface);
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class ContentTypeMiddleware
@@ -194,12 +196,13 @@ class ContentTypeMiddleware
 namespace Acme\Todo;
 
 use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
 
 class UserController
 {
     public function __invoke(ServerRequestInterface $request)
     {
-        return new React\Http\Message\Response(200, [], "Hello world!\n");
+        return new Response(200, [], "Hello world!\n");
     }
 }
 ```
@@ -213,7 +216,7 @@ use Acme\Todo\UserController;
 
 // …
 
-$app->get('/user/', new ContentTypeMiddleware(), new UserController());
+$app->get('/user', new ContentTypeMiddleware(), new UserController());
 ```
 
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which passes on the request to the controller function and then modifies the response that is returned by the controller function.
@@ -242,15 +245,10 @@ As a consequence, each middleware handler can also return
 
 ## Global middleware
 
-> ℹ️ **Feature preview**
->
-> This is a feature preview, i.e. it might not have made it into the current beta.
-> Give feedback to help us prioritize.
+Additionally, you can also add middleware to the [`App`](app.md) object itself
+to register a global middleware handler:
 
-Additionally, you can also add middleware to the `App` object itself to register
-a global middleware handler for all registered routes:
-
-```php hl_lines="8"
+```php hl_lines="7"
 # app.php
 <?php
 
@@ -263,6 +261,9 @@ $app->get('/user', new UserController());
 
 $app->run();
 ```
+
+Any global middleware handler will always be called for all registered routes
+and also any requests that can not be routed.
 
 You can also combine global middleware handlers (think logging) with additional
 middleware handlers for individual routes (think authentication).
