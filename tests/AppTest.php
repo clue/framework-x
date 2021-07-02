@@ -86,7 +86,7 @@ class AppTest extends TestCase
         $loop->expects($this->once())->method('run');
         $app = new App($loop);
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on tcp://127.0.0.1:8080' . PHP_EOL, '/') . '$/');
+        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:8080' . PHP_EOL, '/') . '$/');
         $app->run();
     }
 

@@ -210,7 +210,7 @@ class App
         $socket = new SocketServer(8080, $this->loop);
         $http->listen($socket);
 
-        $this->log('Listening on ' . $socket->getAddress());
+        $this->log('Listening on ' . \str_replace('tcp:', 'http:', $socket->getAddress()));
 
         $http->on('error', function (\Exception $e) {
             $orig = $e;
@@ -221,7 +221,7 @@ class App
 
             $this->log($message);
 
-            fwrite(STDERR, (string)$orig);
+            \fwrite(STDERR, (string)$orig);
         });
     }
 
