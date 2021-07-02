@@ -19,7 +19,7 @@ empty project directory:
 ```php
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 $app = new FrameworkX\App();
 
