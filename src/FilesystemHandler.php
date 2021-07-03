@@ -55,7 +55,7 @@ class FilesystemHandler
         $path = \rtrim($this->root . '/' . $local, '/');
 
         // local path should not contain "./", "../", "//" or null bytes or start with slash
-        $valid = !\preg_match('#(?:^|/)..?(?:$|/)|^/|//|\x00#', $local);
+        $valid = !\preg_match('#(?:^|/)\.\.?(?:$|/)|^/|//|\x00#', $local);
 
         \clearstatcache();
         if ($valid && \is_dir($path)) {

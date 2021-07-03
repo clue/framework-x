@@ -42,6 +42,38 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(file_get_contents(__DIR__ . '/../LICENSE'), (string) $response->getBody());
     }
 
+    public function testInvokeWithValidPathToOneCharacterFilenameWillReturnResponseWithFileContentsAndDefaultContentType()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source/tests/data/a');
+        $request = $request->withAttribute('path', 'tests/data/a');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/plain', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals(file_get_contents(__DIR__ . '/data/a'), (string) $response->getBody());
+    }
+
+    public function testInvokeWithValidPathToTwoCharacterFilenameWillReturnResponseWithFileContentsAndDefaultContentType()
+    {
+        $handler = new FilesystemHandler(dirname(__DIR__));
+
+        $request = new ServerRequest('GET', '/source/tests/data/b');
+        $request = $request->withAttribute('path', 'tests/data/bb');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/plain', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals(file_get_contents(__DIR__ . '/data/bb'), (string) $response->getBody());
+    }
+
     public function testInvokeWithValidPathToComposerJsonAndCachingHeaderWillReturnResponseNotModifiedWithoutContents()
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
