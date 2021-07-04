@@ -98,8 +98,6 @@ $app->get('/stream', function (ServerRequestInterface $request) {
     );
 });
 
-//$app->cgi('/adminer.php', __DIR__ . '/adminer.php');
-
 $app->get('/LICENSE', new FrameworkX\FilesystemHandler(dirname(__DIR__) . '/LICENSE'));
 $app->get('/source/{path:.*}', new FrameworkX\FilesystemHandler(dirname(__DIR__)));
 $app->redirect('/source', '/source/');
