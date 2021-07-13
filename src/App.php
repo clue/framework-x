@@ -2,17 +2,20 @@
 
 namespace FrameworkX;
 
+use DI\Container;
 use FastRoute\DataGenerator\GroupCountBased as RouteGenerator;
 use FastRoute\Dispatcher\GroupCountBased as RouteDispatcher;
 use FastRoute\RouteCollector;
 use FastRoute\RouteParser\Std as RouteParser;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\Http\Server as HttpServer;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Http\Server as HttpServer;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Socket\Server as SocketServer;
@@ -20,7 +23,9 @@ use React\Stream\ReadableStreamInterface;
 
 class App
 {
-    private $loop;
+    private Container $container;
+    private LoopInterface $loop;
+    private ?LoggerInterface $logger;
     private $middleware;
     private $router;
     private $routeDispatcher;
@@ -36,12 +41,12 @@ class App
      * $app = new App($middleware);
      * $app = new App($middleware1, $middleware2);
      *
-     * // instantiate with optional $loop
-     * $app = new App($loop);
-     * $app = new App($loop, $middleware);
-     * $app = new App($loop, $middleware1, $middleware2);
+     * // instantiate with optional $container
+     * $app = new App($container);
+     * $app = new App($container, $middleware);
+     * $app = new App($container, $middleware1, $middleware2);
      *
-     * // invalid $loop argument
+     * // invalid $container argument
      * $app = new App(null);
      * $app = new App(null, $middleware);
      * ```
@@ -50,17 +55,20 @@ class App
      * @param callable ...$middleware
      * @throws \TypeError if given $loop argument is invalid
      */
-    public function __construct($loop = null, callable ...$middleware)
+    public function __construct($container = null, callable ...$middleware)
     {
-        if (\is_callable($loop)) {
-            \array_unshift($middleware, $loop);
-            $loop = null;
-        } elseif (\func_num_args() !== 0 && !$loop instanceof LoopInterface) {
-            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $this->describeType($loop) . ' given');
+        if (\is_callable($container)) {
+            \array_unshift($middleware, $container);
+            $container = null;
+        } elseif (\func_num_args() !== 0 && !$container instanceof ContainerInterface) {
+            throw new \TypeError('Argument 1 ($container) must be callable|' . ContainerInterface::class . ', ' . $this->describeType($container) . ' given');
         }
-        $this->loop = $loop ?? Loop::get();
+
+        $this->container  = $container ?: new Container();
+        $this->loop       = $this->container->has('loop') ? $this->container->get('loop') : Loop::get();
+        $this->logger     = $this->container->has('logger') ? $this->container->get('logger') : null;
         $this->middleware = $middleware;
-        $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());
+        $this->router     = new RouteCollector(new RouteParser(), new RouteGenerator());
     }
 
     public function get(string $route, callable $handler, callable ...$handlers): void
@@ -154,10 +162,15 @@ class App
             return $response;
         });
 
-        $socket = new SocketServer(8080, $this->loop);
+        $context = $this->container->has('socketServerContext') ? $this->container->get('socketServerContext') : [];
+
+        $uri = !empty($context['uri']) ? $context['uri'] : 8080;
+        unset($context['uri']);
+
+        $socket = new SocketServer($uri, $this->loop, $context);
         $http->listen($socket);
 
-        $this->log('Listening on ' . \str_replace('tcp:', 'http:', $socket->getAddress()));
+        $this->log('Listening on ' . \str_replace(['tcp:', 'tls:'], ['http:', 'https'], $socket->getAddress()));
 
         $http->on('error', function (\Exception $e) {
             $orig = $e;
@@ -402,15 +415,29 @@ class App
             return; // @codeCoverageIgnore
         }
 
-        $this->log(
-            ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
-            '"' . $request->getMethod() . ' ' . $request->getUri()->getPath() . ' HTTP/' . $request->getProtocolVersion() . '" ' .
-            $response->getStatusCode() . ' ' . $response->getBody()->getSize()
-        );
+        $entry = ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
+          '"' . $request->getMethod() . ' ' . $request->getUri()->getPath() . ' HTTP/' . $request->getProtocolVersion() . '" ' .
+          $response->getStatusCode() . ' ' . $response->getBody()->getSize();
+
+        $logger = $request->getAttribute('logger');
+
+        if ($logger instanceof LoggerInterface) {
+            $logger->info($entry);
+
+            return;
+        }
+
+        $this->log($entry);
     }
 
     private function log(string $message): void
     {
+        if ($this->logger instanceof LoggerInterface) {
+            $this->logger->notice($message);
+
+            return;
+        }
+
         $time = microtime(true);
 
         $log = date('Y-m-d H:i:s', (int)$time) . sprintf('.%03d ', (int)(($time - (int)$time) * 1e3)) . $message . PHP_EOL;
