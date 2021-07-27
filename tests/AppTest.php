@@ -970,7 +970,7 @@ class AppTest extends TestCase
         $app = new App();
 
         // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 200 6\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 6\n$/");
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
         $response = new Response(200, [], "Hello\n");
@@ -986,7 +986,7 @@ class AppTest extends TestCase
         $app = new App();
 
         // 2021-01-29 12:22:01.717 - "GET /users HTTP/1.1" 200 6\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} - \"GET \/users HTTP\/1\.1\" 200 6\n$/");
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} - \"GET \/users HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users');
         $response = new Response(200, [], "Hello\n");
@@ -1002,7 +1002,7 @@ class AppTest extends TestCase
         $app = new App();
 
         // 2021-01-29 12:22:01.717 Hello\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} Hello\n$/");
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} Hello" . PHP_EOL . "$/");
 
         // $app->log('Hello');
         $ref = new ReflectionMethod($app, 'log');
