@@ -10,12 +10,12 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\Http\Server as HttpServer;
+use React\Http\HttpServer;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use React\Socket\Server as SocketServer;
+use React\Socket\SocketServer;
 use React\Stream\ReadableStreamInterface;
 
 class App
@@ -154,7 +154,7 @@ class App
             return $response;
         });
 
-        $socket = new SocketServer(8080, $this->loop);
+        $socket = new SocketServer('127.0.0.1:8080', [], $this->loop);
         $http->listen($socket);
 
         $this->log('Listening on ' . \str_replace('tcp:', 'http:', $socket->getAddress()));
