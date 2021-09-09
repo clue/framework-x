@@ -164,6 +164,14 @@ $app->get('/user', new AdminMiddleware(), new UserController());
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which then modifies this request and passes the modified request to the next controller function.
 This is commonly used for HTTP authentication, login handling and session handling.
 
+Note that this example only modifies the incoming request object and simply
+returns whatever the next request handler returns without modifying the outgoing
+response. This means this works both when the next request handler returns a
+[response object](../api/response.md) synchronously or if you're using an async
+request handler that may return a [promise](../async/promises.md) or
+[coroutine](../async/coroutines.md). If you want to modify the outgoing response
+object, see also the next chapter.
+
 ## Response middleware
 
 Likewise, we can add an example middleware handler that can modify the outgoing response:
@@ -222,6 +230,12 @@ $app->get('/user', new ContentTypeMiddleware(), new UserController());
 
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which passes on the request to the controller function and then modifies the response that is returned by the controller function.
 This is commonly used for cache handling and response body transformations (compression etc.).
+
+Note that this example assumes the next request handler returns a
+[response object](../api/response.md) synchronously. If you're writing a
+middleware that also needs to support async request handlers that may
+return a [promise](../async/promises.md) or [coroutine](../async/coroutines.md),
+see also the next chapter.
 
 ## Async middleware
 
@@ -329,10 +343,9 @@ This is commonly used for cache handling and response body transformations (comp
 > 🔮 **Future fiber support in PHP 8.1**
 >
 > In the future, PHP 8.1 will provide native support for [fibers](../async/fibers.md).
-> Once fibers become mainstream, there would be little reason to use
-> Generator-based coroutines anymore.
-> While fibers will help to avoid using promises for many common use cases,
-> promises will still be useful for concurrent execution.
+> Once fibers become mainstream, we can simplify this example significantly
+> because we wouldn't have to use [promises](../async/promises.md) or
+> [Generator-based coroutines](../async/coroutines.md) anymore.
 > See [fibers](../async/fibers.md) for more details.
 
 ## Global middleware
