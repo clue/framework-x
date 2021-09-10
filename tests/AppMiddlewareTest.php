@@ -389,7 +389,9 @@ class AppMiddlewareTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> (<code title=\"See " . __FILE__ . " line $line\">AppMiddlewareTest.php:$line</code>): Foo\n", (string) $response->getBody());
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> in <code title=\"See " . __FILE__ . " line $line\">AppMiddlewareTest.php:$line</code>: Foo</p>\n", (string) $response->getBody());
     }
 
     public function testMiddlewareWhichThrowsExceptionReturnsInternalServerErrorResponse()
@@ -416,7 +418,9 @@ class AppMiddlewareTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("500 (Internal Server Error): Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> (<code title=\"See " . __FILE__ . " line $line\">AppMiddlewareTest.php:$line</code>): Foo\n", (string) $response->getBody());
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> in <code title=\"See " . __FILE__ . " line $line\">AppMiddlewareTest.php:$line</code>: Foo</p>\n", (string) $response->getBody());
     }
 
     public function testGlobalMiddlewareCallsNextReturnsResponseFromController()

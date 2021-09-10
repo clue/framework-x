@@ -345,11 +345,7 @@ class App
             case \FastRoute\Dispatcher::NOT_FOUND:
                 return $this->errorNotFound($request);
             case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                $allowedMethods = $routeInfo[1];
-
-                return $this->errorMethodNotAllowed(
-                    $request->withAttribute('allowed', $allowedMethods)
-                );
+                return $this->errorMethodNotAllowed($routeInfo[1]);
             case \FastRoute\Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
@@ -422,59 +418,78 @@ class App
         }
     }
 
-    private function error(int $statusCode, ?string $info = null): ResponseInterface
+    private function error(int $statusCode, string $title, string ...$info): ResponseInterface
     {
-        $response = new Response(
+        $info = \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info));
+        $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+<title>Error $statusCode: $title</title>
+<style>
+body { display: grid; justify-content: center; align-items: center; grid-auto-rows: 100vh; margin: 0; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
+main { display: grid; max-width: 700px; margin: 2em; }
+h1 { margin: 0 .5em 0 0; border-right: 2px solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
+strong { color: #111827; font-size: 3em; }
+p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
+code { padding: 0 .3em; background-color: #f5f6f9; }
+</style>
+</head>
+<body>
+<main>
+<h1>$statusCode</h1>
+<strong>$title</strong>
+$info</main>
+</body>
+</html>
+
+HTML;
+
+        return new Response(
             $statusCode,
             [
                 'Content-Type' => 'text/html'
             ],
-            (string)$statusCode
+            $html
         );
-
-        $body = $response->getBody();
-        $body->seek(0, SEEK_END);
-
-        $reason = $response->getReasonPhrase();
-        if ($reason !== '') {
-            $body->write(' (' . $reason . ')');
-        }
-
-        if ($info !== null) {
-            $body->write(': ' . $info);
-        }
-        $body->write("\n");
-
-        return $response;
     }
 
     private function errorProxy(): ResponseInterface
     {
         return $this->error(
             400,
-            'Proxy requests not allowed'
+            'Proxy Requests Not Allowed',
+            'Please check your settings and retry.'
         );
     }
 
     private function errorNotFound(): ResponseInterface
     {
-        return $this->error(404);
+        return $this->error(
+            404,
+            'Page Not Found',
+            'Please check the URL in the address bar and try again.'
+        );
     }
 
-    private function errorMethodNotAllowed(ServerRequestInterface $request): ResponseInterface
+    private function errorMethodNotAllowed(array $allowedMethods): ResponseInterface
     {
         return $this->error(
             405,
-            implode(', ', $request->getAttribute('allowed'))
-        )->withHeader('Allowed', implode(', ', $request->getAttribute('allowed')));
+            'Method Not Allowed',
+            'Please check the URL in the address bar and try again.',
+            'Try ' . \implode(', ', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods)) . '.'
+        )->withHeader('Allowed', implode(', ', $allowedMethods));
     }
 
     private function errorHandlerException(\Throwable $e): ResponseInterface
     {
-        $where = ' (<code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>)';
+        $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
 
         return $this->error(
             500,
+            'Internal Server Error',
+            'The requested page failed to load, please try again later.',
             'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code>' . $where . ': ' . $e->getMessage()
         );
     }
@@ -483,7 +498,9 @@ class App
     {
         return $this->error(
             500,
-            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>'
+            'Internal Server Error',
+            'The requested page failed to load, please try again later.',
+            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
         );
     }
 
@@ -491,7 +508,9 @@ class App
     {
         return $this->error(
             500,
-            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>'
+            'Internal Server Error',
+            'The requested page failed to load, please try again later.',
+            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
         );
     }
 
