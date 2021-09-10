@@ -252,79 +252,195 @@ matter whether the next request handler returns a
 [promise](../async/promises.md), a [coroutine](../async/coroutines.md) or
 a response object synchronously:
 
-```php
-# src/AsyncAwareContentTypeMiddleware.php
-<?php
+=== "Arrow functions (PHP 7.4+)"
 
-namespace Acme\Todo;
+    ```php
+    # src/AsyncAwareContentTypeMiddleware.php
+    <?php
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use React\Promise\PromiseInterface;
+    namespace Acme\Todo;
 
-class AsyncContentTypeMiddleware
-{
-    public function __invoke(ServerRequestInterface $request, callable $next)
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use React\Promise\PromiseInterface;
+
+    class AsyncContentTypeMiddleware
     {
-        $response = $next($request);
+        public function __invoke(ServerRequestInterface $request, callable $next)
+        {
+            $response = $next($request);
 
-        if ($response instance PromiseInterface) {
-            return $response->then(function (ResponseInterface $response) {
+            if ($response instanceof PromiseInterface) {
+                return $response->then(fn (ResponseInterface $response) => $this->handle($response));
+            } elseif ($response instanceof \Generator) {
+                return (fn () => $this->handle(yield from $response))();
+            } else {
                 return $this->handle($response);
-            });
-        } elseif ($response instanceof \Generator) {
-            return (function () use ($response) {
-                return $this->handle(yield from $response);
-            })();
-        } else {
-            return $this->handle($response);
+            }
+        }
+
+        private function handle(ResponseInterface $response): ResponseInterface
+        {
+            return $response->withHeader('Content-Type', 'text/plain');
         }
     }
+    ```
 
-    private function handle(ResponseInterface $response): ResponseInterface
+=== "Match syntax (PHP 8.0+)"
+
+    ```php
+    # src/AsyncAwareContentTypeMiddleware.php
+    <?php
+
+    namespace Acme\Todo;
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use React\Promise\PromiseInterface;
+
+    class AsyncContentTypeMiddleware
     {
-        return $response->withHeader('Content-Type', 'text/plain');
+        public function __invoke(ServerRequestInterface $request, callable $next)
+        {
+            $response = $next($request);
+
+            return match (true) {
+                $response instanceof PromiseInterface => $response->then(fn (ResponseInterface $response) => $this->handle($response)),
+                $response instanceof \Generator => (fn () => $this->handle(yield from $response))(),
+                default => $this->handle($response),
+            };
+        }
+
+        private function handle(ResponseInterface $response): ResponseInterface
+        {
+            return $response->withHeader('Content-Type', 'text/plain');
+        }
     }
-}
-```
-```php
-# src/AsyncUserController.php
-<?php
+    ```
 
-namespace Acme\Todo;
+=== "Closures"
 
-use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\Loop;
-use React\Http\Message\Response;
-use React\Promise\Promise;
-use React\Promise\PromiseInterface;
+    ```php
+    # src/AsyncAwareContentTypeMiddleware.php
+    <?php
 
-class AsyncUserController
-{
-    public function __invoke(ServerRequestInterface $request): \Generator
+    namespace Acme\Todo;
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use React\Promise\PromiseInterface;
+
+    class AsyncContentTypeMiddleware
     {
-        // async pseudo code to load some data from an external source
-        $promise = $this->fetchRandomUserName();
+        public function __invoke(ServerRequestInterface $request, callable $next)
+        {
+            $response = $next($request);
 
-        $name = yield $promise;
-        assert(is_string($name));
+            if ($response instanceof PromiseInterface) {
+                return $response->then(function (ResponseInterface $response) {
+                    return $this->handle($response);
+                });
+            } elseif ($response instanceof \Generator) {
+                return (function () use ($response) {
+                    return $this->handle(yield from $response);
+                })();
+            } else {
+                return $this->handle($response);
+            }
+        }
 
-        return new Response(200, [], "Hello $name!\n");
+        private function handle(ResponseInterface $response): ResponseInterface
+        {
+            return $response->withHeader('Content-Type', 'text/plain');
+        }
     }
+    ```
 
-    /**
-     * @return PromiseInterface<string>
-     */
-    private function fetchRandomUserName(): PromiseInterface
+<!-- -->
+
+=== "Coroutines"
+
+    ```php
+    # src/AsyncUserController.php
+    <?php
+
+    namespace Acme\Todo;
+
+    use Psr\Http\Message\ServerRequestInterface;
+    use React\EventLoop\Loop;
+    use React\Http\Message\Response;
+    use React\Promise\Promise;
+    use React\Promise\PromiseInterface;
+
+    class AsyncUserController
     {
-        return new Promise(function ($resolve) {
-            Loop::addTimer(0.01, function () use ($resolve) {
-                $resolve('Alice');
+        public function __invoke(ServerRequestInterface $request): \Generator
+        {
+            // async pseudo code to load some data from an external source
+            $promise = $this->fetchRandomUserName();
+
+            $name = yield $promise;
+            assert(is_string($name));
+
+            return new Response(200, [], "Hello $name!\n");
+        }
+
+        /**
+         * @return PromiseInterface<string>
+         */
+        private function fetchRandomUserName(): PromiseInterface
+        {
+            return new Promise(function ($resolve) {
+                Loop::addTimer(0.01, function () use ($resolve) {
+                    $resolve('Alice');
+                });
             });
-        });
+        }
     }
-}
-```
+    ```
+
+=== "Promises"
+
+    ```php
+    # src/AsyncUserController.php
+    <?php
+
+    namespace Acme\Todo;
+
+    use Psr\Http\Message\ServerRequestInterface;
+    use React\EventLoop\Loop;
+    use React\Http\Message\Response;
+    use React\Promise\Promise;
+    use React\Promise\PromiseInterface;
+
+    class AsyncUserController
+    {
+        /**
+         * @return PromiseInterface<Response>
+         */
+        public function __invoke(ServerRequestInterface $request): PromiseInterface
+        {
+            // async pseudo code to load some data from an external source
+            return $this->fetchRandomUserName()->then(function (string $name) {
+                return new Response(200, [], "Hello $name!\n");
+            });
+        }
+
+        /**
+         * @return PromiseInterface<string>
+         */
+        private function fetchRandomUserName(): PromiseInterface
+        {
+            return new Promise(function ($resolve) {
+                Loop::addTimer(0.01, function () use ($resolve) {
+                    $resolve('Alice');
+                });
+            });
+        }
+    }
+    ```
+
+
 ```php
 # app.php
 <?php
