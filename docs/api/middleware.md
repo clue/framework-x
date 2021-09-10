@@ -164,6 +164,14 @@ $app->get('/user', new AdminMiddleware(), new UserController());
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which then modifies this request and passes the modified request to the next controller function.
 This is commonly used for HTTP authentication, login handling and session handling.
 
+Note that this example only modifies the incoming request object and simply
+returns whatever the next request handler returns without modifying the outgoing
+response. This means this works both when the next request handler returns a
+[response object](../api/response.md) synchronously or if you're using an async
+request handler that may return a [promise](../async/promises.md) or
+[coroutine](../async/coroutines.md). If you want to modify the outgoing response
+object, see also the next chapter.
+
 ## Response middleware
 
 Likewise, we can add an example middleware handler that can modify the outgoing response:
@@ -202,7 +210,8 @@ class UserController
 {
     public function __invoke(ServerRequestInterface $request)
     {
-        return new Response(200, [], "Hello world!\n");
+        $name = 'Alice';
+        return new Response(200, [], "Hello $name!\n");
     }
 }
 ```
@@ -222,26 +231,122 @@ $app->get('/user', new ContentTypeMiddleware(), new UserController());
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which passes on the request to the controller function and then modifies the response that is returned by the controller function.
 This is commonly used for cache handling and response body transformations (compression etc.).
 
-## Async middleware
+Note that this example assumes the next request handler returns a
+[response object](../api/response.md) synchronously. If you're writing a
+middleware that also needs to support async request handlers that may
+return a [promise](../async/promises.md) or [coroutine](../async/coroutines.md),
+see also the next chapter.
 
-> ⚠️ **Documentation still under construction**
->
-> You're seeing an early draft of the documentation that is still in the works.
-> Give feedback to help us prioritize.
-> We also welcome [contributors](../more/community.md) to help out!
+## Async middleware
 
 One of the core features of X is its async support.
 As a consequence, each middleware handler can also return
 [promises](../async/promises.md) or [coroutines](../async/coroutines.md).
+While [request middleware](#request-middleware) doesn't usually have to care
+about async responses, this particularly affects
+[response middleware](#response-middleware) that wants to change the outgoing
+response.
+
+Here's an example middleware handler that can modify the outgoing response no
+matter whether the next request handler returns a
+[promise](../async/promises.md), a [coroutine](../async/coroutines.md) or
+a response object synchronously:
+
+```php
+# src/AsyncAwareContentTypeMiddleware.php
+<?php
+
+namespace Acme\Todo;
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\PromiseInterface;
+
+class AsyncContentTypeMiddleware
+{
+    public function __invoke(ServerRequestInterface $request, callable $next)
+    {
+        $response = $next($request);
+
+        if ($response instance PromiseInterface) {
+            return $response->then(function (ResponseInterface $response) {
+                return $this->handle($response);
+            });
+        } elseif ($response instanceof \Generator) {
+            return (function () use ($response) {
+                return $this->handle(yield from $response);
+            })();
+        } else {
+            return $this->handle($response);
+        }
+    }
+
+    private function handle(ResponseInterface $response): ResponseInterface
+    {
+        return $response->withHeader('Content-Type', 'text/plain');
+    }
+}
+```
+```php
+# src/AsyncUserController.php
+<?php
+
+namespace Acme\Todo;
+
+use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Loop;
+use React\Http\Message\Response;
+use React\Promise\Promise;
+use React\Promise\PromiseInterface;
+
+class AsyncUserController
+{
+    public function __invoke(ServerRequestInterface $request): \Generator
+    {
+        // async pseudo code to load some data from an external source
+        $promise = $this->fetchRandomUserName();
+
+        $name = yield $promise;
+        assert(is_string($name));
+
+        return new Response(200, [], "Hello $name!\n");
+    }
+
+    /**
+     * @return PromiseInterface<string>
+     */
+    private function fetchRandomUserName(): PromiseInterface
+    {
+        return new Promise(function ($resolve) {
+            Loop::addTimer(0.01, function () use ($resolve) {
+                $resolve('Alice');
+            });
+        });
+    }
+}
+```
+```php
+# app.php
+<?php
+
+use Acme\Todo\AsyncContentTypeMiddleware;
+use Acme\Todo\AsyncUserController;
+
+// …
+
+$app->get('/user', new AsyncContentTypeMiddleware(), new AsyncUserController());
+```
+
+For example, an HTTP `GET` request for `/user` would first call the middleware handler which passes on the request to the controller function and then modifies the response that is returned by the controller function.
+This is commonly used for cache handling and response body transformations (compression etc.).
 
 > 🔮 **Future fiber support in PHP 8.1**
 >
-> In the future, PHP 8.1 will provide native support for [fibers](fibers.md).
-> Once fibers become mainstream, there would be little reason to use
-> Generator-based coroutines anymore.
-> While fibers will help to avoid using promises for many common use cases,
-> promises will still be useful for concurrent execution.
-> See [fibers](fibers.md) for more details.
+> In the future, PHP 8.1 will provide native support for [fibers](../async/fibers.md).
+> Once fibers become mainstream, we can simplify this example significantly
+> because we wouldn't have to use [promises](../async/promises.md) or
+> [Generator-based coroutines](../async/coroutines.md) anymore.
+> See [fibers](../async/fibers.md) for more details.
 
 ## Global middleware
 
