@@ -474,12 +474,13 @@ HTML;
 
     private function errorMethodNotAllowed(array $allowedMethods): ResponseInterface
     {
+        $methods = \implode('/', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods));
+
         return $this->error(
             405,
             'Method Not Allowed',
-            'Please check the URL in the address bar and try again.',
-            'Try ' . \implode(', ', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods)) . '.'
-        )->withHeader('Allowed', implode(', ', $allowedMethods));
+            'Please check the URL in the address bar and try again with ' . $methods . ' request.'
+        )->withHeader('Allow', implode(', ', $allowedMethods));
     }
 
     private function errorHandlerException(\Throwable $e): ResponseInterface

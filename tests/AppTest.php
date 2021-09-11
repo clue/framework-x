@@ -405,11 +405,34 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMethodNotAllowedMessage()
+    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithSingleMethodNotAllowedMessage()
     {
         $app = new App();
 
         $app->get('/users', function () { });
+
+        $request = new ServerRequest('POST', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(405, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('GET', $response->getHeaderLine('Allow'));
+        $this->assertStringContainsString("<title>Error 405: Method Not Allowed</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code> request.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMultipleMethodNotAllowedMessage()
+    {
+        $app = new App();
+
+        $app->get('/users', function () { });
+        $app->head('/users', function () { });
         $app->post('/users', function () { });
 
         $request = new ServerRequest('DELETE', 'http://localhost/users');
@@ -423,10 +446,9 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals('GET, POST', $response->getHeaderLine('Allowed'));
+        $this->assertEquals('GET, HEAD, POST', $response->getHeaderLine('Allow'));
         $this->assertStringContainsString("<title>Error 405: Method Not Allowed</title>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Please check the URL in the address bar and try again.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Try <code>GET</code>, <code>POST</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code>/<code>HEAD</code>/<code>POST</code> request.</p>\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler()
