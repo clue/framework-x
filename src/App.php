@@ -420,13 +420,14 @@ class App
 
     private function error(int $statusCode, string $title, string ...$info): ResponseInterface
     {
+        $nonce = \base64_encode(\random_bytes(16));
         $info = \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info));
         $html = <<<HTML
 <!DOCTYPE html>
 <html>
 <head>
 <title>Error $statusCode: $title</title>
-<style>
+<style nonce="$nonce">
 body { display: grid; justify-content: center; align-items: center; grid-auto-rows: minmax(min-content, 100vh); margin: 0; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
 main { display: grid; max-width: 700px; margin: 2em; }
 h1 { margin: 0 .5em 0 0; border-right: 2px solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
@@ -453,7 +454,8 @@ HTML;
         return new Response(
             $statusCode,
             [
-                'Content-Type' => 'text/html; charset=utf-8'
+                'Content-Type' => 'text/html; charset=utf-8',
+                'Content-Security-Policy' => "style-src 'nonce-$nonce'; img-src 'self'; default-src 'none'"
             ],
             $html
         );

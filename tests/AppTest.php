@@ -401,7 +401,9 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat('style-src \'nonce-%s\'; img-src \'self\'; default-src \'none\'', $response->getHeaderLine('Content-Security-Policy'));
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<style nonce=\"%s\">\n%a", (string) $response->getBody());
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again.</p>\n", (string) $response->getBody());
     }
 
