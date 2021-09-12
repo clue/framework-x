@@ -124,13 +124,7 @@ class FilesystemHandler
                 \file_get_contents($path)
             );
         } else {
-            return new Response(
-                404,
-                [
-                    'Content-Type' => 'text/plain; charset=utf-8'
-                ],
-                "Error 404: Not Found\n"
-            );
+            return App::errorNotFound();
         }
     }
 

@@ -343,7 +343,7 @@ class App
         $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
-                return $this->errorNotFound($request);
+                return self::errorNotFound($request);
             case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
                 return $this->errorMethodNotAllowed($routeInfo[1]);
             case \FastRoute\Dispatcher::FOUND:
@@ -418,7 +418,7 @@ class App
         }
     }
 
-    private function error(int $statusCode, string $title, string ...$info): ResponseInterface
+    private static function error(int $statusCode, string $title, string ...$info): ResponseInterface
     {
         $nonce = \base64_encode(\random_bytes(16));
         $info = \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info));
@@ -465,9 +465,12 @@ HTML;
         );
     }
 
-    private function errorNotFound(): ResponseInterface
+    /**
+     * @internal
+     */
+    public static function errorNotFound(): ResponseInterface
     {
-        return $this->error(
+        return self::error(
             404,
             'Page Not Found',
             'Please check the URL in the address bar and try again.'
