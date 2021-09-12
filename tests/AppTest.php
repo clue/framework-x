@@ -90,6 +90,62 @@ class AppTest extends TestCase
         $app->run();
     }
 
+    public function testRunWillRunGivenLoopInstanceAndReportListeningAddressFromEnvironment()
+    {
+        $socket = @stream_socket_server('127.0.0.1:0');
+        $addr = stream_socket_get_name($socket, false);
+        fclose($socket);
+
+        putenv('X_LISTEN=' . $addr);
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->once())->method('run');
+        $app = new App($loop);
+
+        $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '$/');
+        $app->run();
+    }
+
+    public function testRunWillRunGivenLoopInstanceAndReportListeningAddressFromEnvironmentWithRandomPort()
+    {
+        putenv('X_LISTEN=127.0.0.1:0');
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->once())->method('run');
+        $app = new App($loop);
+
+        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:', '/') . '\d+' . PHP_EOL . '$/');
+        $app->run();
+    }
+
+    public function testRunAppWithEmptyAddressThrowsWithoutRunningLoop()
+    {
+        putenv('X_LISTEN=');
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->never())->method('run');
+        $app = new App($loop);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $app->run();
+    }
+
+    public function testRunAppWithBusyPortThrowsWithoutRunningLoop()
+    {
+        $socket = @stream_socket_server('127.0.0.1:0');
+        $addr = stream_socket_get_name($socket, false);
+
+        if (@stream_socket_server($addr) !== false) {
+            $this->markTestSkipped('System does not prevent listening on same address twice');
+        }
+
+        putenv('X_LISTEN=' . $addr);
+        $loop = $this->createMock(LoopInterface::class);
+        $loop->expects($this->never())->method('run');
+        $app = new App($loop);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to listen on');
+        $app->run();
+    }
+
     public function testGetMethodAddsGetRouteOnRouter()
     {
         $app = new App();
