@@ -428,17 +428,12 @@ class App
 <head>
 <title>Error $statusCode: $title</title>
 <style nonce="$nonce">
-body { display: grid; justify-content: center; align-items: center; grid-auto-rows: minmax(min-content, 100vh); margin: 0; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
-main { display: grid; max-width: 700px; margin: 2em; }
-h1 { margin: 0 .5em 0 0; border-right: 2px solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
+body { display: grid; justify-content: center; align-items: center; grid-auto-rows: minmax(min-content, calc(100vh - 4em)); margin: 2em; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
+@media (min-width: 700px) { main { display: grid; max-width: 700px; } }
+h1 { margin: 0 .5em 0 0; border-right: calc(2 * max(0px, min(100vw - 700px + 1px, 1px))) solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
 strong { color: #111827; font-size: 3em; }
 p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
 code { padding: 0 .3em; background-color: #f5f6f9; }
-@media (max-width: 600px) {
-  main { display: block; }
-  h1::before { content: "Error "; }
-  h1 { border: 0; }
-}
 </style>
 </head>
 <body>
