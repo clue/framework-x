@@ -453,7 +453,7 @@ HTML;
         return new Response(
             $statusCode,
             [
-                'Content-Type' => 'text/html'
+                'Content-Type' => 'text/html; charset=utf-8'
             ],
             $html
         );
@@ -491,12 +491,13 @@ HTML;
     private function errorHandlerException(\Throwable $e): ResponseInterface
     {
         $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
+        $message = '<code>' . $this->escapeHtml($e->getMessage()) . '</code>';
 
         return $this->error(
             500,
             'Internal Server Error',
             'The requested page failed to load, please try again later.',
-            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code>' . $where . ': ' . $e->getMessage()
+            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code> with message ' . $message . $where . '.'
         );
     }
 
@@ -528,5 +529,17 @@ HTML;
             return \var_export($value, true);
         }
         return \is_object($value) ? \get_class($value) : \gettype($value);
+    }
+
+    private function escapeHtml(string $s): string
+    {
+        return \addcslashes(
+            \str_replace(
+                ' ',
+                '&nbsp;',
+                \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
+            ),
+            "\0..\032\\"
+        );
     }
 }
