@@ -106,8 +106,8 @@ class FilesystemHandlerTest extends TestCase
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
-        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
     public function testInvokeWithDoubleSlashWillReturnNotFoundResponse()
@@ -122,8 +122,8 @@ class FilesystemHandlerTest extends TestCase
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
-        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
     public function testInvokeWithPathWithLeadingSlashWillReturnNotFoundResponse()
@@ -138,8 +138,8 @@ class FilesystemHandlerTest extends TestCase
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
-        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
     public function testInvokeWithPathWithDotSegmentWillReturnNotFoundResponse()
@@ -154,8 +154,8 @@ class FilesystemHandlerTest extends TestCase
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
-        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
     public function testInvokeWithPathBelowRootWillReturnNotFoundResponse()
@@ -170,8 +170,8 @@ class FilesystemHandlerTest extends TestCase
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
-        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
     public function testInvokeWithBinaryPathWillReturnNotFoundResponse()
@@ -186,8 +186,8 @@ class FilesystemHandlerTest extends TestCase
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
-        $this->assertEquals('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("Error 404: Not Found\n", (string) $response->getBody());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
     public function testInvokeWithoutPathWillReturnResponseWithDirectoryListing()

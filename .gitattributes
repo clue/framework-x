@@ -1,3 +1,4 @@
+# exclude dev files from export to reduce archive download size
 /.gitattributes export-ignore
 /.github/workflows/ export-ignore
 /.gitignore export-ignore
@@ -7,3 +8,6 @@
 /phpunit.xml.dist export-ignore
 /phpunit.xml.legacy export-ignore
 /tests/ export-ignore
+
+# preserve original EOL with no automatic conversation
+* -text

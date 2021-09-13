@@ -343,13 +343,9 @@ class App
         $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
-                return $this->errorNotFound($request);
+                return self::errorNotFound($request);
             case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                $allowedMethods = $routeInfo[1];
-
-                return $this->errorMethodNotAllowed(
-                    $request->withAttribute('allowed', $allowedMethods)
-                );
+                return $this->errorMethodNotAllowed($routeInfo[1]);
             case \FastRoute\Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
@@ -422,60 +418,86 @@ class App
         }
     }
 
-    private function error(int $statusCode, ?string $info = null): ResponseInterface
+    private static function error(int $statusCode, string $title, string ...$info): ResponseInterface
     {
-        $response = new Response(
+        $nonce = \base64_encode(\random_bytes(16));
+        $info = \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info));
+        $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+<title>Error $statusCode: $title</title>
+<style nonce="$nonce">
+body { display: grid; justify-content: center; align-items: center; grid-auto-rows: minmax(min-content, calc(100vh - 4em)); margin: 2em; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
+@media (min-width: 700px) { main { display: grid; max-width: 700px; } }
+h1 { margin: 0 .5em 0 0; border-right: calc(2 * max(0px, min(100vw - 700px + 1px, 1px))) solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
+strong { color: #111827; font-size: 3em; }
+p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
+code { padding: 0 .3em; background-color: #f5f6f9; }
+</style>
+</head>
+<body>
+<main>
+<h1>$statusCode</h1>
+<strong>$title</strong>
+$info</main>
+</body>
+</html>
+
+HTML;
+
+        return new Response(
             $statusCode,
             [
-                'Content-Type' => 'text/html'
+                'Content-Type' => 'text/html; charset=utf-8',
+                'Content-Security-Policy' => "style-src 'nonce-$nonce'; img-src 'self'; default-src 'none'"
             ],
-            (string)$statusCode
+            $html
         );
-
-        $body = $response->getBody();
-        $body->seek(0, SEEK_END);
-
-        $reason = $response->getReasonPhrase();
-        if ($reason !== '') {
-            $body->write(' (' . $reason . ')');
-        }
-
-        if ($info !== null) {
-            $body->write(': ' . $info);
-        }
-        $body->write("\n");
-
-        return $response;
     }
 
     private function errorProxy(): ResponseInterface
     {
         return $this->error(
             400,
-            'Proxy requests not allowed'
+            'Proxy Requests Not Allowed',
+            'Please check your settings and retry.'
         );
     }
 
-    private function errorNotFound(): ResponseInterface
+    /**
+     * @internal
+     */
+    public static function errorNotFound(): ResponseInterface
     {
-        return $this->error(404);
+        return self::error(
+            404,
+            'Page Not Found',
+            'Please check the URL in the address bar and try again.'
+        );
     }
 
-    private function errorMethodNotAllowed(ServerRequestInterface $request): ResponseInterface
+    private function errorMethodNotAllowed(array $allowedMethods): ResponseInterface
     {
+        $methods = \implode('/', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods));
+
         return $this->error(
             405,
-            implode(', ', $request->getAttribute('allowed'))
-        )->withHeader('Allowed', implode(', ', $request->getAttribute('allowed')));
+            'Method Not Allowed',
+            'Please check the URL in the address bar and try again with ' . $methods . ' request.'
+        )->withHeader('Allow', implode(', ', $allowedMethods));
     }
 
     private function errorHandlerException(\Throwable $e): ResponseInterface
     {
-        $where = ' (<code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>)';
+        $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
+        $message = '<code>' . $this->escapeHtml($e->getMessage()) . '</code>';
 
         return $this->error(
             500,
-            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code>' . $where . ': ' . $e->getMessage()
+            'Internal Server Error',
+            'The requested page failed to load, please try again later.',
+            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code> with message ' . $message . $where . '.'
         );
     }
 
@@ -483,7 +505,9 @@ class App
     {
         return $this->error(
             500,
-            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>'
+            'Internal Server Error',
+            'The requested page failed to load, please try again later.',
+            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
         );
     }
 
@@ -491,7 +515,9 @@ class App
     {
         return $this->error(
             500,
-            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>'
+            'Internal Server Error',
+            'The requested page failed to load, please try again later.',
+            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
         );
     }
 
@@ -503,5 +529,17 @@ class App
             return \var_export($value, true);
         }
         return \is_object($value) ? \get_class($value) : \gettype($value);
+    }
+
+    private function escapeHtml(string $s): string
+    {
+        return \addcslashes(
+            \str_replace(
+                ' ',
+                '&nbsp;',
+                \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
+            ),
+            "\0..\032\\"
+        );
     }
 }
