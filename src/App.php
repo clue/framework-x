@@ -154,7 +154,12 @@ class App
             return $response;
         });
 
-        $socket = new SocketServer('127.0.0.1:8080', [], $this->loop);
+        $listen = \getenv('X_LISTEN');
+        if ($listen === false) {
+            $listen = '127.0.0.1:8080';
+        }
+
+        $socket = new SocketServer($listen, [], $this->loop);
         $http->listen($socket);
 
         $this->log('Listening on ' . \str_replace('tcp:', 'http:', $socket->getAddress()));

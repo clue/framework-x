@@ -55,6 +55,29 @@ You may be wondering how fast a pure PHP web server implementation could possibl
 In fact, in benchmarks this setup outperforms any traditional PHP stack by orders of magnitude.
 The answer: [Lightning fast!](https://framework-x.clue.engineering/#lightning-fast)
 
+### Listen address
+
+By default, X will listen on `http://127.0.0.1:8080`, i.e. you can connect to it on
+the local port `8080`, but you can not connect to it from outside the system it's
+running on. This is a common approach when running this behind a reverse proxy
+such as nginx, HAproxy, etc. for TLS termination as discussed in the next chapter.
+
+If you want to change the listen address, you can pass an IP and port
+combination through the `X_LISTEN` environment variable like this:
+
+```bash
+$ X_LISTEN=127.0.0.1:8081 php app.php
+```
+
+While not usually recommended, you can also expose this to the public by using
+the special `0.0.0.0` IPv4 address or `[::]` IPv6 address like this:
+
+```bash
+$ X_LISTEN=0.0.0.0:8080 php app.php
+```
+
+### More
+
 If you're going to use this in production, we still recommend running this
 behind a reverse proxy such as nginx, HAproxy, etc. for TLS termination
 (HTTPS support).
