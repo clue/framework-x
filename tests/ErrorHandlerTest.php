@@ -66,8 +66,20 @@ class ErrorHandlerTest extends TestCase
                 'Ünicöde!'
             ],
             [
-                ' spa  ces ',
-                '&nbsp;spa&nbsp;&nbsp;ces&nbsp;'
+                'just some text',
+                'just some text'
+            ],
+            [
+                ' trai ling ',
+                '&nbsp;trai ling&nbsp;'
+            ],
+            [
+                'excess    ive',
+                'excess &nbsp; &nbsp;ive'
+            ],
+            [
+                "new\n line",
+                'new\n line'
             ],
             [
                 'sla/she\'s\\n',

@@ -316,15 +316,15 @@ class FilesystemHandlerTest extends TestCase
             ],
             [
                 'hello world',
-                'hello&nbsp;world'
+                'hello world'
             ],
             [
                 'hello    world',
-                'hello&nbsp;&nbsp;&nbsp;&nbsp;world'
+                'hello &nbsp; &nbsp;world'
             ],
             [
                 ' hello world ',
-                '&nbsp;hello&nbsp;world&nbsp;'
+                '&nbsp;hello world&nbsp;'
             ],
             [
                 "hello\nworld",

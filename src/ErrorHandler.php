@@ -43,7 +43,7 @@ class ErrorHandler
     public function errorInvalidException(\Throwable $e): ResponseInterface
     {
         $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
-        $message = '<code>' . $this->escapeHtml($e->getMessage()) . '</code>';
+        $message = '<code>' . FilesystemHandler::escapeHtml($e->getMessage()) . '</code>';
 
         return $this->htmlResponse(
             500,
@@ -119,17 +119,5 @@ HTML;
             return \var_export($value, true);
         }
         return \is_object($value) ? \get_class($value) : \gettype($value);
-    }
-
-    private function escapeHtml(string $s): string
-    {
-        return \addcslashes(
-            \str_replace(
-                ' ',
-                '&nbsp;',
-                \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
-            ),
-            "\0..\032\\"
-        );
     }
 }

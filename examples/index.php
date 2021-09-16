@@ -127,7 +127,7 @@ $app->map(['GET', 'POST'], '/headers', function (ServerRequestInterface $request
 });
 
 $app->get('/error', function () {
-    throw new RuntimeException('Error');
+    throw new RuntimeException('Unable to load error');
 });
 $app->get('/error/null', function () {
     return null;
