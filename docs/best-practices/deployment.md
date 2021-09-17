@@ -76,12 +76,90 @@ the special `0.0.0.0` IPv4 address or `[::]` IPv6 address like this:
 $ X_LISTEN=0.0.0.0:8080 php app.php
 ```
 
+### Systemd
+
+So far, we're manually executing the application server on the command line and
+everything works fine for testing purposes. Once we're going to push this to
+production, we should use service monitoring to make sure the server will
+automatically restart after system reboot or failure.
+
+If we're using an Ubuntu- or Debian-based system, we can use the below
+instructions to configure `systemd` to manage our server process with just a
+few lines of configuration, which makes it super easy to run X in production.
+
+> ℹ️ **Why systemd?**
+>
+> There's a large variety of different tools and options to use for service
+> monitoring, depending on your particular needs. Among these is `systemd`, which
+> is very wide-spread on Linux-based systems and in fact comes preinstalled with
+> many of the large distributions. But we love choice. If you prefer different
+> tools, you can adjust the following instructions to suite your needs.
+
+First, start by creating a systemd unit file for our application. We can simply
+drop the following configuration template into the systemd configuration
+directory like this:
+
+```bash
+$ sudoedit /etc/systemd/system/acme.service
+```
+
+```
+[Unit]
+Description=ACME server
+
+[Service]
+ExecStart=/usr/bin/php /home/alice/projects/acme/index.php
+User=alice
+
+[Install]
+WantedBy=multi-user.target
+```
+
+In this example, we're assuming the system user `alice` has followed the
+[quickstart example](../getting-started/quickstart.md) and has successfully
+installed everything in the `/home/alice/projects/acme` directory. Make sure to
+adjust the system user and paths to your application directory and PHP binary
+to suite your needs.
+
+Once the new systemd unit file has been put in place, we need to activate the
+service unit once like this:
+
+```bash
+$ sudo systemctl enable acme.service
+```
+
+Finally, we need to instruct systemd to start our new unit:
+
+```bash
+$ sudo systemctl start acme.service
+```
+
+And that's it already! Systemd now monitors our application server and will
+automatically start, stop and restart the server application when needed. You
+can check the status at any time like this:
+
+```bash
+$ sudo systemctl status acme.service
+● acme.service - ACME server
+     Loaded: loaded (/etc/systemd/system/acme.service; enabled; vendor preset: enabled)
+     Active: active (running)
+[…]
+```
+
+This should be enough to get you started with systemd. If you want to learn more
+about systemd, check out the
+[official documentation](https://www.freedesktop.org/software/systemd/man/systemd.service.html).
+
+### Docker containers
+
+> ⚠️ **Documentation still under construction**
+>
+> You're seeing an early draft of the documentation that is still in the works.
+> Give feedback to help us prioritize.
+> We also welcome [contributors](../more/community.md) to help out!
+
 ### More
 
 If you're going to use this in production, we still recommend running this
 behind a reverse proxy such as nginx, HAproxy, etc. for TLS termination
 (HTTPS support).
-
-Additionally, you should use service monitoring to make sure the server will
-automatically restart after system reboot or failure. Docker containers or
-systemd unit files would be common solutions here.
