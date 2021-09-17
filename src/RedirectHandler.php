@@ -12,22 +12,32 @@ class RedirectHandler
 {
     private $target;
     private $code;
+    private $reason;
 
-    public function __construct(string $target, int $code = 302)
+    /** @var HtmlHandler */
+    private $html;
+
+    public function __construct(string $target, int $redirectStatusCode = 302)
     {
+        if ($redirectStatusCode < 300 || $redirectStatusCode === 304 || $redirectStatusCode >= 400) {
+            throw new \InvalidArgumentException('Invalid redirect status code given');
+        }
+
         $this->target = $target;
-        $this->code = $code;
+        $this->code = $redirectStatusCode;
+        $this->reason = \ucwords((new Response($redirectStatusCode))->getReasonPhrase()) ?: 'Redirect';
+        $this->html = new HtmlHandler();
     }
 
     public function __invoke(): ResponseInterface
     {
-        return new Response(
+        $url = $this->html->escape($this->target);
+
+        return $this->html->statusResponse(
             $this->code,
-            [
-                'Content-Type' => 'text/html',
-                'Location' => $this->target
-            ],
-            'See ' . $this->target . '...' . "\n"
-        );
+            'Redirecting to ' . $url,
+            $this->reason,
+            "<p>Redirecting to <a href=\"$url\"><code>$url</code></a>...</p>\n"
+        )->withHeader('Location', $this->target);
     }
 }

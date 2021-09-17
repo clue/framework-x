@@ -305,11 +305,13 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
 
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('/users', $response->getHeaderLine('Location'));
-        $this->assertEquals("See /users...\n", (string) $response->getBody());
+        $this->assertStringContainsString("<title>Redirecting to /users</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
     public function testRedirectMethodWithCustomRedirectCodeAddsGetRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode()
@@ -335,11 +337,13 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
 
         $this->assertEquals(307, $response->getStatusCode());
         $this->assertEquals('/users', $response->getHeaderLine('Location'));
-        $this->assertEquals("See /users...\n", (string) $response->getBody());
+        $this->assertStringContainsString("<title>Redirecting to /users</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
     public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost()
