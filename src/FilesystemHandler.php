@@ -44,9 +44,13 @@ class FilesystemHandler
      */
     private $defaultMimetype = 'text/plain';
 
+    /** @var ErrorHandler */
+    private $errorHandler;
+
     public function __construct(string $root)
     {
         $this->root = $root;
+        $this->errorHandler = new ErrorHandler();
     }
 
     public function __invoke(ServerRequestInterface $request)
@@ -124,7 +128,7 @@ class FilesystemHandler
                 \file_get_contents($path)
             );
         } else {
-            return App::errorNotFound();
+            return $this->errorHandler->requestNotFound();
         }
     }
 

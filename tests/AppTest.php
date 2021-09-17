@@ -439,7 +439,10 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(400, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 400: Proxy Requests Not Allowed</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage()
@@ -457,9 +460,9 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertStringMatchesFormat('style-src \'nonce-%s\'; img-src \'self\'; default-src \'none\'', $response->getHeaderLine('Content-Security-Policy'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
-        $this->assertStringMatchesFormat("%a<style nonce=\"%s\">\n%a", (string) $response->getBody());
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again.</p>\n", (string) $response->getBody());
     }
 
@@ -478,8 +481,10 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('GET', $response->getHeaderLine('Allow'));
         $this->assertStringContainsString("<title>Error 405: Method Not Allowed</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code> request.</p>\n", (string) $response->getBody());
@@ -502,8 +507,10 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('GET, HEAD, POST', $response->getHeaderLine('Allow'));
         $this->assertStringContainsString("<title>Error 405: Method Not Allowed</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code>/<code>HEAD</code>/<code>POST</code> request.</p>\n", (string) $response->getBody());
@@ -740,54 +747,13 @@ class AppTest extends TestCase
         $this->assertEquals("Hello alice\n", (string) $response->getBody());
     }
 
-    public function provideExceptionMessage()
-    {
-        return [
-            [
-                'Foo',
-                'Foo'
-            ],
-            [
-                'Ünicöde!',
-                'Ünicöde!'
-            ],
-            [
-                ' spa  ces ',
-                '&nbsp;spa&nbsp;&nbsp;ces&nbsp;'
-            ],
-            [
-                'sla/she\'s\\n',
-                'sla/she\'s\\\\n'
-            ],
-            [
-                "hello\r\nworld",
-                'hello\r\nworld'
-            ],
-            [
-                '"with"<html>',
-                '"with"&lt;html&gt;'
-            ],
-            [
-                "bin\0\1\2\3\4\5\6\7ary",
-                "bin��������ary"
-            ],
-            [
-                utf8_decode("hellö!"),
-                "hell�!"
-            ]
-        ];
-    }
-
-    /**
-     * @dataProvider provideExceptionMessage
-     */
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException(string $in, string $expected)
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException()
     {
         $app = new App();
 
         $line = __LINE__ + 2;
-        $app->get('/users', function () use ($in) {
-            throw new \RuntimeException($in);
+        $app->get('/users', function () {
+            throw new \RuntimeException('Foo');
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -801,21 +767,20 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>$expected</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    /**
-     * @dataProvider provideExceptionMessage
-     */
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException(string $in, string $expected)
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
     {
         $app = new App();
 
         $line = __LINE__ + 2;
-        $app->get('/users', function () use ($in) {
-            return \React\Promise\reject(new \RuntimeException($in));
+        $app->get('/users', function () {
+            return \React\Promise\reject(new \RuntimeException('Foo'));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -837,9 +802,11 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>$expected</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
@@ -869,21 +836,20 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>React\Promise\RejectedPromise</code>.</p>\n", (string) $response->getBody());
     }
 
-    /**
-     * @dataProvider provideExceptionMessage
-     */
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise(string $in, string $expected)
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise()
     {
         $app = new App();
 
         $line = __LINE__ + 2;
-        $app->get('/users', function () use ($in) {
-            yield \React\Promise\reject(new \RuntimeException($in));
+        $app->get('/users', function () {
+            yield \React\Promise\reject(new \RuntimeException('Foo'));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -905,22 +871,21 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>$expected</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    /**
-     * @dataProvider provideExceptionMessage
-     */
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding(string $in, string $expected)
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding()
     {
         $app = new App();
 
         $line = __LINE__ + 3;
-        $app->get('/users', function () use ($in) {
+        $app->get('/users', function () {
             yield \React\Promise\resolve(null);
-            throw new \RuntimeException($in);
+            throw new \RuntimeException('Foo');
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -942,9 +907,11 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>$expected</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull()
@@ -975,6 +942,8 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
@@ -1007,60 +976,19 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Expected request handler to yield <code>React\Promise\PromiseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function provideInvalidReturnValue()
-    {
-        return [
-            [
-                null,
-                'null',
-            ],
-            [
-                'hello',
-                'string'
-            ],
-            [
-                42,
-                '42'
-            ],
-            [
-                1.0,
-                '1.0'
-            ],
-            [
-                false,
-                'false'
-            ],
-            [
-                [],
-                'array'
-            ],
-            [
-                (object)[],
-                'stdClass'
-            ],
-            [
-                tmpfile(),
-                'resource'
-            ]
-        ];
-    }
-
-    /**
-     * @dataProvider provideInvalidReturnValue
-     * @param mixed $value
-     * @param string $name
-     */
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue($value, $name)
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue()
     {
         $app = new App();
 
-        $app->get('/users', function () use ($value) {
-            return $value;
+        $app->get('/users', function () {
+            return null;
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1074,22 +1002,19 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>$name</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    /**
-     * @dataProvider provideInvalidReturnValue
-     * @param mixed $value
-     * @param string $name
-     */
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue($value, $name)
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue()
     {
         $app = new App();
 
-        $app->get('/users', function () use ($value) {
-            return \React\Promise\resolve($value);
+        $app->get('/users', function () {
+            return \React\Promise\resolve(null);
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1111,9 +1036,46 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>$name</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValueAfterYielding()
+    {
+        $app = new App();
+
+        $app->get('/users', function () {
+            yield \React\Promise\resolve(true);
+            return null;
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $promise = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
     public function testLogRequestResponsePrintsRequestLogWithCurrentDateAndTime()
