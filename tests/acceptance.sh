@@ -17,7 +17,7 @@ out=$(curl -v $base/ 2>&1);         match "HTTP/.* 200" && match -iv "Content-Ty
 out=$(curl -v $base/invalid 2>&1);  match "HTTP/.* 404" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 out=$(curl -v $base// 2>&1);        match "HTTP/.* 404"
 out=$(curl -v $base/ 2>&1 -X POST); match "HTTP/.* 405"
-out=$(curl -v $base/error 2>&1);        match "HTTP/.* 500" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+out=$(curl -v $base/error 2>&1);        match "HTTP/.* 500" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]" && match "<code>Unable to load error</code>"
 out=$(curl -v $base/error/null 2>&1);   match "HTTP/.* 500" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 
 out=$(curl -v $base/uri 2>&1);                          match "HTTP/.* 200" && match "$base/uri"

@@ -25,6 +25,9 @@ class App
     private $router;
     private $routeDispatcher;
 
+    /** @var ErrorHandler */
+    private $errorHandler;
+
     /**
      * Instantiate new X application
      *
@@ -52,11 +55,12 @@ class App
      */
     public function __construct($loop = null, callable ...$middleware)
     {
+        $this->errorHandler = new ErrorHandler();
         if (\is_callable($loop)) {
             \array_unshift($middleware, $loop);
             $loop = null;
         } elseif (\func_num_args() !== 0 && !$loop instanceof LoopInterface) {
-            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $this->describeType($loop) . ' given');
+            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $this->errorHandler->describeType($loop) . ' given');
         }
         $this->loop = $loop ?? Loop::get();
         $this->middleware = $middleware;
@@ -308,7 +312,7 @@ class App
         try {
             $response = $handler($request);
         } catch (\Throwable $e) {
-            return $this->errorHandlerException($e);
+            return $this->errorHandler->errorInvalidException($e);
         }
 
         if ($response instanceof \Generator) {
@@ -320,25 +324,25 @@ class App
         } elseif ($response instanceof PromiseInterface) {
             return $response->then(function ($response) {
                 if (!$response instanceof ResponseInterface) {
-                    return $this->errorHandlerResponse($response);
+                    return $this->errorHandler->errorInvalidResponse($response);
                 }
                 return $response;
             }, function ($e) {
                 if ($e instanceof \Throwable) {
-                    return $this->errorHandlerException($e);
+                    return $this->errorHandler->errorInvalidException($e);
                 } else {
-                    return $this->errorHandlerResponse(\React\Promise\reject($e));
+                    return $this->errorHandler->errorInvalidResponse(\React\Promise\reject($e));
                 }
             });
         } else {
-            return $this->errorHandlerResponse($response);
+            return $this->errorHandler->errorInvalidResponse($response);
         }
     }
 
     private function routeRequest(ServerRequestInterface $request)
     {
         if (\strpos($request->getRequestTarget(), '://') !== false || $request->getMethod() === 'CONNECT') {
-            return $this->errorProxy($request);
+            return $this->errorHandler->requestProxyUnsupported($request);
         }
 
         if ($this->routeDispatcher === null) {
@@ -348,9 +352,9 @@ class App
         $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
-                return self::errorNotFound($request);
+                return $this->errorHandler->requestNotFound($request);
             case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                return $this->errorMethodNotAllowed($routeInfo[1]);
+                return $this->errorHandler->requestMethodNotAllowed($routeInfo[1]);
             case \FastRoute\Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
@@ -376,7 +380,7 @@ class App
             $step = $generator->current();
             if (!$step instanceof PromiseInterface) {
                 $generator = $next = null;
-                $deferred->resolve($this->errorHandlerCoroutine($step));
+                $deferred->resolve($this->errorHandler->errorInvalidCoroutine($step));
                 return;
             }
 
@@ -421,130 +425,5 @@ class App
         } else {
             fwrite(defined('STDERR') ? STDERR : fopen('php://stderr', 'a'), $log);
         }
-    }
-
-    private static function error(int $statusCode, string $title, string ...$info): ResponseInterface
-    {
-        $nonce = \base64_encode(\random_bytes(16));
-        $info = \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info));
-        $html = <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-<title>Error $statusCode: $title</title>
-<style nonce="$nonce">
-body { display: grid; justify-content: center; align-items: center; grid-auto-rows: minmax(min-content, calc(100vh - 4em)); margin: 2em; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
-@media (min-width: 700px) { main { display: grid; max-width: 700px; } }
-h1 { margin: 0 .5em 0 0; border-right: calc(2 * max(0px, min(100vw - 700px + 1px, 1px))) solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
-strong { color: #111827; font-size: 3em; }
-p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
-code { padding: 0 .3em; background-color: #f5f6f9; }
-</style>
-</head>
-<body>
-<main>
-<h1>$statusCode</h1>
-<strong>$title</strong>
-$info</main>
-</body>
-</html>
-
-HTML;
-
-        return new Response(
-            $statusCode,
-            [
-                'Content-Type' => 'text/html; charset=utf-8',
-                'Content-Security-Policy' => "style-src 'nonce-$nonce'; img-src 'self'; default-src 'none'"
-            ],
-            $html
-        );
-    }
-
-    private function errorProxy(): ResponseInterface
-    {
-        return $this->error(
-            400,
-            'Proxy Requests Not Allowed',
-            'Please check your settings and retry.'
-        );
-    }
-
-    /**
-     * @internal
-     */
-    public static function errorNotFound(): ResponseInterface
-    {
-        return self::error(
-            404,
-            'Page Not Found',
-            'Please check the URL in the address bar and try again.'
-        );
-    }
-
-    private function errorMethodNotAllowed(array $allowedMethods): ResponseInterface
-    {
-        $methods = \implode('/', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods));
-
-        return $this->error(
-            405,
-            'Method Not Allowed',
-            'Please check the URL in the address bar and try again with ' . $methods . ' request.'
-        )->withHeader('Allow', implode(', ', $allowedMethods));
-    }
-
-    private function errorHandlerException(\Throwable $e): ResponseInterface
-    {
-        $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
-        $message = '<code>' . $this->escapeHtml($e->getMessage()) . '</code>';
-
-        return $this->error(
-            500,
-            'Internal Server Error',
-            'The requested page failed to load, please try again later.',
-            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code> with message ' . $message . $where . '.'
-        );
-    }
-
-    private function errorHandlerResponse($value): ResponseInterface
-    {
-        return $this->error(
-            500,
-            'Internal Server Error',
-            'The requested page failed to load, please try again later.',
-            'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
-        );
-    }
-
-    private function errorHandlerCoroutine($value): ResponseInterface
-    {
-        return $this->error(
-            500,
-            'Internal Server Error',
-            'The requested page failed to load, please try again later.',
-            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
-        );
-    }
-
-    private function describeType($value): string
-    {
-        if ($value === null) {
-            return 'null';
-        } elseif (\is_scalar($value) && !\is_string($value)) {
-            return \var_export($value, true);
-        }
-        return \is_object($value) ? \get_class($value) : \gettype($value);
-    }
-
-    private function escapeHtml(string $s): string
-    {
-        return \addcslashes(
-            \str_replace(
-                ' ',
-                '&nbsp;',
-                \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
-            ),
-            "\0..\032\\"
-        );
     }
 }

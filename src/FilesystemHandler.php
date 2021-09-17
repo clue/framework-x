@@ -44,9 +44,13 @@ class FilesystemHandler
      */
     private $defaultMimetype = 'text/plain';
 
+    /** @var ErrorHandler */
+    private $errorHandler;
+
     public function __construct(string $root)
     {
         $this->root = $root;
+        $this->errorHandler = new ErrorHandler();
     }
 
     public function __invoke(ServerRequestInterface $request)
@@ -68,7 +72,7 @@ class FilesystemHandler
                 );
             }
 
-            $response = '<strong>' . $this->escapeHtml($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
+            $response = '<strong>' . self::escapeHtml($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
 
             if ($local !== '') {
                 $response .= '    <li><a href="../">../</a></li>' . "\n";
@@ -81,7 +85,7 @@ class FilesystemHandler
                 }
 
                 $dir = \is_dir($path . '/' . $file) ? '/' : '';
-                $response .= '    <li><a href="' . \rawurlencode($file) . $dir . '">' . $this->escapeHtml($file) . $dir . '</a></li>' . "\n";
+                $response .= '    <li><a href="' . \rawurlencode($file) . $dir . '">' . self::escapeHtml($file) . $dir . '</a></li>' . "\n";
             }
             $response .= '</ul>' . "\n";
 
@@ -124,16 +128,17 @@ class FilesystemHandler
                 \file_get_contents($path)
             );
         } else {
-            return App::errorNotFound();
+            return $this->errorHandler->requestNotFound();
         }
     }
 
-    private function escapeHtml(string $s): string
+    /** @internal */
+    public static function escapeHtml(string $s): string
     {
         return \addcslashes(
-            \str_replace(
-                ' ',
-                '&nbsp;',
+            \preg_replace(
+                '/(^| ) |(?: $)/',
+                '$1&nbsp;',
                 \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
             ),
             "\0..\032\\"
