@@ -16,7 +16,7 @@ class AppMiddlewareTest extends TestCase
 {
     public function testGetMethodWithMiddlewareAddsGetRouteOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -33,7 +33,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testHeadMethodWithMiddlewareAddsHeadRouteOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -50,7 +50,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testPostMethodWithMiddlewareAddsPostRouteOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -67,7 +67,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testPutMethodWithMiddlewareAddsPutRouteOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -84,7 +84,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testPatchMethodWithMiddlewareAddsPatchRouteOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -101,7 +101,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testDeleteMethodWithMiddlewareAddsDeleteRouteOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -118,7 +118,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testOptionsMethodWithMiddlewareAddsOptionsRouteOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -135,7 +135,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testAnyMethodWithMiddlewareAddsAllHttpMethodsOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -152,7 +152,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMapMethodWithMiddlewareAddsGivenMethodsOnRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function () {};
         $controller = function () { };
@@ -169,7 +169,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsResponseFromRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request);
@@ -203,7 +203,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextWithModifiedRequestReturnsResponseFromRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request->withAttribute('name', 'Alice'));
@@ -237,7 +237,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsResponseModifiedInMiddlewareFromRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $response = $next($request);
@@ -272,7 +272,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsDeferredResponseModifiedInMiddlewareFromRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $promise = $next($request);
@@ -317,7 +317,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsCoroutineResponseModifiedInMiddlewareFromRouter()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $generator = $next($request);
@@ -364,7 +364,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextWhichThrowsExceptionReturnsInternalServerErrorResponse()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request);
@@ -395,7 +395,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareWhichThrowsExceptionReturnsInternalServerErrorResponse()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 2;
         $middleware = function (ServerRequestInterface $request, callable $next) {
@@ -424,7 +424,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsResponseFromController()
     {
-        $app = new App(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             return $next($request);
         });
 
@@ -454,7 +454,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextWithModifiedRequestWillBeUsedForRouting()
     {
-        $app = new App(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             return $next($request->withUri($request->getUri()->withPath('/users')));
         });
 
@@ -484,7 +484,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsModifiedResponseWhenModifyingResponseFromRouter()
     {
-        $app = new App(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             $response = $next($request);
             assert($response instanceof ResponseInterface);
 
@@ -515,7 +515,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
     {
-        $app = new App(function () {
+        $app = $this->createAppWithoutLogger(function () {
             return new Response(
                 200,
                 [
@@ -548,7 +548,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareReturnsPromiseWhichResolvesWithResponseWithoutCallingNextDoesNotCallRouter()
     {
-        $app = new App(function () {
+        $app = $this->createAppWithoutLogger(function () {
             return resolve(new Response(
                 200,
                 [
@@ -589,7 +589,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingPromiseWhichResolvesToResponseFromRouter()
     {
-        $app = new App(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             return $next($request)->then(function (ResponseInterface $response) {
                 return $response->withHeader('Content-Type', 'text/html');
             });
@@ -627,7 +627,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingCoroutineWhichYieldsResponseFromRouter()
     {
-        $app = new App(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             $generator = $next($request);
             assert($generator instanceof \Generator);
 
@@ -667,5 +667,23 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    private function createAppWithoutLogger(callable ...$middleware): App
+    {
+        $app = new App(...$middleware);
+
+        $ref = new \ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $middleware = $ref->getValue($app);
+
+        $ref = new \ReflectionProperty($middleware, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($middleware);
+
+        unset($handlers[0]);
+        $ref->setValue($middleware, array_values($handlers));
+
+        return $app;
     }
 }

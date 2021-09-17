@@ -62,8 +62,14 @@ class App
         $this->loop = $loop ?? Loop::get();
         $this->router = new RouteHandler();
 
-        // new MiddlewareHandler([$errorHandler, ...$middleware, $routeHandler])
+        // new MiddlewareHandler([$accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
         \array_unshift($middleware, $errorHandler);
+
+        // only log for built-in webserver and PHP development webserver by default, others have their own access log
+        if (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') {
+            \array_unshift($middleware, new AccessLogHandler());
+        }
+
         $middleware[] = $this->router;
         $this->handler = new MiddlewareHandler($middleware);
         $this->sapi = new SapiHandler();
@@ -133,17 +139,7 @@ class App
     private function runLoop()
     {
         $http = new HttpServer($this->loop, function (ServerRequestInterface $request) {
-            $response = $this->handleRequest($request);
-
-            if ($response instanceof ResponseInterface) {
-                $this->sapi->logRequestResponse($request, $response);
-            } elseif ($response instanceof PromiseInterface) {
-                $response->then(function (ResponseInterface $response) use ($request) {
-                    $this->sapi->logRequestResponse($request, $response);
-                });
-            }
-
-            return $response;
+            return $this->handleRequest($request);
         });
 
         $listen = \getenv('X_LISTEN');
@@ -176,11 +172,9 @@ class App
         $response = $this->handleRequest($request);
 
         if ($response instanceof ResponseInterface) {
-            $this->sapi->logRequestResponse($request, $response);
             $this->sapi->sendResponse($response);
         } elseif ($response instanceof PromiseInterface) {
-            $response->then(function (ResponseInterface $response) use ($request) {
-                $this->sapi->logRequestResponse($request, $response);
+            $response->then(function (ResponseInterface $response) {
                 $this->sapi->sendResponse($response);
             });
         }
