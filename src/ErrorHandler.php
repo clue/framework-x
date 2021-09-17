@@ -2,15 +2,22 @@
 
 namespace FrameworkX;
 
-use React\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
-use React\Http\Message\Response;
+use React\Promise\PromiseInterface;
 
 /**
  * @internal
  */
 class ErrorHandler
 {
+    /** @var Htmlhandler */
+    private $html;
+
+    public function __construct()
+    {
+        $this->html = new HtmlHandler();
+    }
+
     public function requestNotFound(): ResponseInterface
     {
         return $this->htmlResponse(
@@ -43,7 +50,7 @@ class ErrorHandler
     public function errorInvalidException(\Throwable $e): ResponseInterface
     {
         $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
-        $message = '<code>' . FilesystemHandler::escapeHtml($e->getMessage()) . '</code>';
+        $message = '<code>' . $this->html->escape($e->getMessage()) . '</code>';
 
         return $this->htmlResponse(
             500,
@@ -73,41 +80,13 @@ class ErrorHandler
         );
     }
 
-    private static function htmlResponse(int $statusCode, string $title, string ...$info): ResponseInterface
+    private function htmlResponse(int $statusCode, string $title, string ...$info): ResponseInterface
     {
-        $nonce = \base64_encode(\random_bytes(16));
-        $info = \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info));
-        $html = <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-<title>Error $statusCode: $title</title>
-<style nonce="$nonce">
-body { display: grid; justify-content: center; align-items: center; grid-auto-rows: minmax(min-content, calc(100vh - 4em)); margin: 2em; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
-@media (min-width: 700px) { main { display: grid; max-width: 700px; } }
-h1 { margin: 0 .5em 0 0; border-right: calc(2 * max(0px, min(100vw - 700px + 1px, 1px))) solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
-strong { color: #111827; font-size: 3em; }
-p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
-code { padding: 0 .3em; background-color: #f5f6f9; }
-</style>
-</head>
-<body>
-<main>
-<h1>$statusCode</h1>
-<strong>$title</strong>
-$info</main>
-</body>
-</html>
-
-HTML;
-
-        return new Response(
+        return $this->html->statusResponse(
             $statusCode,
-            [
-                'Content-Type' => 'text/html; charset=utf-8',
-                'Content-Security-Policy' => "style-src 'nonce-$nonce'; img-src 'self'; default-src 'none'"
-            ],
-            $html
+            'Error ' . $statusCode . ': ' .$title,
+            $title,
+            \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info))
         );
     }
 
