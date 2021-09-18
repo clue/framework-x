@@ -4,9 +4,337 @@ namespace FrameworkX\Tests;
 
 use FrameworkX\ErrorHandler;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use React\Http\Message\Response;
+use React\Http\Message\ServerRequest;
+use React\Promise\PromiseInterface;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 class ErrorHandlerTest extends TestCase
 {
+    public function testInvokeWithHandlerReturningResponseReturnsSameResponse()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response();
+
+        $ret = $handler($request, function () use ($response) { return $response; });
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testInvokeWithHandlerReturningPromiseResolvingWithResponseReturnsPromiseResolvingWithSameResponse()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response();
+
+        $promise = $handler($request, function () use ($response) { return resolve($response); });
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $ret = null;
+        $promise->then(function ($value) use (&$ret) {
+            $ret = $value;
+        });
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseReturnsGeneratorYieldingSameResponse()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response();
+
+        $generator = $handler($request, function () use ($response) {
+            if (false) {
+                yield;
+            }
+            return $response;
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $ret = $generator->getReturn();
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorYieldingResolvedPromiseThenReturningResponseReturnsGeneratorYieldingSameResponse()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response();
+
+        $generator = $handler($request, function () use ($response) {
+            yield resolve(null);
+
+            return $response;
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $generator->next();
+        $ret = $generator->getReturn();
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorYieldingRejectedPromiseInTryCatchThenReturningResponseReturnsGeneratorYieldingSameResponse()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response();
+
+        $generator = $handler($request, function () use ($response) {
+            try {
+                yield reject(new \RuntimeException());
+            } catch (\RuntimeException $e) {
+                return $response;
+            }
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $promise = $generator->current();
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+        $e = null;
+        $promise->then(null, function ($reason) use (&$e) {
+            $e = $reason;
+        });
+
+        /** @var \RuntimeException $e */
+        $this->assertInstanceOf(\RuntimeException::class, $e);
+        $generator->throw($e);
+        $ret = $generator->getReturn();
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testInvokeWithHandlerThrowingExceptionReturnsError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $response = $handler($request, function () {
+            throw new \RuntimeException();
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningPromiseRejectingWithExceptionReturnsPromiseResolvingWithError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $promise = $handler($request, function () {
+            return reject(new \RuntimeException());
+        });
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorThrowingExceptionReturnsGeneratorYieldingError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $generator = $handler($request, function () {
+            if (false) {
+                yield;
+            }
+            throw new \RuntimeException();
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $response = $generator->getReturn();
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorYieldingPromiseThenThrowingExceptionReturnsGeneratorYieldingError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $generator = $handler($request, function () {
+            yield resolve(null);
+            throw new \RuntimeException();
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $generator->next();
+        $response = $generator->getReturn();
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorYieldingPromiseRejectingWithExceptionReturnsGeneratorYieldingError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $generator = $handler($request, function () {
+            yield reject(new \RuntimeException());
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $promise = $generator->current();
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+        $e = null;
+        $promise->then(null, function ($reason) use (&$e) {
+            $e = $reason;
+        });
+
+        /** @var \RuntimeException $e */
+        $this->assertInstanceOf(\RuntimeException::class, $e);
+        $generator->throw($e);
+        $response = $generator->getReturn();
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningNullReturnsError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $response = $handler($request, function () {
+            return null;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningPromiseResolvingWithNullReturnsPromiseResolvingWithError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $promise = $handler($request, function () {
+            return resolve(null);
+        });
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningPromiseRejectingWithNullReturnsPromiseResolvingWithError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $promise = $handler($request, function () {
+            return reject(null);
+        });
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorYieldingNullReturnsGeneratorYieldingError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $generator = $handler($request, function () {
+            yield null;
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $response = $generator->getReturn();
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    public function testInvokeWithHandlerReturningGeneratorReturningNullReturnsGeneratorYieldingError500Response()
+    {
+        $handler = new ErrorHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $generator = $handler($request, function () {
+            if (false) {
+                yield;
+            }
+            return null;
+        });
+
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $response = $generator->getReturn();
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
     public function testRequestNotFoundReturnsError404()
     {
         $handler = new ErrorHandler();

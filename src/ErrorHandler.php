@@ -3,6 +3,7 @@
 namespace FrameworkX;
 
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\PromiseInterface;
 
 /**
@@ -17,6 +18,85 @@ class ErrorHandler
     {
         $this->html = new HtmlHandler();
     }
+
+    /**
+     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>|\Generator
+     *     Returns a response, a Promise which eventually fulfills with a
+     *     response or a Generator which eventually returns a response. This
+     *     method never throws or resolves a rejected promise. If the next
+     *     handler fails to return a valid response, it will be turned into a
+     *     valid error response before returning.
+     */
+    public function __invoke(ServerRequestInterface $request, callable $next)
+    {
+        try {
+            $response = $next($request);
+        } catch (\Throwable $e) {
+            return $this->errorInvalidException($e);
+        }
+
+        if ($response instanceof ResponseInterface) {
+            return $response;
+        } elseif ($response instanceof PromiseInterface) {
+            return $response->then(function ($response) {
+                if ($response instanceof ResponseInterface) {
+                    return $response;
+                } else {
+                    return $this->errorInvalidResponse($response);
+                }
+            }, function ($e) {
+                if ($e instanceof \Throwable) {
+                    return $this->errorInvalidException($e);
+                } else {
+                    return $this->errorInvalidResponse(\React\Promise\reject($e));
+                }
+            });
+        } elseif ($response instanceof \Generator) {
+            return $this->coroutine($response);
+        } else {
+            return $this->errorInvalidResponse($response);
+        }
+    }
+
+    private function coroutine(\Generator $generator): \Generator
+    {
+        do {
+            try {
+                if (!$generator->valid()) {
+                    $response = $generator->getReturn();
+                    if ($response instanceof ResponseInterface) {
+                        return $response;
+                    } else {
+                        return $this->errorInvalidResponse($response);
+                    }
+                }
+            } catch (\Throwable $e) {
+                return $this->errorInvalidException($e);
+            }
+
+            $promise = $generator->current();
+            if (!$promise instanceof PromiseInterface) {
+                return $this->errorInvalidCoroutine($promise);
+            }
+
+            try {
+                $next = yield $promise;
+            } catch (\Throwable $e) {
+                try {
+                    $generator->throw($e);
+                    continue;
+                } catch (\Throwable $e) {
+                    return $this->errorInvalidException($e);
+                }
+            }
+
+            try {
+                $generator->send($next);
+            } catch (\Throwable $e) {
+                return $this->errorInvalidException($e);
+            }
+        } while (true);
+    } // @codeCoverageIgnore
 
     public function requestNotFound(): ResponseInterface
     {
