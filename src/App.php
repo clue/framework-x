@@ -310,7 +310,11 @@ class App
 
         $response = $handler($request);
         if ($response instanceof \Generator) {
-            $response = $this->coroutine($response);
+            if ($response->valid()) {
+                $response = $this->coroutine($response);
+            } else {
+                $response = $response->getReturn();
+            }
         }
 
         return $response;
