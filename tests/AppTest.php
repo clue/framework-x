@@ -2,8 +2,8 @@
 
 namespace FrameworkX\Tests;
 
-use FastRoute\RouteCollector;
 use FrameworkX\App;
+use FrameworkX\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -150,8 +150,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['GET'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -164,8 +164,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['HEAD'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['HEAD'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -178,8 +178,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['POST'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['POST'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -192,8 +192,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['PUT'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['PUT'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -206,8 +206,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['PATCH'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['PATCH'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -220,8 +220,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['DELETE'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['DELETE'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -234,8 +234,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['OPTIONS'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['OPTIONS'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -248,8 +248,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -262,8 +262,8 @@ class AppTest extends TestCase
     {
         $app = new App();
 
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET', 'POST'], '/', $this->anything());
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['GET', 'POST'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
         $ref->setAccessible(true);
@@ -277,8 +277,8 @@ class AppTest extends TestCase
         $app = new App();
 
         $handler = null;
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));
@@ -306,8 +306,8 @@ class AppTest extends TestCase
         $app = new App();
 
         $handler = null;
-        $router = $this->createMock(RouteCollector::class);
-        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
+        $router = $this->createMock(RouteHandler::class);
+        $router->expects($this->once())->method('map')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));

@@ -2,10 +2,6 @@
 
 namespace FrameworkX;
 
-use FastRoute\DataGenerator\GroupCountBased as RouteGenerator;
-use FastRoute\Dispatcher\GroupCountBased as RouteDispatcher;
-use FastRoute\RouteCollector;
-use FastRoute\RouteParser\Std as RouteParser;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
@@ -22,11 +18,12 @@ class App
 {
     private $loop;
     private $middleware;
-    private $router;
-    private $routeDispatcher;
 
     /** @var ErrorHandler */
     private $errorHandler;
+
+    /** @var RouteHandler */
+    private $router;
 
     /**
      * Instantiate new X application
@@ -65,7 +62,7 @@ class App
 
         $this->loop = $loop ?? Loop::get();
         $this->middleware = $middleware;
-        $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());
+        $this->router = new RouteHandler();
     }
 
     public function get(string $route, callable $handler, callable ...$handlers): void
@@ -110,12 +107,7 @@ class App
 
     public function map(array $methods, string $route, callable $handler, callable ...$handlers): void
     {
-        if ($handlers) {
-            $handler = new MiddlewareHandler(array_merge([$handler], $handlers));
-        }
-
-        $this->routeDispatcher = null;
-        $this->router->addRoute($methods, $route, $handler);
+        $this->router->map($methods, $route, $handler, ...$handlers);
     }
 
     public function redirect($route, $target, $code = 302)
@@ -303,10 +295,7 @@ class App
      */
     private function handleRequest(ServerRequestInterface $request)
     {
-        $handler = function (ServerRequestInterface $request) {
-            return $this->routeRequest($request);
-        };
-        $handler = new MiddlewareHandler(\array_merge([$this->errorHandler], $this->middleware, [$handler]));
+        $handler = new MiddlewareHandler(\array_merge([$this->errorHandler], $this->middleware, [$this->router]));
 
         $response = $handler($request);
         if ($response instanceof \Generator) {
@@ -319,34 +308,6 @@ class App
 
         return $response;
     }
-
-    private function routeRequest(ServerRequestInterface $request)
-    {
-        if (\strpos($request->getRequestTarget(), '://') !== false || $request->getMethod() === 'CONNECT') {
-            return $this->errorHandler->requestProxyUnsupported($request);
-        }
-
-        if ($this->routeDispatcher === null) {
-            $this->routeDispatcher = new RouteDispatcher($this->router->getData());
-        }
-
-        $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
-        switch ($routeInfo[0]) {
-            case \FastRoute\Dispatcher::NOT_FOUND:
-                return $this->errorHandler->requestNotFound($request);
-            case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                return $this->errorHandler->requestMethodNotAllowed($routeInfo[1]);
-            case \FastRoute\Dispatcher::FOUND:
-                $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
-
-                foreach ($vars as $key => $value) {
-                    $request = $request->withAttribute($key, rawurldecode($value));
-                }
-
-                return $handler($request);
-        }
-    } // @codeCoverageIgnore
 
     private function coroutine(\Generator $generator): PromiseInterface
     {
