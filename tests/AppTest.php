@@ -3,6 +3,8 @@
 namespace FrameworkX\Tests;
 
 use FrameworkX\App;
+use FrameworkX\ErrorHandler;
+use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -53,11 +55,19 @@ class AppTest extends TestCase
 
         $this->assertSame($loop, $ret);
 
-        $ref = new ReflectionProperty($app, 'middleware');
+        $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
-        $ret = $ref->getValue($app);
+        $handler = $ref->getValue($app);
 
-        $this->assertSame([$middleware], $ret);
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        $this->assertCount(3, $handlers);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[0]);
+        $this->assertSame($middleware, $handlers[1]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
     public function testConstructWithInvalidLoopThrows()

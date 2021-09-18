@@ -17,10 +17,9 @@ use React\Stream\ReadableStreamInterface;
 class App
 {
     private $loop;
-    private $middleware;
 
-    /** @var ErrorHandler */
-    private $errorHandler;
+    /** @var MiddlewareHandler */
+    private $handler;
 
     /** @var RouteHandler */
     private $router;
@@ -52,17 +51,21 @@ class App
      */
     public function __construct($loop = null, callable ...$middleware)
     {
-        $this->errorHandler = new ErrorHandler();
+        $errorHandler = new ErrorHandler();
         if (\is_callable($loop)) {
             \array_unshift($middleware, $loop);
             $loop = null;
         } elseif (\func_num_args() !== 0 && !$loop instanceof LoopInterface) {
-            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $this->errorHandler->describeType($loop) . ' given');
+            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $errorHandler->describeType($loop) . ' given');
         }
 
         $this->loop = $loop ?? Loop::get();
-        $this->middleware = $middleware;
         $this->router = new RouteHandler();
+
+        // new MiddlewareHandler([$errorHandler, ...$middleware, $routeHandler])
+        \array_unshift($middleware, $errorHandler);
+        $middleware[] = $this->router;
+        $this->handler = new MiddlewareHandler($middleware);
     }
 
     public function get(string $route, callable $handler, callable ...$handlers): void
@@ -295,9 +298,7 @@ class App
      */
     private function handleRequest(ServerRequestInterface $request)
     {
-        $handler = new MiddlewareHandler(\array_merge([$this->errorHandler], $this->middleware, [$this->router]));
-
-        $response = $handler($request);
+        $response = ($this->handler)($request);
         if ($response instanceof \Generator) {
             if ($response->valid()) {
                 $response = $this->coroutine($response);
