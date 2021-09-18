@@ -76,7 +76,13 @@ class ErrorHandler
 
             $promise = $generator->current();
             if (!$promise instanceof PromiseInterface) {
-                return $this->errorInvalidCoroutine($promise);
+                $gref = new \ReflectionGenerator($generator);
+
+                return $this->errorInvalidCoroutine(
+                    $promise,
+                    $gref->getExecutingFile(),
+                    $gref->getExecutingLine()
+                );
             }
 
             try {
@@ -129,7 +135,7 @@ class ErrorHandler
 
     public function errorInvalidException(\Throwable $e): ResponseInterface
     {
-        $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
+        $where = ' in ' . $this->where($e->getFile(), $e->getLine());
         $message = '<code>' . $this->html->escape($e->getMessage()) . '</code>';
 
         return $this->htmlResponse(
@@ -150,14 +156,21 @@ class ErrorHandler
         );
     }
 
-    public function errorInvalidCoroutine($value): ResponseInterface
+    public function errorInvalidCoroutine($value, string $file, int $line): ResponseInterface
     {
+        $where = ' near or before '. $this->where($file, $line) . '.';
+
         return $this->htmlResponse(
             500,
             'Internal Server Error',
             'The requested page failed to load, please try again later.',
-            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
+            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>' . $where
         );
+    }
+
+    private function where(string $file, int $line): string
+    {
+        return '<code title="See ' . $file . ' line ' . $line . '">' . \basename($file) . ':' . $line . '</code>';
     }
 
     private function htmlResponse(int $statusCode, string $title, string ...$info): ResponseInterface

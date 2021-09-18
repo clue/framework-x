@@ -509,10 +509,12 @@ class ErrorHandlerTest extends TestCase
     {
         $handler = new ErrorHandler();
 
-        $response = $handler->errorInvalidCoroutine($value);
+        $file = __FILE__;
+        $line = __LINE__;
+        $response = $handler->errorInvalidCoroutine($value, $file, $line);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to yield <code>React\Promise\PromiseInterface</code> but got <code>$name</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to yield <code>React\Promise\PromiseInterface</code> but got <code>$name</code> near or before <code title=\"See $file line $line\">ErrorHandlerTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 }
