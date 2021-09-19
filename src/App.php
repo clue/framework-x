@@ -114,7 +114,7 @@ class App
 
     public function redirect(string $route, string $target, int $code = 302): void
     {
-        $this->get($route, new RedirectHandler($target, $code));
+        $this->any($route, new RedirectHandler($target, $code));
     }
 
     public function run()

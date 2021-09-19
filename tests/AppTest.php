@@ -282,13 +282,13 @@ class AppTest extends TestCase
         $app->map(['GET', 'POST'], '/', function () { });
     }
 
-    public function testRedirectMethodAddsGetRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation()
+    public function testRedirectMethodAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation()
     {
         $app = new App();
 
         $handler = null;
         $router = $this->createMock(RouteHandler::class);
-        $router->expects($this->once())->method('map')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
+        $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));
@@ -314,13 +314,13 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testRedirectMethodWithCustomRedirectCodeAddsGetRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode()
+    public function testRedirectMethodWithCustomRedirectCodeAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode()
     {
         $app = new App();
 
         $handler = null;
         $router = $this->createMock(RouteHandler::class);
-        $router->expects($this->once())->method('map')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
+        $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));
