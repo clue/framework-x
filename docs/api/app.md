@@ -40,9 +40,9 @@ which also highlights how you can use [request attributes](request.md#attributes
 to access values from URI templates.
 
 An HTTP `GET` request for `/foo` would automatically reject the HTTP request with
-a 404 (Not Found) error response unless this route is registered.
-Likewise, an HTTP `POST` request for `/user` would reject with a 405 (Method Not
-Allowed) error response unless a route for this method is also registered.
+a `404 Not Found` error response unless this route is registered.
+Likewise, an HTTP `POST` request for `/user` would reject with a `405 Method Not
+Allowed` error response unless a route for this method is also registered.
 
 You can route any number of incoming HTTP requests to controller functions by
 using the matching API methods like this:
@@ -70,6 +70,27 @@ you can use this additional shortcut:
 ```
 $app->any('/user/{id}', $controller);
 ```
+
+## Redirects
+
+The `App` also offers a convenient helper method to redirect a matching route to
+a new URL like this:
+
+```php
+$app->redirect('/promo/reactphp', 'http://reactphp.org/');
+```
+
+Browsers and search engine crawlers will automatically follow the redirect with
+the `302 Found` status code by default. You can optionally pass a custom redirect
+status code in the `3xx` range to use. If this is a permanent redirect, you may
+want to use the `301 Permanent Redirect` status code to instruct search engine
+crawlers to update their index like this:
+
+```php
+$app->redirect('/blog.html', '/blog', 301);
+```
+
+See [response status codes](response.md#status-codes) for more details.
 
 ## Controllers
 
