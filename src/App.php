@@ -62,6 +62,7 @@ class App
         } elseif (\func_num_args() !== 0 && !$loop instanceof LoopInterface) {
             throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $this->errorHandler->describeType($loop) . ' given');
         }
+
         $this->loop = $loop ?? Loop::get();
         $this->middleware = $middleware;
         $this->router = new RouteCollector(new RouteParser(), new RouteGenerator());
@@ -305,38 +306,18 @@ class App
         $handler = function (ServerRequestInterface $request) {
             return $this->routeRequest($request);
         };
-        if ($this->middleware) {
-            $handler = new MiddlewareHandler(array_merge($this->middleware, [$handler]));
-        }
+        $handler = new MiddlewareHandler(\array_merge([$this->errorHandler], $this->middleware, [$handler]));
 
-        try {
-            $response = $handler($request);
-        } catch (\Throwable $e) {
-            return $this->errorHandler->errorInvalidException($e);
-        }
-
+        $response = $handler($request);
         if ($response instanceof \Generator) {
-            $response = $this->coroutine($response);
+            if ($response->valid()) {
+                $response = $this->coroutine($response);
+            } else {
+                $response = $response->getReturn();
+            }
         }
 
-        if ($response instanceof ResponseInterface) {
-            return $response;
-        } elseif ($response instanceof PromiseInterface) {
-            return $response->then(function ($response) {
-                if (!$response instanceof ResponseInterface) {
-                    return $this->errorHandler->errorInvalidResponse($response);
-                }
-                return $response;
-            }, function ($e) {
-                if ($e instanceof \Throwable) {
-                    return $this->errorHandler->errorInvalidException($e);
-                } else {
-                    return $this->errorHandler->errorInvalidResponse(\React\Promise\reject($e));
-                }
-            });
-        } else {
-            return $this->errorHandler->errorInvalidResponse($response);
-        }
+        return $response;
     }
 
     private function routeRequest(ServerRequestInterface $request)
@@ -377,21 +358,13 @@ class App
                 return;
             }
 
-            $step = $generator->current();
-            if (!$step instanceof PromiseInterface) {
-                $generator = $next = null;
-                $deferred->resolve($this->errorHandler->errorInvalidCoroutine($step));
-                return;
-            }
-
-            $step->then(function ($value) use ($generator, $next) {
+            $promise = $generator->current();
+            $promise->then(function ($value) use ($generator, $next) {
                 $generator->send($value);
                 $next();
             }, function ($reason) use ($generator, $next) {
                 $generator->throw($reason);
                 $next();
-            })->then(null, function ($e) use ($deferred) {
-                $deferred->reject($e);
             });
         };
 

@@ -608,6 +608,38 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
+    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseWithoutYielding()
+    {
+        $app = new App();
+
+        $app->get('/users', function () {
+            if (false) {
+                yield;
+            }
+
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            );
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise()
     {
         $app = new App();
@@ -878,6 +910,36 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionWithoutYielding()
+    {
+        $app = new App();
+
+        $line = __LINE__ + 5;
+        $app->get('/users', function () {
+            if (false) {
+                yield;
+            }
+            throw new \RuntimeException('Foo');
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+    }
+
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding()
     {
         $app = new App();
@@ -949,28 +1011,21 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNull()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNullImmediately()
     {
         $app = new App();
 
+        $line = __LINE__ + 3;
         $app->get('/users', function () {
             yield null;
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
+        // $response = $app->handleRequest($request);
         $ref = new ReflectionMethod($app, 'handleRequest');
         $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
-
-        /** @var PromiseInterface $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -980,7 +1035,7 @@ class AppTest extends TestCase
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to yield <code>React\Promise\PromiseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to yield <code>React\Promise\PromiseInterface</code> but got <code>null</code> near or before <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue()

@@ -132,5 +132,8 @@ $app->get('/error', function () {
 $app->get('/error/null', function () {
     return null;
 });
+$app->get('/error/yield', function () {
+    yield null;
+});
 
 $app->run();

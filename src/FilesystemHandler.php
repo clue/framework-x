@@ -47,10 +47,14 @@ class FilesystemHandler
     /** @var ErrorHandler */
     private $errorHandler;
 
+    /** @var HtmlHandler */
+    private $html;
+
     public function __construct(string $root)
     {
         $this->root = $root;
         $this->errorHandler = new ErrorHandler();
+        $this->html = new HtmlHandler();
     }
 
     public function __invoke(ServerRequestInterface $request)
@@ -72,7 +76,7 @@ class FilesystemHandler
                 );
             }
 
-            $response = '<strong>' . self::escapeHtml($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
+            $response = '<strong>' . $this->html->escape($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
 
             if ($local !== '') {
                 $response .= '    <li><a href="../">../</a></li>' . "\n";
@@ -85,7 +89,7 @@ class FilesystemHandler
                 }
 
                 $dir = \is_dir($path . '/' . $file) ? '/' : '';
-                $response .= '    <li><a href="' . \rawurlencode($file) . $dir . '">' . self::escapeHtml($file) . $dir . '</a></li>' . "\n";
+                $response .= '    <li><a href="' . \rawurlencode($file) . $dir . '">' . $this->html->escape($file) . $dir . '</a></li>' . "\n";
             }
             $response .= '</ul>' . "\n";
 
@@ -130,18 +134,5 @@ class FilesystemHandler
         } else {
             return $this->errorHandler->requestNotFound();
         }
-    }
-
-    /** @internal */
-    public static function escapeHtml(string $s): string
-    {
-        return \addcslashes(
-            \preg_replace(
-                '/(^| ) |(?: $)/',
-                '$1&nbsp;',
-                \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
-            ),
-            "\0..\032\\"
-        );
     }
 }

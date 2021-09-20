@@ -2,15 +2,108 @@
 
 namespace FrameworkX;
 
-use React\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
-use React\Http\Message\Response;
+use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\PromiseInterface;
 
 /**
  * @internal
  */
 class ErrorHandler
 {
+    /** @var Htmlhandler */
+    private $html;
+
+    public function __construct()
+    {
+        $this->html = new HtmlHandler();
+    }
+
+    /**
+     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>|\Generator
+     *     Returns a response, a Promise which eventually fulfills with a
+     *     response or a Generator which eventually returns a response. This
+     *     method never throws or resolves a rejected promise. If the next
+     *     handler fails to return a valid response, it will be turned into a
+     *     valid error response before returning.
+     */
+    public function __invoke(ServerRequestInterface $request, callable $next)
+    {
+        try {
+            $response = $next($request);
+        } catch (\Throwable $e) {
+            return $this->errorInvalidException($e);
+        }
+
+        if ($response instanceof ResponseInterface) {
+            return $response;
+        } elseif ($response instanceof PromiseInterface) {
+            return $response->then(function ($response) {
+                if ($response instanceof ResponseInterface) {
+                    return $response;
+                } else {
+                    return $this->errorInvalidResponse($response);
+                }
+            }, function ($e) {
+                if ($e instanceof \Throwable) {
+                    return $this->errorInvalidException($e);
+                } else {
+                    return $this->errorInvalidResponse(\React\Promise\reject($e));
+                }
+            });
+        } elseif ($response instanceof \Generator) {
+            return $this->coroutine($response);
+        } else {
+            return $this->errorInvalidResponse($response);
+        }
+    }
+
+    private function coroutine(\Generator $generator): \Generator
+    {
+        do {
+            try {
+                if (!$generator->valid()) {
+                    $response = $generator->getReturn();
+                    if ($response instanceof ResponseInterface) {
+                        return $response;
+                    } else {
+                        return $this->errorInvalidResponse($response);
+                    }
+                }
+            } catch (\Throwable $e) {
+                return $this->errorInvalidException($e);
+            }
+
+            $promise = $generator->current();
+            if (!$promise instanceof PromiseInterface) {
+                $gref = new \ReflectionGenerator($generator);
+
+                return $this->errorInvalidCoroutine(
+                    $promise,
+                    $gref->getExecutingFile(),
+                    $gref->getExecutingLine()
+                );
+            }
+
+            try {
+                $next = yield $promise;
+            } catch (\Throwable $e) {
+                try {
+                    $generator->throw($e);
+                    continue;
+                } catch (\Throwable $e) {
+                    return $this->errorInvalidException($e);
+                }
+            }
+
+            try {
+                $generator->send($next);
+            } catch (\Throwable $e) {
+                return $this->errorInvalidException($e);
+            }
+        } while (true);
+    } // @codeCoverageIgnore
+
     public function requestNotFound(): ResponseInterface
     {
         return $this->htmlResponse(
@@ -42,8 +135,8 @@ class ErrorHandler
 
     public function errorInvalidException(\Throwable $e): ResponseInterface
     {
-        $where = ' in <code title="See ' . $e->getFile() . ' line ' . $e->getLine() . '">' . \basename($e->getFile()) . ':' . $e->getLine() . '</code>';
-        $message = '<code>' . FilesystemHandler::escapeHtml($e->getMessage()) . '</code>';
+        $where = ' in ' . $this->where($e->getFile(), $e->getLine());
+        $message = '<code>' . $this->html->escape($e->getMessage()) . '</code>';
 
         return $this->htmlResponse(
             500,
@@ -63,51 +156,30 @@ class ErrorHandler
         );
     }
 
-    public function errorInvalidCoroutine($value): ResponseInterface
+    public function errorInvalidCoroutine($value, string $file, int $line): ResponseInterface
     {
+        $where = ' near or before '. $this->where($file, $line) . '.';
+
         return $this->htmlResponse(
             500,
             'Internal Server Error',
             'The requested page failed to load, please try again later.',
-            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
+            'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>' . $where
         );
     }
 
-    private static function htmlResponse(int $statusCode, string $title, string ...$info): ResponseInterface
+    private function where(string $file, int $line): string
     {
-        $nonce = \base64_encode(\random_bytes(16));
-        $info = \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info));
-        $html = <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-<title>Error $statusCode: $title</title>
-<style nonce="$nonce">
-body { display: grid; justify-content: center; align-items: center; grid-auto-rows: minmax(min-content, calc(100vh - 4em)); margin: 2em; font-family: ui-sans-serif, Arial, "Noto Sans", sans-serif; }
-@media (min-width: 700px) { main { display: grid; max-width: 700px; } }
-h1 { margin: 0 .5em 0 0; border-right: calc(2 * max(0px, min(100vw - 700px + 1px, 1px))) solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
-strong { color: #111827; font-size: 3em; }
-p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
-code { padding: 0 .3em; background-color: #f5f6f9; }
-</style>
-</head>
-<body>
-<main>
-<h1>$statusCode</h1>
-<strong>$title</strong>
-$info</main>
-</body>
-</html>
+        return '<code title="See ' . $file . ' line ' . $line . '">' . \basename($file) . ':' . $line . '</code>';
+    }
 
-HTML;
-
-        return new Response(
+    private function htmlResponse(int $statusCode, string $title, string ...$info): ResponseInterface
+    {
+        return $this->html->statusResponse(
             $statusCode,
-            [
-                'Content-Type' => 'text/html; charset=utf-8',
-                'Content-Security-Policy' => "style-src 'nonce-$nonce'; img-src 'self'; default-src 'none'"
-            ],
-            $html
+            'Error ' . $statusCode . ': ' .$title,
+            $title,
+            \implode('', \array_map(function (string $info) { return "<p>$info</p>\n"; }, $info))
         );
     }
 
