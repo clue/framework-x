@@ -12,6 +12,21 @@ use React\Stream\ReadableStreamInterface;
  */
 class SapiHandler
 {
+    /** @var resource */
+    private $logStream;
+
+    /** @var bool */
+    private $shouldLogRequest;
+
+    public function __construct()
+    {
+        $this->logStream = PHP_SAPI === 'cli' ? \fopen('php://output', 'a') : (\defined('STDERR') ? \STDERR : \fopen('php://stderr', 'a'));
+
+        // Only log for built-in webserver and PHP development webserver, others have their own access log.
+        // Yes, this should be moved out of this class.
+        $this->shouldLogRequest = PHP_SAPI === 'cli' || PHP_SAPI === 'cli-server';
+    }
+
     public function requestFromGlobals(): ServerRequestInterface
     {
         $host = null;
@@ -60,10 +75,11 @@ class SapiHandler
         return $request;
     }
 
-    public function sendResponse(ServerRequestInterface $request, ResponseInterface $response): void
+    /**
+     * @param ResponseInterface $response
+     */
+    public function sendResponse(ResponseInterface $response): void
     {
-        $this->logRequestResponse($request, $response);
-
         header($_SERVER['SERVER_PROTOCOL'] . ' ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase());
 
         // automatically assign "Content-Length" response header if known and not already present
@@ -73,7 +89,7 @@ class SapiHandler
 
         // remove default "Content-Type" header set by PHP (default_mimetype)
         if (!$response->hasHeader('Content-Type')) {
-            header('Content-Type: foo');
+            header('Content-Type:');
             header_remove('Content-Type');
         }
 
@@ -90,14 +106,14 @@ class SapiHandler
         $body = $response->getBody();
 
         if ($body instanceof ReadableStreamInterface) {
-            // clear all output buffers (default in cli-server)
-            while (ob_get_level()) {
-                ob_end_clean();
-            }
-
             // try to disable nginx buffering (http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering)
             if (isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'nginx') === 0) {
                 header('X-Accel-Buffering: no');
+            }
+
+            // clear output buffer to show streaming output (default in cli-server)
+            if (\PHP_SAPI === 'cli-server') {
+                \ob_end_flush(); // @codeCoverageIgnore
             }
 
             // flush data whenever stream reports one data chunk
@@ -106,15 +122,14 @@ class SapiHandler
                 flush();
             });
         } else {
-            echo $response->getBody();
+            echo $body;
         }
     }
 
     public function logRequestResponse(ServerRequestInterface $request, ResponseInterface $response): void
     {
-        // only log for built-in webserver and PHP development webserver, others have their own access log
-        if (PHP_SAPI !== 'cli' && PHP_SAPI !== 'cli-server') {
-            return; // @codeCoverageIgnore
+        if (!$this->shouldLogRequest) {
+            return;
         }
 
         $this->log(
@@ -129,10 +144,6 @@ class SapiHandler
         $time = microtime(true);
         $log = date('Y-m-d H:i:s', (int)$time) . sprintf('.%03d ', (int)(($time - (int)$time) * 1e3)) . $message . PHP_EOL;
 
-        if (\PHP_SAPI === 'cli') {
-            echo $log;
-        } else {
-            fwrite(defined('STDERR') ? STDERR : fopen('php://stderr', 'a'), $log);
-        }
+        fwrite($this->logStream, $log);
     }
 }

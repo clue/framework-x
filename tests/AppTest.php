@@ -6,6 +6,7 @@ use FrameworkX\App;
 use FrameworkX\ErrorHandler;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
+use FrameworkX\SapiHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -17,6 +18,8 @@ use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use ReflectionMethod;
 use ReflectionProperty;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 class AppTest extends TestCase
 {
@@ -154,6 +157,62 @@ class AppTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');
         $app->run();
+    }
+
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestThenLogRequestAndThenSendResponseFromHandler()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $response = new Response();
+        $app->get('/', function () use ($response) {
+            return $response;
+        });
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $sapi = $this->createMock(SapiHandler::class);
+        $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
+        $sapi->expects($this->once())->method('logRequestResponse')->with($request, $response);
+        $sapi->expects($this->once())->method('sendResponse')->with($response);
+
+        // $app->sapi = $sapi;
+        $ref = new \ReflectionProperty($app, 'sapi');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $sapi);
+
+        // $app->runOnce();
+        $ref = new \ReflectionMethod($app, 'runOnce');
+        $ref->setAccessible(true);
+        $ref->invoke($app);
+    }
+
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestThenLogRequestAndThenSendResponseFromDeferredHandler()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $response = new Response();
+        $app->get('/', function () use ($response) {
+            return resolve($response);
+        });
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $sapi = $this->createMock(SapiHandler::class);
+        $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
+        $sapi->expects($this->once())->method('logRequestResponse')->with($request, $response);
+        $sapi->expects($this->once())->method('sendResponse')->with($response);
+
+        // $app->sapi = $sapi;
+        $ref = new \ReflectionProperty($app, 'sapi');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $sapi);
+
+        // $app->runOnce();
+        $ref = new \ReflectionMethod($app, 'runOnce');
+        $ref->setAccessible(true);
+        $ref->invoke($app);
     }
 
     public function testGetMethodAddsGetRouteOnRouter()
@@ -472,7 +531,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            return \React\Promise\resolve(new Response(
+            return resolve(new Response(
                 200,
                 [
                     'Content-Type' => 'text/html'
@@ -568,7 +627,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            $body = yield \React\Promise\resolve("OK\n");
+            $body = yield resolve("OK\n");
 
             return new Response(
                 200,
@@ -608,7 +667,7 @@ class AppTest extends TestCase
         $app->get('/users', function () {
             $body = '';
             try {
-                yield \React\Promise\reject(new \RuntimeException("OK\n"));
+                yield reject(new \RuntimeException("OK\n"));
             } catch (\RuntimeException $e) {
                 $body = $e->getMessage();
             }
@@ -735,7 +794,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
-            return \React\Promise\reject(new \RuntimeException('Foo'));
+            return reject(new \RuntimeException('Foo'));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -769,7 +828,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            return \React\Promise\reject(null);
+            return reject(null);
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -804,7 +863,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
-            yield \React\Promise\reject(new \RuntimeException('Foo'));
+            yield reject(new \RuntimeException('Foo'));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -869,7 +928,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 3;
         $app->get('/users', function () {
-            yield \React\Promise\resolve(null);
+            yield resolve(null);
             throw new \RuntimeException('Foo');
         });
 
@@ -904,7 +963,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            $value = yield \React\Promise\resolve(null);
+            $value = yield resolve(null);
             return $value;
         });
 
@@ -992,7 +1051,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            return \React\Promise\resolve(null);
+            return resolve(null);
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1026,7 +1085,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            yield \React\Promise\resolve(true);
+            yield resolve(true);
             return null;
         });
 

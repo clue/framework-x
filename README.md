@@ -102,7 +102,7 @@ $ composer install
 To run the test suite, go to the project root and run:
 
 ```bash
-$ php vendor/bin/phpunit
+$ vendor/bin/phpunit --stderr
 ```
 
 Additionally, you can run some simple acceptance tests to verify the framework

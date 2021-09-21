@@ -121,10 +121,10 @@ class App
 
     public function run()
     {
-        if (\php_sapi_name() === 'cli') {
+        if (\PHP_SAPI === 'cli') {
             $this->runLoop();
         } else {
-            $this->runOnce();
+            $this->runOnce(); // @codeCoverageIgnore
         }
 
         $this->loop->run();
@@ -176,10 +176,12 @@ class App
         $response = $this->handleRequest($request);
 
         if ($response instanceof ResponseInterface) {
-            $this->sapi->sendResponse($request, $response);
+            $this->sapi->logRequestResponse($request, $response);
+            $this->sapi->sendResponse($response);
         } elseif ($response instanceof PromiseInterface) {
             $response->then(function (ResponseInterface $response) use ($request) {
-                $this->sapi->sendResponse($request, $response);
+                $this->sapi->logRequestResponse($request, $response);
+                $this->sapi->sendResponse($response);
             });
         }
     }
