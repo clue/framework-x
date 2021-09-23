@@ -2,7 +2,7 @@
 
 base=${1:-http://localhost:8080}
 
-for i in {1..10}
+for i in {1..20}
 do
    out=$(curl -v -X PROBE $base/ 2>&1) && exit 0 || echo -n .
    sleep 0.1
