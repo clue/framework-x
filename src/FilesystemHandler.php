@@ -68,12 +68,7 @@ class FilesystemHandler
         \clearstatcache();
         if ($valid && \is_dir($path)) {
             if ($local !== '' && \substr($local, -1) !== '/') {
-                return new Response(
-                    302,
-                    [
-                        'Location' => \basename($path) . '/'
-                    ]
-                );
+                return (new RedirectHandler(\basename($path) . '/'))();
             }
 
             $response = '<strong>' . $this->html->escape($local === '' ? '/' : $local) . '</strong>' . "\n<ul>\n";
@@ -102,12 +97,7 @@ class FilesystemHandler
             );
         } elseif ($valid && \is_file($path)) {
             if ($local !== '' && \substr($local, -1) === '/') {
-                return new Response(
-                    302,
-                    [
-                        'Location' => '../' . \basename($path)
-                    ]
-                );
+                return (new RedirectHandler('../' . \basename($path)))();
             }
 
             // Assign MIME type based on file extension (same as nginx/Apache) or fall back to given default otherwise.

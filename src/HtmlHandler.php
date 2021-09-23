@@ -25,6 +25,7 @@ h1 { margin: 0 .5em 0 0; border-right: calc(2 * max(0px, min(100vw - 700px + 1px
 strong { color: #111827; font-size: 3em; }
 p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
 code { padding: 0 .3em; background-color: #f5f6f9; }
+a { color: inherit; }
 </style>
 </head>
 <body>

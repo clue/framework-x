@@ -282,13 +282,13 @@ class AppTest extends TestCase
         $app->map(['GET', 'POST'], '/', function () { });
     }
 
-    public function testRedirectMethodAddsGetRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation()
+    public function testRedirectMethodAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation()
     {
         $app = new App();
 
         $handler = null;
         $router = $this->createMock(RouteHandler::class);
-        $router->expects($this->once())->method('map')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
+        $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));
@@ -305,19 +305,22 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertEquals(302, $response->getStatusCode());
-        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals('/users', $response->getHeaderLine('Location'));
-        $this->assertEquals("See /users...\n", (string) $response->getBody());
+        $this->assertStringContainsString("<title>Redirecting to /users</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testRedirectMethodWithCustomRedirectCodeAddsGetRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode()
+    public function testRedirectMethodWithCustomRedirectCodeAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode()
     {
         $app = new App();
 
         $handler = null;
         $router = $this->createMock(RouteHandler::class);
-        $router->expects($this->once())->method('map')->with(['GET'], '/', $this->callback(function ($fn) use (&$handler) {
+        $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));
@@ -334,10 +337,13 @@ class AppTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertEquals(307, $response->getStatusCode());
-        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals('/users', $response->getHeaderLine('Location'));
-        $this->assertEquals("See /users...\n", (string) $response->getBody());
+        $this->assertStringContainsString("<title>Redirecting to /users</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
     public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost()

@@ -164,12 +164,12 @@ Each HTTP response message contains a status code that describes whether the
 HTTP request has been successfully completed.
 Here's a list of the most common HTTP status codes:
 
-* 200 (OK)
-* 301 (Permanent Redirect)
-* 302 (Temporary Redirect)
-* 403 (Forbidden)
-* 404 (Not Found)
-* 500 (Internal Server Error)
+* `200 OK`
+* `301 Permanent Redirect`
+* `302 Found` (previously `302 Temporary Redirect`)
+* `403 Forbidden`
+* `404 Not Found`
+* `500 Internal Server Error`
 * …
 
 See [list of HTTP status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) for more details.
@@ -210,7 +210,7 @@ know what you're doing.
 Each controller function needs to return a response object in order to send
 an HTTP response message.
 If the controller functions throws an `Exception` (or `Throwable`) or any other type, the
-HTTP request will automatically be rejected with a 500 (Internal Server Error)
+HTTP request will automatically be rejected with a `500 Internal Server Error`
 HTTP error response:
 
 ```php

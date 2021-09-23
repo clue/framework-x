@@ -7,7 +7,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Http\HttpServer;
-use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -113,18 +112,9 @@ class App
         $this->router->map($methods, $route, $handler, ...$handlers);
     }
 
-    public function redirect($route, $target, $code = 302)
+    public function redirect(string $route, string $target, int $code = 302): void
     {
-        return $this->get($route, function () use ($target, $code) {
-            return new Response(
-                $code,
-                [
-                    'Content-Type' => 'text/html',
-                    'Location' => $target
-                ],
-                'See ' . $target . '...' . "\n"
-            );
-        });
+        $this->any($route, new RedirectHandler($target, $code));
     }
 
     public function run()

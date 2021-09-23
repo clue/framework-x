@@ -71,14 +71,14 @@ out=$(curl -v $base/users/ 2>&1);    match "HTTP/.* 404"
 out=$(curl -v $base/users/a/b 2>&1); match "HTTP/.* 404"
 
 out=$(curl -v $base/LICENSE 2>&1);              match "HTTP/.* 200" && match -iP "Content-Type: text/plain[\r\n]"
-out=$(curl -v $base/source 2>&1);               match -i "Location: /source/" && match -iP "Content-Type: text/html[\r\n]"
+out=$(curl -v $base/source 2>&1);               match -i "Location: /source/" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 out=$(curl -v $base/source/ 2>&1);              match "HTTP/.* 200"
 out=$(curl -v $base/source/composer.json 2>&1); match "HTTP/.* 200" && match -iP "Content-Type: application/json[\r\n]"
 out=$(curl -v $base/source/LICENSE 2>&1);       match "HTTP/.* 200" && match -iP "Content-Type: text/plain[\r\n]"
-out=$(curl -v $base/source/LICENSE/ 2>&1);      match -i "Location: ../LICENSE"
+out=$(curl -v $base/source/LICENSE/ 2>&1);      match -i "Location: ../LICENSE" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 out=$(curl -v $base/source/LICENSE// 2>&1);     match "HTTP/.* 404"
 out=$(curl -v $base/source//LICENSE 2>&1);      match "HTTP/.* 404"
-out=$(curl -v $base/source/tests 2>&1);         match -i "Location: tests/"
+out=$(curl -v $base/source/tests 2>&1);         match -i "Location: tests/" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 out=$(curl -v $base/source/invalid 2>&1);       match "HTTP/.* 404"
 out=$(curl -v $base/source/bin%00ary 2>&1);     match "HTTP/.* 40[40]" # expects 404, but not processed with nginx (400) and Apache (404)
 

@@ -267,8 +267,13 @@ class FilesystemHandlerTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('.github/', $response->getHeaderLine('Location'));
+        $this->assertStringContainsString("<title>Redirecting to .github/</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Redirecting to <a href=\".github/\"><code>.github/</code></a>...</p>\n", (string) $response->getBody());
     }
 
     public function testInvokeWithValidPathToFileButWithTrailingSlashWillReturnRedirectToPathWithoutSlash()
@@ -282,7 +287,12 @@ class FilesystemHandlerTest extends TestCase
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('../LICENSE', $response->getHeaderLine('Location'));
+        $this->assertStringContainsString("<title>Redirecting to ../LICENSE</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Redirecting to <a href=\"../LICENSE\"><code>../LICENSE</code></a>...</p>\n", (string) $response->getBody());
     }
 }
