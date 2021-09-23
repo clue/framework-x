@@ -152,44 +152,6 @@ class SapiHandlerTest extends TestCase
         $body->end('test');
     }
 
-    public function testLogRequestResponsePrintsRequestLogWithCurrentDateAndTime()
-    {
-        // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 200 6\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
-
-        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
-        $response = new Response(200, [], "Hello\n");
-
-        $sapi = new SapiHandler();
-        $sapi->logRequestResponse($request, $response);
-    }
-
-    public function testLogRequestResponseWithoutRemoteAddressPrintsRequestLogWithDashAsPlaceholder()
-    {
-        // 2021-01-29 12:22:01.717 - "GET /users HTTP/1.1" 200 6\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} - \"GET \/users HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
-
-        $request = new ServerRequest('GET', 'http://localhost:8080/users');
-        $response = new Response(200, [], "Hello\n");
-
-        $sapi = new SapiHandler();
-        $sapi->logRequestResponse($request, $response);
-    }
-
-    public function testLogRequestResponseWithLogDisabledShouldNotPrintMessage()
-    {
-        $request = new ServerRequest('GET', 'http://localhost:8080/users');
-        $response = new Response(200, [], "Hello\n");
-
-        $sapi = new SapiHandler();
-        $ref = new \ReflectionProperty($sapi, 'shouldLogRequest');
-        $ref->setAccessible(true);
-        $ref->setValue($sapi, false);
-
-        $this->expectOutputString('');
-        $sapi->logRequestResponse($request, $response);
-    }
-
     public function testLogPrintsMessageWithCurrentDateAndTime()
     {
         // 2021-01-29 12:22:01.717 Hello\n

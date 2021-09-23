@@ -2,6 +2,7 @@
 
 namespace FrameworkX\Tests;
 
+use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
 use FrameworkX\ErrorHandler;
 use FrameworkX\MiddlewareHandler;
@@ -67,10 +68,11 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
 
-        $this->assertCount(3, $handlers);
-        $this->assertInstanceOf(ErrorHandler::class, $handlers[0]);
-        $this->assertSame($middleware, $handlers[1]);
-        $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
+        $this->assertCount(4, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
+        $this->assertSame($middleware, $handlers[2]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
     }
 
     public function testConstructWithInvalidLoopThrows()
@@ -159,10 +161,9 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestThenLogRequestAndThenSendResponseFromHandler()
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromHandler()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = $this->createAppWithoutLogger();
 
         $response = new Response();
         $app->get('/', function () use ($response) {
@@ -173,7 +174,6 @@ class AppTest extends TestCase
 
         $sapi = $this->createMock(SapiHandler::class);
         $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
-        $sapi->expects($this->once())->method('logRequestResponse')->with($request, $response);
         $sapi->expects($this->once())->method('sendResponse')->with($response);
 
         // $app->sapi = $sapi;
@@ -187,10 +187,9 @@ class AppTest extends TestCase
         $ref->invoke($app);
     }
 
-    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestThenLogRequestAndThenSendResponseFromDeferredHandler()
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromDeferredHandler()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
+        $app = $this->createAppWithoutLogger();
 
         $response = new Response();
         $app->get('/', function () use ($response) {
@@ -201,7 +200,6 @@ class AppTest extends TestCase
 
         $sapi = $this->createMock(SapiHandler::class);
         $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
-        $sapi->expects($this->once())->method('logRequestResponse')->with($request, $response);
         $sapi->expects($this->once())->method('sendResponse')->with($response);
 
         // $app->sapi = $sapi;
@@ -405,9 +403,9 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestAreNotAllowed()
+    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $request = new ServerRequest('GET', 'http://google.com/');
         $request = $request->withRequestTarget('http://google.com/');
@@ -429,7 +427,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $request = new ServerRequest('GET', 'http://localhost/invalid');
 
@@ -450,7 +448,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithSingleMethodNotAllowedMessage()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () { });
 
@@ -474,7 +472,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMultipleMethodNotAllowedMessage()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () { });
         $app->head('/users', function () { });
@@ -500,7 +498,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             return new Response(
@@ -528,7 +526,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             return resolve(new Response(
@@ -564,7 +562,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsPendingPromise()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             return new Promise(function () { });
@@ -592,7 +590,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseWithoutYielding()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             if (false) {
@@ -624,7 +622,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             $body = yield resolve("OK\n");
@@ -662,7 +660,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             $body = '';
@@ -705,7 +703,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsCoroutineThatYieldsPendingPromise()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             yield new Promise(function () { });
@@ -733,7 +731,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users/{name}', function (ServerRequestInterface $request) {
             $name = $request->getAttribute('name');
@@ -763,7 +761,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
@@ -790,7 +788,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
@@ -825,7 +823,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             return reject(null);
@@ -859,7 +857,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
@@ -894,7 +892,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionWithoutYielding()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 5;
         $app->get('/users', function () {
@@ -924,7 +922,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 3;
         $app->get('/users', function () {
@@ -960,7 +958,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             $value = yield resolve(null);
@@ -995,7 +993,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNullImmediately()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 3;
         $app->get('/users', function () {
@@ -1022,7 +1020,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             return null;
@@ -1048,7 +1046,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             return resolve(null);
@@ -1082,7 +1080,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValueAfterYielding()
     {
-        $app = new App();
+        $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
             yield resolve(true);
@@ -1113,5 +1111,23 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
+    }
+
+    private function createAppWithoutLogger(): App
+    {
+        $app = new App();
+
+        $ref = new \ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $middleware = $ref->getValue($app);
+
+        $ref = new \ReflectionProperty($middleware, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($middleware);
+
+        unset($handlers[0]);
+        $ref->setValue($middleware, array_values($handlers));
+
+        return $app;
     }
 }

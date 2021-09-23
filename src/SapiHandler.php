@@ -15,16 +15,9 @@ class SapiHandler
     /** @var resource */
     private $logStream;
 
-    /** @var bool */
-    private $shouldLogRequest;
-
     public function __construct()
     {
         $this->logStream = PHP_SAPI === 'cli' ? \fopen('php://output', 'a') : (\defined('STDERR') ? \STDERR : \fopen('php://stderr', 'a'));
-
-        // Only log for built-in webserver and PHP development webserver, others have their own access log.
-        // Yes, this should be moved out of this class.
-        $this->shouldLogRequest = PHP_SAPI === 'cli' || PHP_SAPI === 'cli-server';
     }
 
     public function requestFromGlobals(): ServerRequestInterface
@@ -124,19 +117,6 @@ class SapiHandler
         } else {
             echo $body;
         }
-    }
-
-    public function logRequestResponse(ServerRequestInterface $request, ResponseInterface $response): void
-    {
-        if (!$this->shouldLogRequest) {
-            return;
-        }
-
-        $this->log(
-            ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
-            '"' . $request->getMethod() . ' ' . $request->getUri()->getPath() . ' HTTP/' . $request->getProtocolVersion() . '" ' .
-            $response->getStatusCode() . ' ' . $response->getBody()->getSize()
-        );
     }
 
     public function log(string $message): void
