@@ -6,6 +6,7 @@ use FrameworkX\App;
 use FrameworkX\ErrorHandler;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
+use FrameworkX\SapiHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -17,6 +18,8 @@ use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use ReflectionMethod;
 use ReflectionProperty;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 class AppTest extends TestCase
 {
@@ -154,6 +157,62 @@ class AppTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');
         $app->run();
+    }
+
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestThenLogRequestAndThenSendResponseFromHandler()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $response = new Response();
+        $app->get('/', function () use ($response) {
+            return $response;
+        });
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $sapi = $this->createMock(SapiHandler::class);
+        $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
+        $sapi->expects($this->once())->method('logRequestResponse')->with($request, $response);
+        $sapi->expects($this->once())->method('sendResponse')->with($response);
+
+        // $app->sapi = $sapi;
+        $ref = new \ReflectionProperty($app, 'sapi');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $sapi);
+
+        // $app->runOnce();
+        $ref = new \ReflectionMethod($app, 'runOnce');
+        $ref->setAccessible(true);
+        $ref->invoke($app);
+    }
+
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestThenLogRequestAndThenSendResponseFromDeferredHandler()
+    {
+        $loop = $this->createMock(LoopInterface::class);
+        $app = new App($loop);
+
+        $response = new Response();
+        $app->get('/', function () use ($response) {
+            return resolve($response);
+        });
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $sapi = $this->createMock(SapiHandler::class);
+        $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
+        $sapi->expects($this->once())->method('logRequestResponse')->with($request, $response);
+        $sapi->expects($this->once())->method('sendResponse')->with($response);
+
+        // $app->sapi = $sapi;
+        $ref = new \ReflectionProperty($app, 'sapi');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $sapi);
+
+        // $app->runOnce();
+        $ref = new \ReflectionMethod($app, 'runOnce');
+        $ref->setAccessible(true);
+        $ref->invoke($app);
     }
 
     public function testGetMethodAddsGetRouteOnRouter()
@@ -346,99 +405,6 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost()
-    {
-        $app = new App();
-
-        // $request = $app->requestFromGlobals();
-        $ref = new ReflectionMethod($app, 'requestFromGlobals');
-        $ref->setAccessible(true);
-        $request = $ref->invoke($app);
-
-        /** @var ServerRequestInterface $request */
-        $this->assertInstanceOf(ServerRequestInterface::class, $request);
-        $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('http://localhost/', (string) $request->getUri());
-        $this->assertEquals('1.1', $request->getProtocolVersion());
-        $this->assertEquals('', $request->getHeaderLine('Host'));
-    }
-
-    /**
-     * @backupGlobals enabled
-     */
-    public function testRequestFromGlobalsWithHeadRequest()
-    {
-        $app = new App();
-
-        $_SERVER['REQUEST_METHOD'] = 'HEAD';
-        $_SERVER['REQUEST_URI'] = '//';
-        $_SERVER['SERVER_PROTOCOL'] = 'http/1.0';
-        $_SERVER['HTTP_HOST'] = 'example.com';
-
-        // $request = $app->requestFromGlobals();
-        $ref = new ReflectionMethod($app, 'requestFromGlobals');
-        $ref->setAccessible(true);
-        $request = $ref->invoke($app);
-
-        /** @var ServerRequestInterface $request */
-        $this->assertInstanceOf(ServerRequestInterface::class, $request);
-        $this->assertEquals('HEAD', $request->getMethod());
-        $this->assertEquals('http://example.com//', (string) $request->getUri());
-        $this->assertEquals('1.0', $request->getProtocolVersion());
-        $this->assertEquals('example.com', $request->getHeaderLine('Host'));
-    }
-
-    /**
-     * @backupGlobals enabled
-     */
-    public function testRequestFromGlobalsWithGetRequestOverCustomPort()
-    {
-        $app = new App();
-
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['REQUEST_URI'] = '/path';
-        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $_SERVER['HTTP_HOST'] = 'localhost:8080';
-
-        // $request = $app->requestFromGlobals();
-        $ref = new ReflectionMethod($app, 'requestFromGlobals');
-        $ref->setAccessible(true);
-        $request = $ref->invoke($app);
-
-        /** @var ServerRequestInterface $request */
-        $this->assertInstanceOf(ServerRequestInterface::class, $request);
-        $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('http://localhost:8080/path', (string) $request->getUri());
-        $this->assertEquals('1.1', $request->getProtocolVersion());
-        $this->assertEquals('localhost:8080', $request->getHeaderLine('Host'));
-    }
-
-    /**
-     * @backupGlobals enabled
-     */
-    public function testRequestFromGlobalsWithGetRequestOverHttps()
-    {
-        $app = new App();
-
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['REQUEST_URI'] = '/';
-        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $_SERVER['HTTP_HOST'] = 'localhost';
-        $_SERVER['HTTPS'] = 'on';
-
-        // $request = $app->requestFromGlobals();
-        $ref = new ReflectionMethod($app, 'requestFromGlobals');
-        $ref->setAccessible(true);
-        $request = $ref->invoke($app);
-
-        /** @var ServerRequestInterface $request */
-        $this->assertInstanceOf(ServerRequestInterface::class, $request);
-        $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('https://localhost/', (string) $request->getUri());
-        $this->assertEquals('1.1', $request->getProtocolVersion());
-        $this->assertEquals('localhost', $request->getHeaderLine('Host'));
-    }
-
     public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestAreNotAllowed()
     {
         $app = new App();
@@ -565,7 +531,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            return \React\Promise\resolve(new Response(
+            return resolve(new Response(
                 200,
                 [
                     'Content-Type' => 'text/html'
@@ -661,7 +627,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            $body = yield \React\Promise\resolve("OK\n");
+            $body = yield resolve("OK\n");
 
             return new Response(
                 200,
@@ -701,7 +667,7 @@ class AppTest extends TestCase
         $app->get('/users', function () {
             $body = '';
             try {
-                yield \React\Promise\reject(new \RuntimeException("OK\n"));
+                yield reject(new \RuntimeException("OK\n"));
             } catch (\RuntimeException $e) {
                 $body = $e->getMessage();
             }
@@ -828,7 +794,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
-            return \React\Promise\reject(new \RuntimeException('Foo'));
+            return reject(new \RuntimeException('Foo'));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -862,7 +828,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            return \React\Promise\reject(null);
+            return reject(null);
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -897,7 +863,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
-            yield \React\Promise\reject(new \RuntimeException('Foo'));
+            yield reject(new \RuntimeException('Foo'));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -962,7 +928,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 3;
         $app->get('/users', function () {
-            yield \React\Promise\resolve(null);
+            yield resolve(null);
             throw new \RuntimeException('Foo');
         });
 
@@ -997,7 +963,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            $value = yield \React\Promise\resolve(null);
+            $value = yield resolve(null);
             return $value;
         });
 
@@ -1085,7 +1051,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            return \React\Promise\resolve(null);
+            return resolve(null);
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1119,7 +1085,7 @@ class AppTest extends TestCase
         $app = new App();
 
         $app->get('/users', function () {
-            yield \React\Promise\resolve(true);
+            yield resolve(true);
             return null;
         });
 
@@ -1147,50 +1113,5 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
-    }
-
-    public function testLogRequestResponsePrintsRequestLogWithCurrentDateAndTime()
-    {
-        $app = new App();
-
-        // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 200 6\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
-
-        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
-        $response = new Response(200, [], "Hello\n");
-
-        // $app->logRequestResponse($request, $response);
-        $ref = new ReflectionMethod($app, 'logRequestResponse');
-        $ref->setAccessible(true);
-        $ref->invoke($app, $request, $response);
-    }
-
-    public function testLogRequestResponseWithoutRemoteAddressPrintsRequestLogWithDashAsPlaceholder()
-    {
-        $app = new App();
-
-        // 2021-01-29 12:22:01.717 - "GET /users HTTP/1.1" 200 6\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} - \"GET \/users HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
-
-        $request = new ServerRequest('GET', 'http://localhost:8080/users');
-        $response = new Response(200, [], "Hello\n");
-
-        // $app->logRequestResponse($request, $response);
-        $ref = new ReflectionMethod($app, 'logRequestResponse');
-        $ref->setAccessible(true);
-        $ref->invoke($app, $request, $response);
-    }
-
-    public function testLogPrintsMessageWithCurrentDateAndTime()
-    {
-        $app = new App();
-
-        // 2021-01-29 12:22:01.717 Hello\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} Hello" . PHP_EOL . "$/");
-
-        // $app->log('Hello');
-        $ref = new ReflectionMethod($app, 'log');
-        $ref->setAccessible(true);
-        $ref->invoke($app, 'Hello');
     }
 }
