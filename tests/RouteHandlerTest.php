@@ -94,6 +94,19 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
+    public function testHandleRequestWithGetRequestWithHttpUrlInPathReturnsResponseFromMatchingHandler()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/http://localhost/');
+        $response = new Response(200, [], '');
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/http://localhost/', function () use ($response) { return $response; });
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
     public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyHandler()
     {
         $request = new ServerRequest('OPTIONS', 'http://example.com');

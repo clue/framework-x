@@ -36,6 +36,7 @@ out=$(curl -v $base/uri/Wham%21 2>&1);                  match "HTTP/.* 200" && m
 out=$(curl -v $base/uri/AC%2FDC 2>&1);                  skipif "HTTP/.* 404"    && match "HTTP/.* 200" && match "$base/uri/AC%2FDC" # skip Apache (404 unless `AllowEncodedSlashes NoDecode`)
 out=$(curl -v $base/uri/bin%00ary 2>&1);                skipif "HTTP/.* 40[04]" && match "HTTP/.* 200" && match "$base/uri/bin%00ary" # skip nginx (400) and Apache (404)
 out=$(curl -v $base/uri/AC/DC 2>&1);                    match "HTTP/.* 200" && match "$base/uri/AC/DC"
+out=$(curl -v $base/uri/http://example.com:8080/ 2>&1); match "HTTP/.* 200" && match "$base/uri/http://example.com:8080/"
 out=$(curl -v $base/uri? 2>&1);                         match "HTTP/.* 200" && match "$base/uri" # trailing "?" not reported for empty query string
 out=$(curl -v $base/uri?query 2>&1);                    match "HTTP/.* 200" && match "$base/uri?query"
 out=$(curl -v $base/uri?q=a 2>&1);                      match "HTTP/.* 200" && match "$base/uri?q=a"
