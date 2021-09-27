@@ -136,4 +136,9 @@ $app->get('/error/yield', function () {
     yield null;
 });
 
+// OPTIONS *
+$app->options('', function () {
+    return new React\Http\Message\Response(200);
+});
+
 $app->run();

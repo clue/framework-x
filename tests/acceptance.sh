@@ -95,6 +95,7 @@ out=$(curl -v $base/method -X PUT 2>&1);        match "HTTP/.* 200" && match "PU
 out=$(curl -v $base/method -X PATCH 2>&1);      match "HTTP/.* 200" && match "PATCH"
 out=$(curl -v $base/method -X DELETE 2>&1);     match "HTTP/.* 200" && match "DELETE"
 out=$(curl -v $base/method -X OPTIONS 2>&1);    match "HTTP/.* 200" && match "OPTIONS"
+out=$(curl -v $base -X OPTIONS --request-target "*" 2>&1);  skipif "Server: nginx" && match "HTTP/.* 200" # skip nginx (400)
 
 out=$(curl -v $base/headers -H 'Accept: text/html' 2>&1);   match "HTTP/.* 200" && match "\"Accept\": \"text/html\""
 out=$(curl -v $base/headers -d 'name=Alice' 2>&1);          match "HTTP/.* 200" && match "\"Content-Type\": \"application/x-www-form-urlencoded\"" && match "\"Content-Length\": \"10\""

@@ -4,7 +4,6 @@ namespace FrameworkX\Tests;
 
 use FrameworkX\SapiHandler;
 use PHPUnit\Framework\TestCase;
-use React\Http\Message\ServerRequest;
 use React\Http\Message\Response;
 use React\Stream\ThroughStream;
 
@@ -75,6 +74,26 @@ class SapiHandlerTest extends TestCase
 
         $this->assertEquals('GET', $request->getMethod());
         $this->assertEquals('https://localhost/', (string) $request->getUri());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('localhost', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithOptionsAsterisk()
+    {
+        $_SERVER['REQUEST_METHOD'] = 'OPTIONS';
+        $_SERVER['REQUEST_URI'] = '*';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $_SERVER['HTTP_HOST'] = 'localhost';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('OPTIONS', $request->getMethod());
+        $this->assertEquals('http://localhost', (string) $request->getUri());
+        $this->assertEquals('*', $request->getRequestTarget());
         $this->assertEquals('1.1', $request->getProtocolVersion());
         $this->assertEquals('localhost', $request->getHeaderLine('Host'));
     }

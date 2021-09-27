@@ -7,6 +7,7 @@ use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 
 class RouteHandlerTest extends TestCase
@@ -78,5 +79,32 @@ class RouteHandlerTest extends TestCase
 
         $this->assertStringContainsString("<title>Error 400: Proxy Requests Not Allowed</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandler()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', function () use ($response) { return $response; });
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyHandler()
+    {
+        $request = new ServerRequest('OPTIONS', 'http://example.com');
+        $request = $request->withRequestTarget('*');
+        $response = new Response(200, [], '');
+
+        $handler = new RouteHandler();
+        $handler->map(['OPTIONS'], '', function () use ($response) { return $response; });
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
     }
 }
