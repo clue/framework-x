@@ -6,6 +6,9 @@ use FastRoute\RouteCollector;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use React\Http\Message\Response;
+use React\Http\Message\ServerRequest;
 
 class RouteHandlerTest extends TestCase
 {
@@ -40,5 +43,81 @@ class RouteHandlerTest extends TestCase
         $ref->setValue($handler, $router);
 
         $handler->map(['GET'], '/', $middleware, $controller);
+    }
+
+    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $request = $request->withRequestTarget('http://example.com/');
+
+        $handler = new RouteHandler();
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 400: Proxy Requests Not Allowed</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithConnectProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
+    {
+        $request = new ServerRequest('CONNECT', 'example.com:80');
+        $request = $request->withRequestTarget('example.com:80');
+
+        $handler = new RouteHandler();
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 400: Proxy Requests Not Allowed</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandler()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', function () use ($response) { return $response; });
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithGetRequestWithHttpUrlInPathReturnsResponseFromMatchingHandler()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/http://localhost/');
+        $response = new Response(200, [], '');
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/http://localhost/', function () use ($response) { return $response; });
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyHandler()
+    {
+        $request = new ServerRequest('OPTIONS', 'http://example.com');
+        $request = $request->withRequestTarget('*');
+        $response = new Response(200, [], '');
+
+        $handler = new RouteHandler();
+        $handler->map(['OPTIONS'], '', function () use ($response) { return $response; });
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
     }
 }

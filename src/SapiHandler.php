@@ -42,11 +42,17 @@ class SapiHandler
         }
         // @codeCoverageIgnoreEnd
 
+        $target = ($_SERVER['REQUEST_URI'] ?? '/');
+        $url = $target;
+        if (($target[0] ?? '/') === '/' || $target === '*') {
+            $url = ($_SERVER['HTTPS'] ?? null === 'on' ? 'https://' : 'http://') . ($host ?? 'localhost') . ($target === '*' ? '' : $target);
+        }
+
         $body = file_get_contents('php://input');
 
         $request = new ServerRequest(
             $_SERVER['REQUEST_METHOD'] ?? 'GET',
-            ($_SERVER['HTTPS'] ?? null === 'on' ? 'https://' : 'http://') . ($host ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/'),
+            $url,
             $headers,
             $body,
             substr($_SERVER['SERVER_PROTOCOL'] ?? 'http/1.1', 5),
@@ -54,6 +60,9 @@ class SapiHandler
         );
         if ($host === null) {
             $request = $request->withoutHeader('Host');
+        }
+        if (isset($target[0]) && $target[0] !== '/') {
+            $request = $request->withRequestTarget($target);
         }
         $request = $request->withParsedBody($_POST);
 

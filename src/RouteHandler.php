@@ -45,7 +45,7 @@ class RouteHandler
      */
     public function __invoke(ServerRequestInterface $request)
     {
-        if (\strpos($request->getRequestTarget(), '://') !== false || $request->getMethod() === 'CONNECT') {
+        if ($request->getRequestTarget()[0] !== '/' && $request->getRequestTarget() !== '*') {
             return $this->errorHandler->requestProxyUnsupported($request);
         }
 

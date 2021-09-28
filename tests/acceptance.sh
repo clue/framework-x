@@ -1,6 +1,7 @@
 #!/bin/bash
 
 base=${1:-http://localhost:8080}
+baseWithPort=$(php -r 'echo parse_url($argv[1],PHP_URL_PORT) ? $argv[1] : $argv[1] . ":80";' "$base")
 
 n=0
 match() {
@@ -35,6 +36,7 @@ out=$(curl -v $base/uri/Wham%21 2>&1);                  match "HTTP/.* 200" && m
 out=$(curl -v $base/uri/AC%2FDC 2>&1);                  skipif "HTTP/.* 404"    && match "HTTP/.* 200" && match "$base/uri/AC%2FDC" # skip Apache (404 unless `AllowEncodedSlashes NoDecode`)
 out=$(curl -v $base/uri/bin%00ary 2>&1);                skipif "HTTP/.* 40[04]" && match "HTTP/.* 200" && match "$base/uri/bin%00ary" # skip nginx (400) and Apache (404)
 out=$(curl -v $base/uri/AC/DC 2>&1);                    match "HTTP/.* 200" && match "$base/uri/AC/DC"
+out=$(curl -v $base/uri/http://example.com:8080/ 2>&1); match "HTTP/.* 200" && match "$base/uri/http://example.com:8080/"
 out=$(curl -v $base/uri? 2>&1);                         match "HTTP/.* 200" && match "$base/uri" # trailing "?" not reported for empty query string
 out=$(curl -v $base/uri?query 2>&1);                    match "HTTP/.* 200" && match "$base/uri?query"
 out=$(curl -v $base/uri?q=a 2>&1);                      match "HTTP/.* 200" && match "$base/uri?q=a"
@@ -94,6 +96,7 @@ out=$(curl -v $base/method -X PUT 2>&1);        match "HTTP/.* 200" && match "PU
 out=$(curl -v $base/method -X PATCH 2>&1);      match "HTTP/.* 200" && match "PATCH"
 out=$(curl -v $base/method -X DELETE 2>&1);     match "HTTP/.* 200" && match "DELETE"
 out=$(curl -v $base/method -X OPTIONS 2>&1);    match "HTTP/.* 200" && match "OPTIONS"
+out=$(curl -v $base -X OPTIONS --request-target "*" 2>&1);  skipif "Server: nginx" && match "HTTP/.* 200" # skip nginx (400)
 
 out=$(curl -v $base/headers -H 'Accept: text/html' 2>&1);   match "HTTP/.* 200" && match "\"Accept\": \"text/html\""
 out=$(curl -v $base/headers -d 'name=Alice' 2>&1);          match "HTTP/.* 200" && match "\"Content-Type\": \"application/x-www-form-urlencoded\"" && match "\"Content-Length\": \"10\""
@@ -105,5 +108,8 @@ out=$(curl -v $base/headers -H 'Empty;' 2>&1);              match "HTTP/.* 200" 
 out=$(curl -v $base/headers -H 'Content-Type;' 2>&1);       skipif "Server: Apache" && match "HTTP/.* 200" && match "\"Content-Type\": \"\"" # skip Apache (discards empty Content-Type)
 out=$(curl -v $base/headers -H 'DNT: 1' 2>&1);              skipif "Server: nginx" && match "HTTP/.* 200" && match "\"DNT\"" && notmatch "\"Dnt\"" # skip nginx which doesn't report original case (DNT->Dnt)
 out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: nginx" && skipif -v "Server:" && match "HTTP/.* 200" && match "\"V\": \"a, b\"" # skip nginx (last only) and PHP webserver (first only)
+
+out=$(curl -v --proxy $baseWithPort $base/debug 2>&1);      skipif "Server: nginx" && match "HTTP/.* 400" # skip nginx (continues like direct request)
+out=$(curl -v --proxy $baseWithPort -p $base/debug 2>&1);   skipif "CONNECT aborted" && match "HTTP/.* 400" # skip PHP development server (rejects as "Malformed HTTP request")
 
 echo "OK ($n)"
