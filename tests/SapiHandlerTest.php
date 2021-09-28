@@ -79,6 +79,46 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals('localhost', $request->getHeaderLine('Host'));
     }
 
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithGetProxy()
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = 'http://example.com/';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('GET', $request->getMethod());
+        $this->assertEquals('http://example.com/', (string) $request->getUri());
+        $this->assertEquals('http://example.com/', $request->getRequestTarget());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('example.com', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithConnectProxy()
+    {
+        $_SERVER['REQUEST_METHOD'] = 'CONNECT';
+        $_SERVER['REQUEST_URI'] = 'example.com:443';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $_SERVER['HTTP_HOST'] = 'example.com:443';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('CONNECT', $request->getMethod());
+        $this->assertEquals('example.com:443', (string) $request->getUri());
+        $this->assertEquals('example.com:443', $request->getRequestTarget());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('example.com:443', $request->getHeaderLine('Host'));
+    }
+
     public function testSendResponseSendsEmptyResponseWithNoHeadersAndEmptyBodyAndAssignsNoContentTypeAndEmptyContentLength()
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
