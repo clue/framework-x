@@ -47,7 +47,7 @@ class AccessLogHandler
     {
         $this->sapi->log(
             ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
-            '"' . $request->getMethod() . ' ' . $request->getUri()->getPath() . ' HTTP/' . $request->getProtocolVersion() . '" ' .
+            '"' . $request->getMethod() . ' ' . $request->getRequestTarget() . ' HTTP/' . $request->getProtocolVersion() . '" ' .
             $response->getStatusCode() . ' ' . $response->getBody()->getSize()
         );
     }
