@@ -34,6 +34,19 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
+    public function testInvokePrintsRequestWithEscapedSpecialCharactersInRequestMethodAndTargetWithCurrentDateAndTime()
+    {
+        $handler = new AccessLogHandler();
+
+        $request = new ServerRequest('GE"T', 'http://localhost:8080/wörld', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $request = $request->withRequestTarget('/wörld');
+        $response = new Response(200, [], "Hello\n");
+
+        // 2021-01-29 12:22:01.717 127.0.0.1 "GE\x22T /w\xC3\xB6rld HTTP/1.1" 200 6\n
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GE\\\\x22T \/w\\\\xC3\\\\xB6rld HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
+        $handler($request, function () use ($response) { return $response; });
+    }
+
     public function testInvokePrintsPlainProxyRequestLogWithCurrentDateAndTime()
     {
         $handler = new AccessLogHandler();
