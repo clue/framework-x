@@ -47,8 +47,15 @@ class AccessLogHandler
     {
         $this->sapi->log(
             ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
-            '"' . $request->getMethod() . ' ' . $request->getUri()->getPath() . ' HTTP/' . $request->getProtocolVersion() . '" ' .
+            '"' . $this->escape($request->getMethod()) . ' ' . $this->escape($request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . '" ' .
             $response->getStatusCode() . ' ' . $response->getBody()->getSize()
         );
+    }
+
+    private function escape(string $s): string
+    {
+        return preg_replace_callback('/[\x00-\x1F\x7F-\xFF"\\\\]+/', function (array $m) {
+            return str_replace('%', '\x', rawurlencode($m[0]));
+        }, $s);
     }
 }
