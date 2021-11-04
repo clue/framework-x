@@ -110,6 +110,48 @@ $app->any('/method', function (ServerRequestInterface $request) {
     );
 });
 
+$app->get('/etag/', function (ServerRequestInterface $request) {
+    $etag = '"_"';
+    if ($request->getHeaderLine('If-None-Match') === $etag) {
+        return new React\Http\Message\Response(
+            304,
+            [
+                'ETag' => $etag
+            ],
+            ''
+        );
+    }
+
+    return new React\Http\Message\Response(
+        200,
+        [
+            'ETag' => $etag
+        ],
+        ''
+    );
+});
+$app->get('/etag/{etag:[a-z]+}', function (ServerRequestInterface $request) {
+    $etag = '"' . $request->getAttribute('etag') . '"';
+    if ($request->getHeaderLine('If-None-Match') === $etag) {
+        return new React\Http\Message\Response(
+            304,
+            [
+                'ETag' => $etag,
+                'Content-Length' => strlen($etag) - 1
+            ],
+            ''
+        );
+    }
+
+    return new React\Http\Message\Response(
+        200,
+        [
+            'ETag' => $etag
+        ],
+        $request->getAttribute('etag') . "\n"
+    );
+});
+
 $app->map(['GET', 'POST'], '/headers', function (ServerRequestInterface $request) {
     // Returns a JSON representation of all request headers passed to this endpoint.
     // Note that this assumes UTF-8 data in request headers and may break for other encodings,
