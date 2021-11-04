@@ -15,9 +15,13 @@ class AccessLogHandler
     /** @var SapiHandler */
     private $sapi;
 
+    /** @var bool */
+    private $hasHighResolution;
+
     public function __construct()
     {
         $this->sapi = new SapiHandler();
+        $this->hasHighResolution = \function_exists('hrtime'); // PHP 7.3+
     }
 
     /**
@@ -25,21 +29,22 @@ class AccessLogHandler
      */
     public function __invoke(ServerRequestInterface $request, callable $next)
     {
+        $now = $this->now();
         $response = $next($request);
 
         if ($response instanceof PromiseInterface) {
-            return $response->then(function (ResponseInterface $response) use ($request) {
-                $this->logWhenClosed($request, $response);
+            return $response->then(function (ResponseInterface $response) use ($request, $now) {
+                $this->logWhenClosed($request, $response, $now);
                 return $response;
             });
         } elseif ($response instanceof \Generator) {
-            return (function (\Generator $generator) use ($request) {
+            return (function (\Generator $generator) use ($request, $now) {
                 $response = yield from $generator;
-                $this->logWhenClosed($request, $response);
+                $this->logWhenClosed($request, $response, $now);
                 return $response;
             })($response);
         } else {
-            $this->logWhenClosed($request, $response);
+            $this->logWhenClosed($request, $response, $now);
             return $response;
         }
     }
@@ -47,7 +52,7 @@ class AccessLogHandler
     /**
      * checks if response body is closed (not streaming) before writing log message for response
      */
-    private function logWhenClosed(ServerRequestInterface $request, ResponseInterface $response): void
+    private function logWhenClosed(ServerRequestInterface $request, ResponseInterface $response, float $start): void
     {
         $body = $response->getBody();
 
@@ -57,23 +62,23 @@ class AccessLogHandler
                 $size += strlen($chunk);
             });
 
-            $body->on('close', function () use (&$size, $request, $response) {
-                $this->log($request, $response, $size);
+            $body->on('close', function () use (&$size, $request, $response, $start) {
+                $this->log($request, $response, $size, $this->now() - $start);
             });
         } else {
-            $this->log($request, $response, $body->getSize() ?? strlen((string) $body));
+            $this->log($request, $response, $body->getSize() ?? strlen((string) $body), $this->now() - $start);
         }
     }
 
     /**
      * writes log message for response after response body is closed (not streaming anymore)
      */
-    private function log(ServerRequestInterface $request, ResponseInterface $response, int $responseSize): void
+    private function log(ServerRequestInterface $request, ResponseInterface $response, int $responseSize, float $time): void
     {
         $this->sapi->log(
             ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
             '"' . $this->escape($request->getMethod()) . ' ' . $this->escape($request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . '" ' .
-            $response->getStatusCode() . ' ' . $responseSize
+            $response->getStatusCode() . ' ' . $responseSize . ' ' . sprintf('%.3F', $time < 0 ? 0 : $time)
         );
     }
 
@@ -82,5 +87,10 @@ class AccessLogHandler
         return preg_replace_callback('/[\x00-\x1F\x7F-\xFF"\\\\]+/', function (array $m) {
             return str_replace('%', '\x', rawurlencode($m[0]));
         }, $s);
+    }
+
+    private function now(): float
+    {
+        return $this->hasHighResolution ? hrtime(true) * 1e-9 : microtime(true);
     }
 }
