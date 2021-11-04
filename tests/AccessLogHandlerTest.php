@@ -48,6 +48,42 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
+    public function testInvokePrintsRequestLogForHeadRequestWithResponseSizeAsZero()
+    {
+        $handler = new AccessLogHandler();
+
+        $request = new ServerRequest('HEAD', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], "HEAD\n");
+
+        // 2021-01-29 12:22:01.717 127.0.0.1 "HEAD /users HTTP/1.1" 200 0 0.000\n
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"HEAD \/users HTTP\/1\.1\" 200 0 0\.0\d\d" . PHP_EOL . "$/");
+        $handler($request, function () use ($response) { return $response; });
+    }
+
+    public function testInvokePrintsRequestLogForNoContentResponseWithResponseSizeAsZero()
+    {
+        $handler = new AccessLogHandler();
+
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(204, [], "No Content\n");
+
+        // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 204 0 0.000\n
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 204 0 0\.0\d\d" . PHP_EOL . "$/");
+        $handler($request, function () use ($response) { return $response; });
+    }
+
+    public function testInvokePrintsRequestLogForNotModifiedResponseWithResponseSizeAsZero()
+    {
+        $handler = new AccessLogHandler();
+
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(304, [], "Not Modified\n");
+
+        // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 304 0 0.000\n
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 304 0 0\.0\d\d" . PHP_EOL . "$/");
+        $handler($request, function () use ($response) { return $response; });
+    }
+
     public function testInvokePrintsPlainProxyRequestLogWithCurrentDateAndTime()
     {
         $handler = new AccessLogHandler();
