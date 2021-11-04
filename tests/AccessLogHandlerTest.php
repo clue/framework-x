@@ -6,6 +6,7 @@ use FrameworkX\AccessLogHandler;
 use PHPUnit\Framework\TestCase;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Stream\ThroughStream;
 use function React\Promise\resolve;
 
 class AccessLogHandlerTest extends TestCase
@@ -118,6 +119,48 @@ class AccessLogHandlerTest extends TestCase
         // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 200 6\n
         $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 6" . PHP_EOL . "$/");
         $generator->next();
+    }
+
+    public function testInvokeWithStreamingResponsePrintsRequestLogWithCurrentDateAndTime()
+    {
+        $handler = new AccessLogHandler();
+
+        $stream = new ThroughStream();
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], $stream);
+
+        // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 200 10\n
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 10" . PHP_EOL . "$/");
+        $handler($request, function () use ($response) { return $response; });
+        $stream->write('hello');
+        $stream->end('world');
+    }
+
+    public function testInvokeWithClosedStreamingResponsePrintsRequestLogWithCurrentDateAndTime()
+    {
+        $handler = new AccessLogHandler();
+
+        $stream = new ThroughStream();
+        $stream->close();
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], $stream);
+
+        // 2021-01-29 12:22:01.717 127.0.0.1 "GET /users HTTP/1.1" 200 10\n
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 0" . PHP_EOL . "$/");
+        $handler($request, function () use ($response) { return $response; });
+    }
+
+    public function testInvokeWithStreamingResponsePrintsNothingIfStreamIsPending()
+    {
+        $handler = new AccessLogHandler();
+
+        $stream = new ThroughStream();
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], $stream);
+
+        $this->expectOutputString('');
+        $handler($request, function () use ($response) { return $response; });
+        $stream->write('hello');
     }
 
     public function testInvokeWithoutRemoteAddressPrintsRequestLogWithDashAsPlaceholder()
