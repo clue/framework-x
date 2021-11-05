@@ -98,11 +98,16 @@ out=$(curl -v $base/method -X DELETE 2>&1);     match "HTTP/.* 200" && match "DE
 out=$(curl -v $base/method -X OPTIONS 2>&1);    match "HTTP/.* 200" && match "OPTIONS"
 out=$(curl -v $base -X OPTIONS --request-target "*" 2>&1);  skipif "Server: nginx" && match "HTTP/.* 200" # skip nginx (400)
 
+out=$(curl -v $base/etag/ 2>&1);                            match "HTTP/.* 200" && match -iP "Content-Length: 0[\r\n]" && match -iP "Etag: \"_\""
+out=$(curl -v $base/etag/ -H 'If-None-Match: "_"' 2>&1);    skipif "Server: ReactPHP" && match "HTTP/.* 304" && notmatch -i "Content-Length" && match -iP "Etag: \"_\"" # skip built-in webserver (always includes Content-Length : 0)
+out=$(curl -v $base/etag/a 2>&1);                           match "HTTP/.* 200" && match -iP "Content-Length: 2[\r\n]" && match -iP "Etag: \"a\""
+out=$(curl -v $base/etag/a -H 'If-None-Match: "a"' 2>&1);   skipif "Server: ReactPHP" && skipif "Server: Apache" && match "HTTP/.* 304" && match -iP "Content-Length: 2[\r\n]" && match -iP "Etag: \"a\"" # skip built-in webserver (always includes Content-Length: 0) and Apache (no Content-Length)
+
 out=$(curl -v $base/headers -H 'Accept: text/html' 2>&1);   match "HTTP/.* 200" && match "\"Accept\": \"text/html\""
 out=$(curl -v $base/headers -d 'name=Alice' 2>&1);          match "HTTP/.* 200" && match "\"Content-Type\": \"application/x-www-form-urlencoded\"" && match "\"Content-Length\": \"10\""
 out=$(curl -v $base/headers -u user:pass 2>&1);             match "HTTP/.* 200" && match "\"Authorization\": \"Basic dXNlcjpwYXNz\""
 out=$(curl -v $base/headers 2>&1);                          match "HTTP/.* 200" && notmatch -i "\"Content-Type\"" && notmatch -i "\"Content-Length\""
-out=$(curl -v $base/headers -H User-Agent: -H Accept: -H Host: -10 2>&1);   skipif "Server: ReactPHP" && match "HTTP/.* 200" && match "{}" # skip built-in webserver (always includes Host)
+out=$(curl -v $base/headers -H User-Agent: -H Accept: -H Host: -10 2>&1);   match "HTTP/.* 200" && match "{}"
 out=$(curl -v $base/headers -H 'Content-Length: 0' 2>&1);   match "HTTP/.* 200" && match "\"Content-Length\": \"0\""
 out=$(curl -v $base/headers -H 'Empty;' 2>&1);              match "HTTP/.* 200" && match "\"Empty\": \"\""
 out=$(curl -v $base/headers -H 'Content-Type;' 2>&1);       skipif "Server: Apache" && match "HTTP/.* 200" && match "\"Content-Type\": \"\"" # skip Apache (discards empty Content-Type)

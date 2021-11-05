@@ -82,11 +82,17 @@ class SapiHandler
      */
     public function sendResponse(ResponseInterface $response): void
     {
-        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase());
+        $status = $response->getStatusCode();
+        $body = $response->getBody();
 
-        // automatically assign "Content-Length" response header if known and not already present
-        if (!$response->hasHeader('Content-Length') && $response->getBody()->getSize() !== null) {
-            $response = $response->withHeader('Content-Length', (string)$response->getBody()->getSize());
+        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $status . ' ' . $response->getReasonPhrase());
+
+        if ($status === 204) {
+            // 204 MUST NOT include "Content-Length" response header
+            $response = $response->withoutHeader('Content-Length');
+        } elseif (!$response->hasHeader('Content-Length') && $body->getSize() !== null && ($status !== 304 || $body->getSize() !== 0)) {
+            // automatically assign "Content-Length" response header if known and not already present
+            $response = $response->withHeader('Content-Length', (string) $body->getSize());
         }
 
         // remove default "Content-Type" header set by PHP (default_mimetype)
@@ -105,7 +111,10 @@ class SapiHandler
         }
         ini_set('default_charset', $old);
 
-        $body = $response->getBody();
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' || $status === 204 || $status === 304) {
+            $body->close();
+            return;
+        }
 
         if ($body instanceof ReadableStreamInterface) {
             // try to disable nginx buffering (http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering)
