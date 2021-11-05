@@ -75,10 +75,18 @@ class AccessLogHandler
      */
     private function log(ServerRequestInterface $request, ResponseInterface $response, int $responseSize, float $time): void
     {
+        $method = $request->getMethod();
+        $status = $response->getStatusCode();
+
+        // HEAD requests and `204 No Content` and `304 Not Modified` always use an empty response body
+        if ($method === 'HEAD' || $status === 204 || $status === 304) {
+            $responseSize = 0;
+        }
+
         $this->sapi->log(
             ($request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
-            '"' . $this->escape($request->getMethod()) . ' ' . $this->escape($request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . '" ' .
-            $response->getStatusCode() . ' ' . $responseSize . ' ' . sprintf('%.3F', $time < 0 ? 0 : $time)
+            '"' . $this->escape($method) . ' ' . $this->escape($request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . '" ' .
+            $status . ' ' . $responseSize . ' ' . sprintf('%.3F', $time < 0 ? 0 : $time)
         );
     }
 
