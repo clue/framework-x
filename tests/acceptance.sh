@@ -99,9 +99,9 @@ out=$(curl -v $base/method -X OPTIONS 2>&1);    match "HTTP/.* 200" && match "OP
 out=$(curl -v $base -X OPTIONS --request-target "*" 2>&1);  skipif "Server: nginx" && match "HTTP/.* 200" # skip nginx (400)
 
 out=$(curl -v $base/etag/ 2>&1);                            match "HTTP/.* 200" && match -iP "Content-Length: 0[\r\n]" && match -iP "Etag: \"_\""
-out=$(curl -v $base/etag/ -H 'If-None-Match: "_"' 2>&1);    skipif "Server: ReactPHP" && match "HTTP/.* 304" && notmatch -i "Content-Length" && match -iP "Etag: \"_\"" # skip built-in webserver (always includes Content-Length : 0)
+out=$(curl -v $base/etag/ -H 'If-None-Match: "_"' 2>&1);    match "HTTP/.* 304" && notmatch -i "Content-Length" && match -iP "Etag: \"_\""
 out=$(curl -v $base/etag/a 2>&1);                           match "HTTP/.* 200" && match -iP "Content-Length: 2[\r\n]" && match -iP "Etag: \"a\""
-out=$(curl -v $base/etag/a -H 'If-None-Match: "a"' 2>&1);   skipif "Server: ReactPHP" && skipif "Server: Apache" && match "HTTP/.* 304" && match -iP "Content-Length: 2[\r\n]" && match -iP "Etag: \"a\"" # skip built-in webserver (always includes Content-Length: 0) and Apache (no Content-Length)
+out=$(curl -v $base/etag/a -H 'If-None-Match: "a"' 2>&1);   skipif "Server: Apache" && match "HTTP/.* 304" && match -iP "Content-Length: 2[\r\n]" && match -iP "Etag: \"a\"" # skip Apache (no Content-Length)
 
 out=$(curl -v $base/headers -H 'Accept: text/html' 2>&1);   match "HTTP/.* 200" && match "\"Accept\": \"text/html\""
 out=$(curl -v $base/headers -d 'name=Alice' 2>&1);          match "HTTP/.* 200" && match "\"Content-Type\": \"application/x-www-form-urlencoded\"" && match "\"Content-Length\": \"10\""
