@@ -383,6 +383,74 @@ Last-Modified: Sat, 06 Nov 2021 12:31:04 GMT
 > for your response or don't want to expose this information, you may want to
 > use [`ETag`](#etag) headers from the previous section instead.
 
+## Output buffering
+
+PHP provides a number of functions that write directly to the
+[output buffer](https://www.php.net/manual/en/book.outcontrol.php) instead of
+returning values:
+
+* [`echo`](https://www.php.net/manual/en/function.echo.php),
+  [`print`](https://www.php.net/manual/en/function.print.php),
+  [`printf()`](https://www.php.net/manual/en/function.printf.php),
+  [`vprintf()`](https://www.php.net/manual/en/function.vprintf.php),
+  etc.
+* [`var_dump()`](https://www.php.net/manual/en/function.var-dump.php),
+  [`var_export()`](https://www.php.net/manual/en/function.var-export.php),
+  [`print_r()`](https://www.php.net/manual/en/function.print-r.php),
+  etc.
+* [`readfile()`](https://www.php.net/manual/en/function.readfile.php),
+  [`fpassthru()`](https://www.php.net/manual/en/function.fpassthru.php),
+  [`passthru()`](https://www.php.net/manual/en/function.passthru.php),
+  etc.
+* …
+
+These functions can also be used in X, but do require some special care because
+we want to redirect this output to be part of an HTTP response instead. You can
+start a temporary output buffer using [`ob_start()`](https://www.php.net/manual/en/function.ob-start.php)
+to catch any output and return it as a response body like this:
+
+```php
+<?php
+// …
+
+$app->get('/dump', function () {
+    ob_start();
+    echo "Hello\n";
+    var_dump(42);
+    $body = ob_get_clean();
+
+    return new React\Http\Message\Response(
+        200,
+        ['Content-Type' => 'text/plain; charset=utf-8'],
+        $body
+    );
+});
+```
+
+An HTTP request can be sent like this:
+
+```bash
+$ curl http://localhost:8080/dump
+Hello
+int(42)
+```
+
+> ℹ️ **A word of caution**
+>
+> Special care should be taken if the code in question is deeply nested with
+> multiple return conditions or may throw an `Exception`.
+>
+> As a rule of thumb, output buffering should only be used as a last resort and
+> directly working with `string` values is usually preferable. For instance,
+> [`print_r()`](https://www.php.net/manual/en/function.print_r.php),
+> [`var_export()`](https://www.php.net/manual/en/function.var-export.php) and
+> others accept optional boolean flags to return the value instead of printing
+> to the output buffer. In many other cases, PHP also provides alternative
+> functions that directly return `string` values instead of writing to the output
+> buffer. For instance, instead of using
+> [`printf()`](https://www.php.net/manual/en/function.printf.php), you may want
+> to use [`sprintf()`](https://www.php.net/manual/en/function.sprintf.php).
+
 ## Internal Server Error
 
 Each controller function needs to return a response object in order to send
