@@ -167,6 +167,7 @@ Here's a list of the most common HTTP status codes:
 * `200 OK`
 * `301 Permanent Redirect`
 * `302 Found` (previously `302 Temporary Redirect`)
+* `304 Not Modified` (see [HTTP caching](#http-caching) below)
 * `403 Forbidden`
 * `404 Not Found`
 * `500 Internal Server Error`
@@ -204,6 +205,183 @@ Additionally, the application will automatically include default headers require
 by the HTTP protocol.
 It's not recommended to mess with these default headers unless you're sure you
 know what you're doing.
+
+## HTTP caching
+
+HTTP caching can be used to significantly improve the performance of web
+applications by reusing previously fetched resources. HTTP caching is a whole
+topic on its own, so this section only aims to give a basic overview of how
+you can leverage HTTP caches with X. For a more in-depth overview, we highly
+recommend [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching).
+
+HTTP supports caching for certain requests by default. In any but the most basic
+use cases, it's often a good idea to explicitly specify HTTP caching headers
+as part of the HTTP response to have more control over the freshness lifetime
+and revalidation behavior.
+
+### Cache-Control
+
+The [`Cache-Control`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
+response header can be used to control caching of responses by browsers and
+shared caches such as proxies and CDNs. In its most basic form, you can use this
+response header to control the lifetime of a cached response like this:
+
+```php
+<?php
+// …
+
+$app->get('/user', function () {
+    $html = <<<HTML
+<h1>Hello Alice</h1>
+HTML;
+
+    return new Response(
+        200,
+        [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'max-age=3600',
+        ],
+        $html
+    );
+});
+```
+
+An HTTP request can be sent like this:
+
+```bash
+$ curl -I http://localhost:8080/user
+HTTP/1.1 200 OK
+Cache-Control: max-age=3600
+…
+```
+
+### ETag
+
+The [`ETag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag)
+response header can be used for conditional requests. This ensures the response
+body only needs to be transferred when it actually changes. For instance, you
+can build a hash (or some other arbitrary identifier) for your contents and
+check if it matches the incoming
+[`If-None-Match`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match)
+request header for subsequent requests. If both values match, you can send a
+[`304 Not Modified`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/304)
+response and omit the response body like this:
+
+```php
+<?php
+// …
+
+$app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
+    // example body, would usually come from some kind of database
+    $html = <<<HTML
+<h1>Hello Alice</h1>
+HTML;
+
+    $etag = '"' . sha1($html) . '"';
+    if ($request->getHeaderLine('If-None-Match') === $etag) {
+        return new Response(
+            304,
+            [
+                'Cache-Control' => 'max-age=0, must-revalidate',
+                'ETag' => $etag
+            ]
+        );
+    }
+
+    return new Response(
+        200,
+        [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'max-age=0, must-revalidate',
+            'ETag' => $etag
+        ],
+        $html
+    );
+});
+```
+
+An HTTP request can be sent like this:
+
+```bash
+$ curl http://localhost:8080/user
+<h1>Hello Alice</h1>
+
+$ curl -I http://localhost:8080/user -H 'If-None-Match: "87637b595ed5b32934c011dc6b33afb43f598865"'
+HTTP/1.1 304 Not Modified
+Cache-Control: max-age=0, must-revalidate
+ETag: "87637b595ed5b32934c011dc6b33afb43f598865"
+…
+```
+
+### Last-Modified
+
+The [`Last-Modified`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified)
+response header can be used to signal when a response was last modified. Among
+others, this can be used to ensure the response body only needs to be
+transferred when it changes. For instance, you can store a timestamp or datetime
+for your contents and check if it matches the incoming
+[`If-Modified-Since`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since)
+request header for subsequent requests. If both values match, you can send a
+[`304 Not Modified`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/304)
+response and omit the response body like this:
+
+```php
+<?php
+// …
+
+$app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
+    // example date and body, would usually come from some kind of database
+    $date = new DateTimeImmutable(
+        '2021-11-06 13:31:04',
+        new DateTimeZone('Europe/Berlin')
+    );
+    $html = <<<HTML
+<h1>Hello Alice</h1>
+HTML;
+
+    $modified = $date->setTimezone(new DateTimeZone('UTC'))->format(DATE_RFC7231);
+    if ($request->getHeaderLine('If-Modified-Since') === $modified) {
+        return new Response(
+            304,
+            [
+                'Cache-Control' => 'max-age=0, must-revalidate',
+                'Last-Modified' => $modified
+            ]
+        );
+    }
+
+    return new Response(
+        200,
+        [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'max-age=0, must-revalidate',
+            'Last-Modified' => $modified
+        ],
+        $html
+    );
+});
+```
+
+An HTTP request can be sent like this:
+
+```bash
+$ curl http://localhost:8080/user
+<h1>Hello Alice</h1>
+
+$ curl -I http://localhost:8080/user -H 'If-Modified-Since: Sat, 06 Nov 2021 12:31:04 GMT'
+HTTP/1.1 304 Not Modified
+Cache-Control: max-age=0, must-revalidate
+Last-Modified: Sat, 06 Nov 2021 12:31:04 GMT
+…
+```
+
+> ℹ️ **Working with dates**
+>
+> For use in HTTP, you may format any date in the GMT/UTC timezone using the
+> [`DATE_RFC7231`](https://www.php.net/manual/en/class.datetimeinterface.php#datetime.constants.rfc7231)
+> (PHP 7.1.5+) constant as given above. If you don't know the modification date
+> for your response or don't want to expose this information, you may want to
+> use [`ETag`](#etag) headers from the previous section instead.
 
 ## Internal Server Error
 
