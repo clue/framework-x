@@ -333,7 +333,7 @@ $ sudo systemctl start acme.service
 ```
 
 And that's it already! Systemd now monitors our application server and will
-automatically start, stop and restart the server application when needed. You
+automatically start, stop and restart the server application. You
 can check the status at any time like this:
 
 ```bash
@@ -342,6 +342,13 @@ $ sudo systemctl status acme.service
      Loaded: loaded (/etc/systemd/system/acme.service; enabled; vendor preset: enabled)
      Active: active (running)
 […]
+```
+
+If you add new content to your project files this configuration won't trigger.
+Therefore you can simply restart your service manually by executing the following command:
+
+```bash
+$ sudo systemctl restart acme.service
 ```
 
 This should be enough to get you started with systemd. If you want to learn more
