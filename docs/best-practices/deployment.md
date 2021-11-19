@@ -21,7 +21,7 @@ For example, if you've followed the [quickstart guide](../getting-started/quicks
 server for testing purposes like this:
 
 ```bash
-$ php -S 0.0.0.0:8080 app.php
+$ php -S 0.0.0.0:8080 public/index.php
 ```
 
 In order to check your web application responds as expected, you can use your favorite webbrowser or command line tool:
@@ -41,7 +41,7 @@ With the built-in web server, we provide a non-blocking implementation that can 
 With no changes required, you can run the built-in web server with the exact same code base on the command line:
 
 ```bash
-$ php app.php
+$ php public/index.php
 ```
 
 Let's take a look and see this works just like before:
@@ -66,14 +66,14 @@ If you want to change the listen address, you can pass an IP and port
 combination through the `X_LISTEN` environment variable like this:
 
 ```bash
-$ X_LISTEN=127.0.0.1:8081 php app.php
+$ X_LISTEN=127.0.0.1:8081 php public/index.php
 ```
 
 While not usually recommended, you can also expose this to the public by using
 the special `0.0.0.0` IPv4 address or `[::]` IPv6 address like this:
 
 ```bash
-$ X_LISTEN=0.0.0.0:8080 php app.php
+$ X_LISTEN=0.0.0.0:8080 php public/index.php
 ```
 
 ### Systemd
@@ -108,7 +108,7 @@ $ sudoedit /etc/systemd/system/acme.service
 Description=ACME server
 
 [Service]
-ExecStart=/usr/bin/php /home/alice/projects/acme/index.php
+ExecStart=/usr/bin/php /home/alice/projects/acme/public/index.php
 User=alice
 
 [Install]

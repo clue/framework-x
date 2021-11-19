@@ -8,10 +8,10 @@ This is especially useful once you leave the prototyping phase and want to find 
 To get started, let's take a look at the following simple closure definitions:
 
 ```php
-# app.php
+# public/index.php
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 $app = new FrameworkX\App();
 
@@ -42,10 +42,10 @@ into invidividual controller classes. This way, we can break up the above
 definition into three even simpler files:
 
 ```php
-# app.php
+# public/index.php
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 $app = new FrameworkX\App();
 

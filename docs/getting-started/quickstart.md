@@ -10,17 +10,18 @@ In order to first start using X, let's start with an entirely empty project dire
 This shouldn't be too confusing, but here's how you can do so on the command line:
 
 ```bash
-$ mkdir ~/projects/acme
-$ cd ~/projects/acme
+$ mkdir ~/projects/acme/
+$ cd ~/projects/acme/
 ```
 
 Next, we can start by taking a look at a simple example application.
-You can use this example to get started by creating a new `app.php` file in your empty project directory:
+You can use this example to get started by creating a new `public/` directory with
+an `index.php` file inside:
 
 ```php
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 $app = new FrameworkX\App();
 
@@ -90,16 +91,27 @@ $ composer require clue/framework-x:dev-main
 
 This isn't NPM, so this should only take a moment or two.
 
+Once installed, your project directory should now look like this:
+
+```
+acme/
+├── public/
+│   └── index.php
+├── vendor/
+├── composer.json
+└── composer.lock
+```
+
 ## Running
 
 The next step after installing all dependencies is now to serve this web application.
 One of the nice properties of this project is that it *runs anywhere* (provided you have PHP installed of course).
 
-For example, you can run the above example using PHP's built-in web server for
-testing purposes like this:
+For example, you can run the above example using the built-in web server like
+this:
 
 ```bash
-$ php -S 0.0.0.0:8080 app.php
+$ php public/index.php
 ```
 
 You can now use your favorite web browser or command line tool to check your web

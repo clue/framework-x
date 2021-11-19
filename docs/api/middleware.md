@@ -83,7 +83,7 @@ class DemoMiddleware
 }
 ```
 ```php
-# app.php
+# public/index.php
 <?php
 
 use Acme\Todo\DemoMiddleware;
@@ -150,7 +150,7 @@ class UserController
 ```
 
 ```php
-# app.php
+# public/index.php
 <?php
 
 use Acme\Todo\AdminMiddleware;
@@ -217,7 +217,7 @@ class UserController
 ```
 
 ```php
-# app.php
+# public/index.php
 <?php
 
 use Acme\Todo\ContentTypeMiddleware;
@@ -442,7 +442,7 @@ a response object synchronously:
 
 
 ```php
-# app.php
+# public/index.php
 <?php
 
 use Acme\Todo\AsyncContentTypeMiddleware;
@@ -470,7 +470,7 @@ Additionally, you can also add middleware to the [`App`](app.md) object itself
 to register a global middleware handler:
 
 ```php hl_lines="7"
-# app.php
+# public/index.php
 <?php
 
 use Acme\Todo\AdminMiddleware;

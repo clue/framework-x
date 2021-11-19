@@ -13,13 +13,13 @@ Framework X – the simple and fast micro framework for building reactive web ap
 
 Start by creating an empty project directory.
 Next, we can start by taking a look at a simple example application.
-You can use this example to get started by creating a new `app.php` file in your
-empty project directory:
+You can use this example to get started by creating a new `public/` directory with
+an `index.php` file inside:
 
 ```php
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 $app = new FrameworkX\App();
 
@@ -66,14 +66,14 @@ That's it already! The next step is now to serve this web application.
 One of the nice properties of this project is that is works both behind
 traditional web server setups as well as in a stand-alone environment.
 
-For example, you can run the above example using PHP's built-in webserver for
-testing purposes like this:
+For example, you can run the above example using the built-in web server like
+this:
 
 ```bash
-$ php -S 0.0.0.0:8080 app.php
+$ php public/index.php
 ```
 
-You can now use your favorite webbrowser or command line tool to check your web
+You can now use your favorite web browser or command line tool to check your web
 application responds as expected:
 
 ```bash
