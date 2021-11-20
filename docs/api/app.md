@@ -4,10 +4,10 @@ The `App` class is your main entrypoint to any application that builds on top of
 It provides a simple API for routing HTTP requests as commonly used in RESTful applications.
 
 ```php
-# app.php
+# public/index.php
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 $app = new FrameworkX\App();
 
@@ -113,7 +113,7 @@ For this reason, we recommend using [controller classes](../best-practices/contr
 for production use-cases like this:
 
 ```php
-# app.php
+# public/index.php
 $app->get('/', new Acme\Todo\HelloController());
 ```
 
