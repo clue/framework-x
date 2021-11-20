@@ -176,13 +176,30 @@ database implementations.
 
 ## DBAL
 
-> ⚠️ **Documentation still under construction**
+> ⚠️ **Feature preview**
 >
-> You're seeing an early draft of the documentation that is still in the works.
+> This is a feature preview, i.e. it might not have made it into the current beta.
 > Give feedback to help us prioritize.
 > We also welcome [contributors](../more/community.md) to help out!
 
-* Future DBAL and ORM
+There is ongoing effort to provide an async DBAL (DataBase Abstraction Layer)
+that will allow you to write your logic in such a way that it is not tied to a
+specific database adapter.
+
+Among others, this will make it easier to support multiple database adapters in
+a single code base, which is particularly useful for reusable components such as
+[middleware classes](../api/middleware.md). You may also use this to configure
+different database adapters for testing purposes (such as using SQLite for
+integration tests and using MySQL in production).
+
+At the moment, we recommend using one of the above database adapters directly.
+Looking forward, the idea is to add an abstraction that uses a common API and
+provides a native integration with these adapters. Accordingly, switching to the
+new DBAL APIs should only be a matter of a few minutes, not hours. Expect more
+details later this year.
+
+On top of this, there are ideas to build an ORM (Object-Relational Mapping) in
+the future. More details will follow.
 
 ## Best practices
 
@@ -786,3 +803,48 @@ structures to get you started:
     ├── composer.json
     └── composer.lock
     ```
+
+### Connection pools
+
+> ⚠️ **Feature preview**
+>
+> This is a feature preview, i.e. it might not have made it into the current beta.
+> Give feedback to help us prioritize.
+> We also welcome [contributors](../more/community.md) to help out!
+
+If you're using X behind a [traditional web server](../best-practices/deployment.md#traditional-stacks),
+there's nothing to worry about: PHP will process a single request and then clean
+up afterward (shared-nothing architecture). Likewise, any database connection
+will be created as part of the request handling and will be closed after the
+request has been handled. Because the number of parallel PHP processes is
+limited (usually through a PHP-FPM configuration), this also ensures the number
+of concurrent database connections is limited.
+
+If you're using X with its [built-in web server](../best-practices/deployment.md#built-in-web-server),
+things behave differently: a single PHP process will take care of handling any
+number of requests concurrently. Because this process is kept running, this
+means we can reuse state such as database connections. This provides a
+significant performance boost as we do not have to recreate the connection and
+exchange authentication credentials for each request. As such, using the
+built-in web server gives you more options on how to handle these database
+connections.
+
+* Set up a database connection for each request and clean up afterward: Same
+  characteristics as traditional shared-nothing architecture. Needs to juggle
+  with multiple database connection objects and missing out on significant
+  performance boost.
+
+* Create a single database connection and reuse this across multiple requests:
+  Significantly less connection setup and promises noticeable performance boost.
+  However, database queries will be processed in order over a single connection
+  and a single slow query may thus negatively impact all following queries
+  ([Head-of-line blocking](https://en.wikipedia.org/wiki/Head-of-line_blocking)).
+
+The best compromise between both extremes is a database connection pool: Your
+code interfaces with a single database connection object that will automatically
+create a limited number of underlying database connections as needed.
+
+There is ongoing effort to provide built-in support for database connection
+pools for all database adapters, possible through the async DBAL described
+above. Once ready, switching to the connection pool should only be a matter of
+minutes, not hours. Expect more details later this year.
