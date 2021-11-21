@@ -35,6 +35,64 @@ $ curl http://localhost:8080/
 Hello wörld!
 ```
 
+### nginx
+
+nginx is a high performance web server, load balancer and reverse proxy. In
+particular, its high performance and versatility makes it one of the most
+popular web servers. It is used everywhere from the smallest projects to the
+biggest enterprises.
+
+X supports nginx out of the box. If you've used nginx before to run any PHP
+application, using nginx with X is as simple as dropping the project files in
+the right directory. Accordingly, this guide assumes you want to process a
+number of [dynamic routes](../api/app.md#routing) through X and optionally
+include some public assets (such as style sheets and images).
+
+Assuming you've followed the [quickstart guide](../getting-started/quickstart.md),
+all you need to do is to point the nginx' [`root`](http://nginx.org/en/docs/http/ngx_http_core_module.html#root)
+("docroot") to the `public/` directory of your project. On top of this, you'll need
+to instruct nginx to process any dynamic requests through X. This can be
+achieved by using an nginx configuration with the following contents:
+
+```
+server {
+    root /home/alice/projects/acme/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass localhost:9000;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+```
+
+> ℹ️ **New to nginx?**
+>
+> A complete nginx configuration is out of scope for this guide, so we assume
+> you already have nginx and PHP with PHP-FPM up and running. In this example,
+> we're assuming PHP-FPM is already up and running and listens on `localhost:9000`,
+> consult your search engine of choice for basic install instructions. Once this
+> is set up, the above guide should be everything you need to then use X.
+>
+> We recommend using the above nginx configuration as a starting point if you're
+> unsure. In this basic form, it instructs nginx to rewrite any requests for
+> files that do not exist to your `public/index.php` which then processes any
+> requests by checking your [registered routes](../api/app.md#routing).
+
+Once done, you can check your web application responds as expected. Use your
+favorite web browser or command-line tool:
+
+```bash
+$ curl http://localhost/
+Hello wörld!
+```
+
 ### Apache
 
 The Apache HTTP server (httpd) is one of the most popular web servers. In
