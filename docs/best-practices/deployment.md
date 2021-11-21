@@ -48,6 +48,13 @@ the right directory. Accordingly, this guide assumes you want to process a
 number of [dynamic routes](../api/app.md#routing) through X and optionally
 include some public assets (such as style sheets and images).
 
+> ℹ️ **PHP-FPM or reverse proxy?**
+> 
+> This section assumes you want to use nginx with PHP-FPM which is a very common,
+> traditional web stack. If you want to get the most out of X, you may also
+> want to look into using the built-in web server with an
+> [nginx reverse proxy](#nginx-reverse-proxy).
+
 Assuming you've followed the [quickstart guide](../getting-started/quickstart.md),
 all you need to do is to point the nginx' [`root`](http://nginx.org/en/docs/http/ngx_http_core_module.html#root)
 ("docroot") to the `public/` directory of your project. On top of this, you'll need
@@ -201,8 +208,9 @@ combination through the `X_LISTEN` environment variable like this:
 $ X_LISTEN=127.0.0.1:8081 php public/index.php
 ```
 
-While not usually recommended, you can also expose this to the public by using
-the special `0.0.0.0` IPv4 address or `[::]` IPv6 address like this:
+While not usually recommended (see [nginx reverse proxy](#nginx-reverse-proxy)),
+you can also expose this to the public by using the special `0.0.0.0` IPv4 address
+or `[::]` IPv6 address like this:
 
 ```bash
 $ X_LISTEN=0.0.0.0:8080 php public/index.php
@@ -225,7 +233,7 @@ few lines of configuration, which makes it super easy to run X in production.
 > monitoring, depending on your particular needs. Among these is `systemd`, which
 > is very wide-spread on Linux-based systems and in fact comes preinstalled with
 > many of the large distributions. But we love choice. If you prefer different
-> tools, you can adjust the following instructions to suite your needs.
+> tools, you can adjust the following instructions to suit your needs.
 
 First, start by creating a systemd unit file for our application. We can simply
 drop the following configuration template into the systemd configuration
@@ -251,7 +259,7 @@ In this example, we're assuming the system user `alice` has followed the
 [quickstart example](../getting-started/quickstart.md) and has successfully
 installed everything in the `/home/alice/projects/acme` directory. Make sure to
 adjust the system user and paths to your application directory and PHP binary
-to suite your needs.
+to suit your needs.
 
 Once the new systemd unit file has been put in place, we need to activate the
 service unit once like this:
@@ -282,6 +290,59 @@ This should be enough to get you started with systemd. If you want to learn more
 about systemd, check out the
 [official documentation](https://www.freedesktop.org/software/systemd/man/systemd.service.html).
 
+### nginx reverse proxy
+
+If you're using the built-in web server, X will listen on `http://127.0.0.1:8080`
+[by default](#listen-address). Instead of using the `X_LISTEN` environment to
+change to a publicly accessible listen address, it's usually recommended to use
+a reverse proxy instead for production deployments.
+
+By using nginx as a reverse proxy, we can leverage a high performance web server
+to handle static assets (such as style sheets and images) and proxy any
+requests to [dynamic routes](../api/app.md#routing) through X. On top of this,
+we can configure nginx to log requests, handle rate limits, and to provide HTTPS
+support (TLS/SSL termination).
+
+Assuming you've followed the [quickstart guide](../getting-started/quickstart.md),
+all you need to do is to point the nginx' [`root`](http://nginx.org/en/docs/http/ngx_http_core_module.html#root)
+("docroot") to the `public/` directory of your project. On top of this, you'll need
+to instruct nginx to process any dynamic requests through X. This can be
+achieved by using an nginx configuration with the following contents:
+
+```
+server {
+    root /home/alice/projects/acme/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ @x;
+    }
+
+    location @x {
+        proxy_pass http://localhost:8080;
+    }
+}
+```
+
+> ℹ️ **New to nginx?**
+>
+> A complete nginx configuration is out of scope for this guide, so we assume
+> you already have nginx up and running. Unlike [using nginx with PHP-FPM](#nginx),
+> this example does not require a PHP-FPM setup.
+>
+> We recommend using the above nginx configuration as a starting point if you're
+> unsure. In this basic form, it instructs nginx to rewrite any requests for
+> files that do not exist to your `public/index.php` which then processes any
+> requests by checking your [registered routes](../api/app.md#routing).
+
+Once done, you can check your web application responds as expected. Use your
+favorite web browser or command-line tool:
+
+```bash
+$ curl http://localhost/
+Hello wörld!
+```
+
 ### Docker containers
 
 > ⚠️ **Documentation still under construction**
@@ -289,9 +350,3 @@ about systemd, check out the
 > You're seeing an early draft of the documentation that is still in the works.
 > Give feedback to help us prioritize.
 > We also welcome [contributors](../more/community.md) to help out!
-
-### More
-
-If you're going to use this in production, we still recommend running this
-behind a reverse proxy such as nginx, HAproxy, etc. for TLS termination
-(HTTPS support).
