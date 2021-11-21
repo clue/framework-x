@@ -14,6 +14,7 @@ jobs:
           - ubuntu-20.04
           - windows-2019
         php:
+          - 8.1
           - 8.0
           - 7.4
           - 7.3
@@ -37,6 +38,7 @@ jobs:
     strategy:
       matrix:
         php:
+          - 8.1
           - 8.0
           - 7.4
           - 7.3
@@ -54,10 +56,11 @@ jobs:
 
   nginx-webserver:
     name: nginx + PHP-FPM (PHP ${{ matrix.php }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         php:
+          - 8.1
           - 8.0
           - 7.4
           - 7.3
@@ -76,10 +79,11 @@ jobs:
 
   Apache-webserver:
     name: Apache webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         php:
+          - 8.1
           - 8.0
           - 7.4
           - 7.3
@@ -101,6 +105,7 @@ jobs:
     strategy:
       matrix:
         php:
+          - 8.1
           - 8.0
           - 7.4
           - 7.3
