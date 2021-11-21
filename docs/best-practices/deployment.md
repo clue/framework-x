@@ -15,19 +15,93 @@ This means that if you've already used PHP before, X will *just work*.
 * Any other web server using FastCGI to talk to PHP-FPM
 * Linux, Mac and Windows operating systems (<abbrev title="Apache, MySQL or MariaDB, PHP, on Linux, Mac or Windows operating systems">LAMP, MAMP, WAMP</abbrev>)
 
-*We've got you covered.*
+*We've got you covered!*
 
-For example, if you've followed the [quickstart guide](../getting-started/quickstart.md), you can run this using PHP's built-in development web
-server for testing purposes like this:
+### PHP development web server
+
+For example, if you've followed the [quickstart guide](../getting-started/quickstart.md),
+you can run this using PHP's built-in development web server for testing
+purposes like this:
 
 ```bash
 $ php -S 0.0.0.0:8080 public/index.php
 ```
 
-In order to check your web application responds as expected, you can use your favorite webbrowser or command line tool:
+In order to check your web application responds as expected, you can use your
+favorite web browser or command-line tool:
 
 ```bash
 $ curl http://localhost:8080/
+Hello wörld!
+```
+
+### Apache
+
+The Apache HTTP server (httpd) is one of the most popular web servers. In
+particular, it is a very common choice for hosts that run multiple web
+applications (such as shared hosting providers) due to its ease of use and
+support for dynamic configuration through `.htaccess` files.
+
+X supports Apache out of the box. If you've used Apache before to run any PHP
+application, using Apache with X is as simple as dropping the project files in
+the right directory. Accordingly, this guide assumes you want to process a
+number of [dynamic routes](../api/app.md#routing) through X and optionally
+include some public assets (such as style sheets and images).
+
+Assuming you've followed the [quickstart guide](../getting-started/quickstart.md),
+all you need to do is to point the Apache's [`DocumentRoot`](http://httpd.apache.org/docs/2.4/de/mod/core.html#documentroot)
+("docroot") to the `public/` directory of your project. On top of this, you'll need
+to instruct Apache to rewrite dynamic requests so they will be processed by X.
+Inside your `public/` directory, create an `.htaccess` file (note the leading `.` which
+makes this a hidden file) with the following contents:
+
+```
+# public/.htaccess
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* index.php
+```
+
+> ℹ️ **New to mod_rewrite?**
+>
+> We recommend using the above `.htaccess` file as a starting point if you're
+> unsure. In this basic form, it instructs Apache to rewrite any requests for
+> files that do not exist to your `public/index.php` which then processes any
+> requests by checking your [registered routes](../api/app.md#routing). This
+> requires the [`mod_rewrite`](https://httpd.apache.org/docs/2.4/mod/mod_rewrite.html)
+> Apache module, which should be enabled by default on most platforms. On Ubuntu-
+> or Debian-based systems, you may enable it like this:
+>
+> ```bash
+> $ sudo a2enmod rewrite
+> ```
+
+Once done, your project directory should now look like this:
+
+```
+acme/
+├── public/
+│   ├── .htaccess
+│   └── index.php
+├── vendor/
+├── composer.json
+└── composer.lock
+```
+
+If you're not already running an Apache server, you can run your X project with
+Apache in a temporary Docker container like this:
+
+```bash
+$ docker run -it --rm -p 80:80 -v "$PWD":/srv php:8.0-apache sh -c "rmdir /var/www/html;ln -s /srv/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+```
+
+In order to check your web application responds as expected, you can use your
+favorite web browser or command-line tool:
+
+```bash
+$ curl http://localhost/
 Hello wörld!
 ```
 
