@@ -177,7 +177,7 @@ database implementations.
 >
 > This is a feature preview, i.e. it might not have made it into the current beta.
 > Give feedback to help us prioritize.
-> We also welcome [contributors](../more/community.md) to help out!
+> We also welcome [contributors](../getting-started/community.md) to help out!
 
 There is ongoing effort to provide an async DBAL (DataBase Abstraction Layer)
 that will allow you to write your logic in such a way that it is not tied to a
@@ -794,7 +794,7 @@ structures to get you started:
 >
 > This is a feature preview, i.e. it might not have made it into the current beta.
 > Give feedback to help us prioritize.
-> We also welcome [contributors](../more/community.md) to help out!
+> We also welcome [contributors](../getting-started/community.md) to help out!
 
 If you're using X behind a [traditional web server](../best-practices/deployment.md#traditional-stacks),
 there's nothing to worry about: PHP will process a single request and then clean

@@ -26,6 +26,8 @@ nav:
   - Getting Started:
 #   - "Why?": ""
     - getting-started/quickstart.md
+    - getting-started/philosophy.md
+    - getting-started/community.md
   - Best Practices:
     - "Controller classes": best-practices/controllers.md
     - best-practices/testing.md
@@ -48,7 +50,3 @@ nav:
     - integrations/sessions.md
     - integrations/templates.md
     - integrations/queueing.md
-  - More:
-    - more/philosophy.md
-    - more/architecture.md
-    - more/community.md

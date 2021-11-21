@@ -4,7 +4,7 @@
 >
 > You're seeing an early draft of the documentation that is still in the works.
 > Give feedback to help us prioritize.
-> We also welcome [contributors](../more/community.md) to help out!
+> We also welcome [contributors](../getting-started/community.md) to help out!
 
 * Avoid blocking by moving blocking implementation to child process
 * Child process I/O for communication
