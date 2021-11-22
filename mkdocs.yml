@@ -36,9 +36,9 @@ nav:
     - api/request.md
     - api/response.md
   - Async:
-    - async/promises.md
-    - async/coroutines.md
     - async/fibers.md
+    - async/coroutines.md
+    - async/promises.md
     - async/streaming.md
     - "Child processes": async/child-processes.md
   - Integrations:
