@@ -22,8 +22,7 @@ This way, testing becomes pretty straight forward.
 
 Let's start simple and write some unit tests for our simple `HelloController` class:
 
-```php
-# src/HelloController.php
+```php title="src/HelloController.php"
 <?php
 
 namespace Acme\Todo;
@@ -59,8 +58,7 @@ $ composer require --dev phpunit/phpunit
 
 Next, we can start by creating our first unit test:
 
-```php
-# tests/HelloControllerTest.php
+```php title="tests/HelloControllerTest.php"
 <?php
 
 namespace Acme\Tests\Todo;
@@ -117,8 +115,7 @@ shows different behavior depending on what HTTP request comes in.
 For this example, we're using [request attributes](../api/request.md#attributes),
 but the same logic applies to testing different URLs, HTTP request headers, etc.:
 
-```php
-# src/UserController.php
+```php title="src/UserController.php"
 <?php
 
 namespace Acme\Todo;
@@ -141,8 +138,7 @@ class UserController
 
 Again, we create a new test class matching the controller class:
 
-```php
-# tests/UserControllerTest.php
+```php title="tests/UserControllerTest.php"
 <?php
 
 namespace Acme\Tests\Todo;

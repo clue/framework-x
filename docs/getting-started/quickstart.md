@@ -18,7 +18,7 @@ Next, we can start by taking a look at a simple example application.
 You can use this example to get started by creating a new `public/` directory with
 an `index.php` file inside:
 
-```php
+```php title="public/index.php"
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -59,7 +59,7 @@ Next, we need to install X and its dependencies to actually run this project.
 >
 > Start by creating a new `composer.json` in the project directory with the following contents:
 > 
-> ```json
+> ```json title="composer.json"
 > {
 >     "repositories": [
 >         {

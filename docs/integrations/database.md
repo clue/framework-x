@@ -9,8 +9,7 @@ Let's take a look at the most basic async database integration possible with X:
 
 === "Fibers"
 
-    ```php
-    # public/index.php
+    ```php title="public/index.php"
     <?php
 
     use function React\Async\await;
@@ -40,8 +39,7 @@ Let's take a look at the most basic async database integration possible with X:
 
 === "Coroutines"
 
-    ```php
-    # public/index.php
+    ```php title="public/index.php"
     <?php
 
 
@@ -71,8 +69,7 @@ Let's take a look at the most basic async database integration possible with X:
 
 === "Promises"
 
-    ```php
-    # public/index.php
+    ```php title="public/index.php"
     <?php
 
 
@@ -216,8 +213,7 @@ from a [route placeholder](../api/app.md#routing) like this:
 
 === "Fibers"
 
-    ```php
-    # public/index.php
+    ```php title="public/index.php"
     <?php
 
     use function React\Async\await;
@@ -259,8 +255,7 @@ from a [route placeholder](../api/app.md#routing) like this:
 
 === "Coroutines"
 
-    ```php
-    # public/index.php
+    ```php title="public/index.php"
     <?php
 
 
@@ -302,8 +297,7 @@ from a [route placeholder](../api/app.md#routing) like this:
 
 === "Promises"
 
-    ```php
-    # public/index.php
+    ```php title="public/index.php"
     <?php
 
 
@@ -387,8 +381,7 @@ acme/
 The main entry point [registers a route](../api/app.md#routing) for our
 controller and uses dependency injection (DI) to connect all classes:
 
-```php
-# public/index.php
+```php title="public/index.php"
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -409,8 +402,7 @@ makes it super easy to write and to use in our code:
 
 === "Readonly constructor property (PHP 8.1+)"
 
-    ```php
-    # src/Book.php
+    ```php title="src/Book.php"
     <?php
 
     namespace Acme\Todo;
@@ -432,8 +424,7 @@ makes it super easy to write and to use in our code:
 
 === "Typed property (PHP 7.4+)"
 
-    ```php
-    # src/Book.php
+    ```php title="src/Book.php"
     <?php
 
     namespace Acme\Todo;
@@ -455,8 +446,7 @@ makes it super easy to write and to use in our code:
 
 === "Old school property"
 
-    ```php
-    # src/Book.php
+    ```php title="src/Book.php"
     <?php
 
     namespace Acme\Todo;
@@ -481,8 +471,7 @@ interface with each other using a simple async API:
 
 === "Fibers"
 
-    ```php
-    # src/BookRepository.php
+    ```php title="src/BookRepository.php"
     <?php
 
     namespace Acme\Todo;
@@ -517,8 +506,7 @@ interface with each other using a simple async API:
         }
     }
     ```
-    ```php
-    # src/BookLookupController.php
+    ```php title="src/BookLookupController.php"
     <?php
 
     namespace Acme\Todo;
@@ -564,8 +552,7 @@ interface with each other using a simple async API:
 
 === "Coroutines"
 
-    ```php
-    # src/BookRepository.php
+    ```php title="src/BookRepository.php"
     <?php
 
     namespace Acme\Todo;
@@ -600,8 +587,7 @@ interface with each other using a simple async API:
         }
     }
     ```
-    ```php
-    # src/BookLookupController.php
+    ```php title="src/BookLookupController.php"
     <?php
 
     namespace Acme\Todo;
@@ -647,8 +633,7 @@ interface with each other using a simple async API:
 
 === "Promises"
 
-    ```php
-    # src/BookRepository.php
+    ```php title="src/BookRepository.php"
     <?php
 
     namespace Acme\Todo;
@@ -683,8 +668,7 @@ interface with each other using a simple async API:
         }
     }
     ```
-    ```php
-    # src/BookLookupController.php
+    ```php title="src/BookLookupController.php"
     <?php
 
     namespace Acme\Todo;

@@ -52,8 +52,7 @@ keep adding more controllers to a single application.
 For this reason, we recommend using middleware classes for production use-cases
 like this:
 
-```php
-# src/DemoMiddleware.php
+```php title="src/DemoMiddleware.php"
 <?php
 
 namespace Acme\Todo;
@@ -82,8 +81,7 @@ class DemoMiddleware
     }
 }
 ```
-```php
-# public/index.php
+```php title="public/index.php"
 <?php
 
 use Acme\Todo\DemoMiddleware;
@@ -108,8 +106,7 @@ Accordingly, all examples below use middleware classes as the recommended style.
 
 To get started, we can add an example middleware handler that can modify the incoming request:
 
-```php
-# src/AdminMiddleware.php
+```php title="src/AdminMiddleware.php"
 <?php
 
 namespace Acme\Todo;
@@ -130,8 +127,7 @@ class AdminMiddleware
 }
 ```
 
-```php
-# src/UserController.php
+```php title="src/UserController.php"
 <?php
 
 namespace Acme\Todo;
@@ -176,8 +172,7 @@ object, see also the next chapter.
 
 Likewise, we can add an example middleware handler that can modify the outgoing response:
 
-```php
-# src/ContentTypeMiddleware.php
+```php title="src/ContentTypeMiddleware.php"
 <?php
 
 namespace Acme\Todo;
@@ -197,8 +192,7 @@ class ContentTypeMiddleware
 }
 ```
 
-```php
-# src/UserController.php
+```php title="src/UserController.php"
 <?php
 
 namespace Acme\Todo;
@@ -216,8 +210,7 @@ class UserController
 }
 ```
 
-```php
-# public/index.php
+```php title="public/index.php"
 <?php
 
 use Acme\Todo\ContentTypeMiddleware;
@@ -254,8 +247,7 @@ a response object synchronously:
 
 === "Arrow functions (PHP 7.4+)"
 
-    ```php
-    # src/AsyncAwareContentTypeMiddleware.php
+    ```php title="src/AsyncAwareContentTypeMiddleware.php"
     <?php
 
     namespace Acme\Todo;
@@ -288,8 +280,7 @@ a response object synchronously:
 
 === "Match syntax (PHP 8.0+)"
 
-    ```php
-    # src/AsyncAwareContentTypeMiddleware.php
+    ```php title="src/AsyncAwareContentTypeMiddleware.php"
     <?php
 
     namespace Acme\Todo;
@@ -320,8 +311,7 @@ a response object synchronously:
 
 === "Closures"
 
-    ```php
-    # src/AsyncAwareContentTypeMiddleware.php
+    ```php title="src/AsyncAwareContentTypeMiddleware.php"
     <?php
 
     namespace Acme\Todo;
@@ -360,8 +350,7 @@ a response object synchronously:
 
 === "Coroutines"
 
-    ```php
-    # src/AsyncUserController.php
+    ```php title="src/AsyncUserController.php"
     <?php
 
     namespace Acme\Todo;
@@ -401,8 +390,7 @@ a response object synchronously:
 
 === "Promises"
 
-    ```php
-    # src/AsyncUserController.php
+    ```php title="src/AsyncUserController.php"
     <?php
 
     namespace Acme\Todo;
@@ -441,8 +429,7 @@ a response object synchronously:
     ```
 
 
-```php
-# public/index.php
+```php title="public/index.php"
 <?php
 
 use Acme\Todo\AsyncContentTypeMiddleware;
@@ -469,8 +456,7 @@ This is commonly used for cache handling and response body transformations (comp
 Additionally, you can also add middleware to the [`App`](app.md) object itself
 to register a global middleware handler:
 
-```php hl_lines="7"
-# public/index.php
+```php hl_lines="7" title="public/index.php"
 <?php
 
 use Acme\Todo\AdminMiddleware;
