@@ -120,8 +120,7 @@ to instruct Apache to rewrite dynamic requests so they will be processed by X.
 Inside your `public/` directory, create an `.htaccess` file (note the leading `.` which
 makes this a hidden file) with the following contents:
 
-```
-# public/.htaccess
+``` title="public/.htaccess"
 RewriteEngine On
 
 RewriteCond %{REQUEST_FILENAME} !-d
@@ -243,7 +242,7 @@ directory like this:
 $ sudoedit /etc/systemd/system/acme.service
 ```
 
-```
+``` title="/etc/systemd/system/acme.service"
 [Unit]
 Description=ACME server
 

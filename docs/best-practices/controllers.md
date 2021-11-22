@@ -7,8 +7,7 @@ This is especially useful once you leave the prototyping phase and want to find 
 
 To get started, let's take a look at the following simple closure definitions:
 
-```php
-# public/index.php
+```php title="public/index.php"
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -41,8 +40,7 @@ For real-world applications, we highly recommend structuring your application
 into invidividual controller classes. This way, we can break up the above
 definition into three even simpler files:
 
-```php
-# public/index.php
+```php title="public/index.php"
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -55,8 +53,7 @@ $app->get('/users/{name}', new Acme\Todo\UserController());
 $app->run();
 ```
 
-```php
-# src/HelloController.php
+```php title="src/HelloController.php"
 <?php
 
 namespace Acme\Todo;
@@ -76,8 +73,7 @@ class HelloController
 }
 ```
 
-```php
-# src/UserController.php
+```php title="src/UserController.php"
 <?php
 
 namespace Acme\Todo;
@@ -102,7 +98,7 @@ Doesn't look too complex, right? Now, we only need to tell Composer's autoloader
 about our vendor namespace `Acme\Todo` in the `src/` folder. Make sure to include
 the following lines in your `composer.json` file:
 
-```json
+```json title="composer.json"
 {
     "autoload": {
         "psr-4": {

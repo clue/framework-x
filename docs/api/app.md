@@ -3,8 +3,7 @@
 The `App` class is your main entrypoint to any application that builds on top of X.
 It provides a simple API for routing HTTP requests as commonly used in RESTful applications.
 
-```php
-# public/index.php
+```php title="public/index.php"
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -112,13 +111,11 @@ you keep adding more controllers to a single application.
 For this reason, we recommend using [controller classes](../best-practices/controllers.md)
 for production use-cases like this:
 
-```php
-# public/index.php
+```php title="public/index.php"
 $app->get('/', new Acme\Todo\HelloController());
 ```
 
-```php
-# src/HelloController.php
+```php title="src/HelloController.php"
 <?php
 
 namespace Acme\Todo;
