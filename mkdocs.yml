@@ -1,12 +1,12 @@
 site_name: Framework X documentation
-site_url: https://framework-x.clue.engineering/docs/
+site_url: https://framework-x.org/docs/
 site_dir: build/docs
 extra:
   homepage: ../
 
 repo_url: https://github.com/clue/framework-x
 repo_name: clue/framework-x
-edit_uri: "" # not publicly accessible while in early access
+edit_uri: "edit/main/docs/"
 
 theme:
   name: material
@@ -24,7 +24,6 @@ markdown_extensions:
 
 nav:
   - Getting Started:
-#   - "Why?": ""
     - getting-started/quickstart.md
     - getting-started/philosophy.md
     - getting-started/community.md

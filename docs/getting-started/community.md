@@ -36,8 +36,8 @@ tweet mentioning [**@x_framework**](https://twitter.com/x_framework). ❤️
 
 ## Open source
 
-Framework X will be released as open-source under the permissive MIT license.
-This means it will be free as in free speech and as in free beer.
+Framework X is released as open-source under the permissive MIT license.
+This means it is free as in free speech and as in free beer.
 
 We believe in open source and made a conscious decision to take this path.
 Being open-source means we can foster a community to focus on building the best possible framework together.
