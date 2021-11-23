@@ -10,7 +10,7 @@ provides even more awesome features with its built-in web server.
 No matter what existing PHP stack you're using, X runs anywhere.
 This means that if you've already used PHP before, X will *just work*.
 
-* nginx with PHP-FPM
+* nginx or Caddy with PHP-FPM
 * Apache with PHP-FPM, mod_fcgid, mod_cgi or mod_php
 * Any other web server using FastCGI to talk to PHP-FPM
 * Linux, Mac and Windows operating systems (<abbrev title="Apache, MySQL or MariaDB, PHP, on Linux, Mac or Windows operating systems">LAMP, MAMP, WAMP</abbrev>)
@@ -97,6 +97,65 @@ favorite web browser or command-line tool:
 
 ```bash
 $ curl http://localhost/
+Hello wörld!
+```
+
+### Caddy
+
+Caddy is an extensible, cross-platform, open-source web server written in Go.
+Many projects use Caddy because of its ease of use in configuration, and its
+headlining feature, Automatic HTTPS, which provisions TLS certificates for your
+sites and keeps them renewed.
+
+X supports Caddy out of the box. If you've used Caddy before to run any PHP
+application, using Caddy with X is as simple as dropping the project files in
+the right directory. Accordingly, this guide assumes you want to process a
+number of [dynamic routes](../api/app.md#routing) through X and optionally
+include some public assets (such as style sheets and images).
+
+> ℹ️ **PHP-FPM or reverse proxy?**
+> 
+> This section assumes you want to use Caddy with PHP-FPM which is a very common,
+> traditional web stack. If you want to get the most out of X, you may also
+> want to look into using the built-in web server with
+> [Caddy's reverse proxy](#caddy-reverse-proxy).
+
+Assuming you've followed the [quickstart guide](../getting-started/quickstart.md),
+all you need to do is to point Caddy's [`root` directive](https://caddyserver.com/docs/caddyfile/directives/root)
+to the `public/` directory of your project. On top of this, you'll need
+to instruct Caddy to process any dynamic requests through X. This can be
+achieved by using an `Caddyfile` configuration with the following contents:
+
+```
+example.com {
+    root * /var/www/html/public
+    encode gzip
+    php_fastcgi localhost:9000
+    file_server
+}
+```
+
+Caddy's [`php_fastcgi` directive](https://caddyserver.com/docs/caddyfile/directives/php_fastcgi)
+is ready out-of-the-box to serve modern PHP sites. This will also automatically
+provision a TLS certificate for your domain (e.g. `example.com` – replace it
+with your own domain) on startup, assuming your DNS is properly configured to
+point to your server, and your server is publicly accessible on ports 80 and 443.
+
+> ℹ️ **New to Caddy?**
+>
+> A complete `Caddyfile` configuration is out of scope for this guide, so we assume
+> you already have Caddy and PHP with PHP-FPM up and running. In this example,
+> we're assuming PHP-FPM is already up and running and listens on `localhost:9000`,
+> consult your search engine of choice for basic install instructions. Once this
+> is set up, the above guide should be everything you need to then use X. We
+> recommend using the above Caddy configuration as a starting point if you're
+> unsure.
+
+Once done, you can check your web application responds as expected. Use your
+favorite web browser or command-line tool:
+
+```bash
+$ curl https://example.com/
 Hello wörld!
 ```
 
@@ -339,6 +398,63 @@ favorite web browser or command-line tool:
 
 ```bash
 $ curl http://localhost/
+Hello wörld!
+```
+
+### Caddy reverse proxy
+
+If you're using the built-in web server, X will listen on `http://127.0.0.1:8080`
+[by default](#listen-address). Instead of using the `X_LISTEN` environment to
+change to a publicly accessible listen address, it's usually recommended to use
+a reverse proxy instead for production deployments.
+
+By using Caddy as a reverse proxy, we can leverage a high performance web server
+to handle static assets (such as style sheets and images) and proxy any
+requests to [dynamic routes](../api/app.md#routing) through X. On top of this,
+we can configure Caddy to log requests, handle rate limits, and to provide HTTPS
+support (TLS termination).
+
+Assuming you've followed the [quickstart guide](../getting-started/quickstart.md),
+all you need to do is to point the Caddy's [`root` directive](https://caddyserver.com/docs/caddyfile/directives/root)
+to the `public/` directory of your project. On top of this, you'll need
+to instruct Caddy to process any dynamic requests through X. This can be
+achieved by using a `Caddyfile` configuration with the following contents:
+
+```
+example.com {
+    root * /var/www/html/public;
+
+    @static {
+        file {path} {path}/
+        not path *.php
+    }
+    handle @static {
+        rewrite * {http.matchers.file.relative}
+        file_server
+    }
+    
+    handle {
+        reverse_proxy localhost:8080
+    }
+}
+```
+
+> ℹ️ **New to Caddy?**
+>
+> A complete Caddy configuration is out of scope for this guide, so we assume
+> you already have Caddy up and running. Unlike [using Caddy with PHP-FPM](#caddy),
+> this example does not require a PHP-FPM setup.
+>
+> We recommend using the above `Caddyfile` configuration as a starting point if you're
+> unsure. In this basic form, it instructs Caddy to server any requests for
+> files _do_ exist, and proxy everything else to your X server, which processes any
+> requests by checking your [registered routes](../api/app.md#routing).
+
+Once done, you can check your web application responds as expected. Use your
+favorite web browser or command-line tool:
+
+```bash
+$ curl https://example.com/
 Hello wörld!
 ```
 
