@@ -2,7 +2,7 @@
 
 This folder contains the source documentation files for Framework X.
 
-You can see the [website](https://framework-x.clue.engineering/) for the
+You can see the [website](https://framework-x.org/) for the
 user-accessible version.
 
 ## Contribute

@@ -51,25 +51,6 @@ but the above should be just fine for starters.
 ## Installation
 
 Next, we need to install X and its dependencies to actually run this project.
-
-> ⚠️ **Beta**
->
-> This project is currently in closed beta, so the installation requires a manual step first.
-> This will not be necessary once the project is released to the public.
->
-> Start by creating a new `composer.json` in the project directory with the following contents:
-> 
-> ```json title="composer.json"
-> {
->     "repositories": [
->         {
->             "type": "vcs",
->             "url": "https://github.com/clue-access/framework-x"
->         }
->     ]
-> }
-> ```
-
 Thanks to [Composer](https://getcomposer.org/), this installation only requires a single command.
 
 > ℹ️ **New to Composer?**

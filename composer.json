@@ -2,7 +2,7 @@
     "name": "clue/framework-x",
     "description": "Framework X – the simple and fast micro framework for building reactive web applications that run anywhere.",
     "keywords": ["microframework", "micro", "framework", "web", "http", "event-driven", "async", "ReactPHP"],
-    "homepage": "https://framework-x.clue.engineering/",
+    "homepage": "https://framework-x.org/",
     "license": "MIT",
     "authors": [
         {

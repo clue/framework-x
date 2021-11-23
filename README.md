@@ -43,20 +43,7 @@ $app->run();
 ```
 
 Next, we need to install X and its dependencies to actually run this project.
-Start by creating a new `composer.json` in the project directory with the following contents:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/clue-access/framework-x"
-        }
-    ]
-}
-```
-
-Finally, simply install Framework X:
+In your project directory, simply run the following command:
 
 ```bash
 $ composer require clue/framework-x:dev-main
@@ -84,7 +71,7 @@ Hello wörld!
 ## Documentation
 
 Hooked?
-See [website](https://framework-x.clue.engineering/) for full documentation.
+See [website](https://framework-x.org/) for full documentation.
 
 Found a typo or want to contribute?
 The website documentation is build from the source documentation files in

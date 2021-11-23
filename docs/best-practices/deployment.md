@@ -191,7 +191,7 @@ Hello wörld!
 
 You may be wondering how fast a pure PHP web server implementation could possibly be.
 In fact, in benchmarks this setup outperforms any traditional PHP stack by orders of magnitude.
-The answer: [Lightning fast!](https://framework-x.clue.engineering/#lightning-fast)
+The answer: [Lightning fast!](https://framework-x.org/#lightning-fast)
 
 ### Listen address
 
