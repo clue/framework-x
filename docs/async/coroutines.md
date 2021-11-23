@@ -16,7 +16,7 @@ Let's take a look at the most basic coroutine usage by using an
 require __DIR__ . '/../vendor/autoload.php';
 
 $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-$db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+$db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
 $app = new FrameworkX\App();
 
@@ -62,7 +62,7 @@ shown in a simple example:
 require __DIR__ . '/../vendor/autoload.php';
 
 $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-$db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+$db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
 $app = new FrameworkX\App();
 
