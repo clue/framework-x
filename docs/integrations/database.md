@@ -17,7 +17,7 @@ Let's take a look at the most basic async database integration possible with X:
     require __DIR__ . '/../vendor/autoload.php';
 
     $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-    $db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+    $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
     $app = new FrameworkX\App();
 
@@ -47,7 +47,7 @@ Let's take a look at the most basic async database integration possible with X:
     require __DIR__ . '/../vendor/autoload.php';
 
     $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-    $db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+    $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
     $app = new FrameworkX\App();
 
@@ -77,7 +77,7 @@ Let's take a look at the most basic async database integration possible with X:
     require __DIR__ . '/../vendor/autoload.php';
 
     $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-    $db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+    $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
     $app = new FrameworkX\App();
 
@@ -221,7 +221,7 @@ from a [route placeholder](../api/app.md#routing) like this:
     require __DIR__ . '/../vendor/autoload.php';
 
     $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-    $db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+    $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
     $app = new FrameworkX\App();
 
@@ -263,7 +263,7 @@ from a [route placeholder](../api/app.md#routing) like this:
     require __DIR__ . '/../vendor/autoload.php';
 
     $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-    $db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+    $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
     $app = new FrameworkX\App();
 
@@ -305,7 +305,7 @@ from a [route placeholder](../api/app.md#routing) like this:
     require __DIR__ . '/../vendor/autoload.php';
 
     $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-    $db = (new React\MySQL\Factory($loop))->createLazyConnection($credentials);
+    $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
     $app = new FrameworkX\App();
 
@@ -387,7 +387,7 @@ controller and uses dependency injection (DI) to connect all classes:
 require __DIR__ . '/../vendor/autoload.php';
 
 $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-$db = (new React\Mysql\Factory($loop))->createLazyConnection($credentials);
+$db = (new React\Mysql\Factory())->createLazyConnection($credentials);
 $repository = new Acme\Todo\BookRepository($db);
 
 $app = new FrameworkX\App();
