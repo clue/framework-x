@@ -169,7 +169,7 @@ database implementations.
 > described above. For legacy integrations, we provide limited support for
 > blocking database calls such as PDO, Doctrine, etc., but as a rule of thumb,
 > going for an async alternative is usually somewhat more efficient.
-> See [child processes](../async/child-processes.md) for more details.
+> See [child processes](child-processes.md) for more details.
 
 ## DBAL
 

@@ -41,11 +41,11 @@ nav:
     - async/fibers.md
     - async/coroutines.md
     - async/promises.md
-    - async/streaming.md
-    - "Child processes": async/child-processes.md
   - Integrations:
     - integrations/database.md
     - integrations/filesystem.md
+    - "Child processes": integrations/child-processes.md
+    - integrations/streaming.md
     - integrations/authentication.md
     - integrations/sessions.md
     - integrations/templates.md

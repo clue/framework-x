@@ -10,4 +10,4 @@
 * Child process I/O for communication
 * Multithreading, but isolated processes
 * See [reactphp/child-process](https://reactphp.org/child-process/) for underlying APIs
-* See [clue/reactphp-pq](https://github.com/clue/reactphp-pq) for higher-level API to automatically wrap blocking functions in an async child process and turn blocking functions into non-blocking [promises](promises.md)
+* See [clue/reactphp-pq](https://github.com/clue/reactphp-pq) for higher-level API to automatically wrap blocking functions in an async child process and turn blocking functions into non-blocking [promises](../async/promises.md)
