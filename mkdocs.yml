@@ -26,6 +26,8 @@ nav:
   - Getting Started:
 #   - "Why?": ""
     - getting-started/quickstart.md
+    - getting-started/philosophy.md
+    - getting-started/community.md
   - Best Practices:
     - "Controller classes": best-practices/controllers.md
     - best-practices/testing.md
@@ -39,16 +41,12 @@ nav:
     - async/fibers.md
     - async/coroutines.md
     - async/promises.md
-    - async/streaming.md
-    - "Child processes": async/child-processes.md
   - Integrations:
     - integrations/database.md
-    - integrations/filesystem.md
-    - integrations/authentication.md
-    - integrations/sessions.md
-    - integrations/templates.md
-    - integrations/queueing.md
-  - More:
-    - more/philosophy.md
-    - more/architecture.md
-    - more/community.md
+    - "⚠ Filesystem": integrations/filesystem.md
+    - "⚠ Child processes": integrations/child-processes.md
+    - "⚠ Streaming": integrations/streaming.md
+    - "⚠ Authentication": integrations/authentication.md
+    - "⚠ Sessions": integrations/sessions.md
+    - "⚠ Templates": integrations/templates.md
+    - "⚠ Queueing": integrations/queueing.md

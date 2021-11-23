@@ -49,7 +49,7 @@ return value.
 >
 > This is a feature preview, i.e. it might not have made it into the current beta.
 > Give feedback to help us prioritize.
-> We also welcome [contributors](../more/community.md) to help out!
+> We also welcome [contributors](../getting-started/community.md) to help out!
 
 At the moment, fibers are available as a development version by installing
 [react/async](https://github.com/reactphp/async) from a development branch
