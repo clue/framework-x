@@ -6,7 +6,6 @@ use FrameworkX\FilesystemHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use React\Http\Message\ServerRequest;
-use ReflectionMethod;
 
 class FilesystemHandlerTest extends TestCase
 {
