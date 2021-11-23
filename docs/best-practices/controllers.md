@@ -37,7 +37,7 @@ While easy to get started, it's also easy to see how this will get out of hand f
 business domains when you have more than a couple of routes registered.
 
 For real-world applications, we highly recommend structuring your application
-into invidividual controller classes. This way, we can break up the above
+into individual controller classes. This way, we can break up the above
 definition into three even simpler files:
 
 ```php title="public/index.php"
