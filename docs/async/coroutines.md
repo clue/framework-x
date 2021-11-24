@@ -186,7 +186,7 @@ for more details.
 
 ### When to coroutines?
 
-As a rule of thumb, you'll likely want to use fibers when you're working with
+As a rule of thumb, you'll likely want to use coroutines when you're working with
 async APIs in your controllers with PHP < 8.1 and want to use these async APIs
 in a way that resembles a synchronous code flow.
 
