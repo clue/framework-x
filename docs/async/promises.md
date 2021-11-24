@@ -51,7 +51,7 @@ This works across all supported PHP versions.
 ## Usage
 
 If you've used promises before, you'll find that using promise-based APIs in X
-is pretty straightfowrard. The gist is that when you're working with an async
+is pretty straightforward. The gist is that when you're working with an async
 API that returns a promise, you have to use a chained `then()` call on it in
 order to "await" its fulfillment value. This is best shown in a simple example:
 
