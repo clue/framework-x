@@ -95,6 +95,12 @@ this:
 $ php public/index.php
 ```
 
+Note: If you are using Docker, then run the example specifying the server port like this:
+
+```bash
+$ php -S 0.0.0.0:8080 public/index.php
+```
+
 You can now use your favorite web browser or command line tool to check your web
 application responds as expected:
 
