@@ -40,18 +40,37 @@ For real-world applications, we highly recommend structuring your application
 into individual controller classes. This way, we can break up the above
 definition into three even simpler files:
 
-```php title="public/index.php"
-<?php
+=== "Using controller instances"
 
-require __DIR__ . '/../vendor/autoload.php';
+    ```php title="public/index.php"
+    <?php
 
-$app = new FrameworkX\App();
+    require __DIR__ . '/../vendor/autoload.php';
 
-$app->get('/', new Acme\Todo\HelloController());
-$app->get('/users/{name}', new Acme\Todo\UserController());
+    $app = new FrameworkX\App();
 
-$app->run();
-```
+    $app->get('/', new Acme\Todo\HelloController());
+    $app->get('/users/{name}', new Acme\Todo\UserController());
+
+    $app->run();
+    ```
+
+=== "Using controller names"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $app = new FrameworkX\App();
+
+    $app->get('/', Acme\Todo\HelloController::class);
+    $app->get('/users/{name}', Acme\Todo\UserController::class);
+
+    $app->run();
+    ```
+
+<!-- -->
 
 ```php title="src/HelloController.php"
 <?php

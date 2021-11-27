@@ -39,6 +39,38 @@ class MiddlewareHandlerTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
+    public function testOneMiddlewareClass()
+    {
+        $middleware = new class{
+            public function __invoke(ServerRequestInterface $request, callable $next) {
+                return $next($request);
+            }
+        };
+
+        $handler = new MiddlewareHandler([
+            $middleware,
+            function (ServerRequestInterface $request) {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        ]);
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        $response = $handler($request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
     public function testTwoMiddleware()
     {
         $handler = new MiddlewareHandler([

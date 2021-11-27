@@ -81,16 +81,32 @@ class DemoMiddleware
     }
 }
 ```
-```php title="public/index.php"
-<?php
 
-use Acme\Todo\DemoMiddleware;
-use Acme\Todo\UserController;
+=== "Using middleware instances"
 
-// …
+    ```php title="public/index.php"
+    <?php
 
-$app->get('/user', new DemoMiddleware(), new UserController());
-```
+    use Acme\Todo\DemoMiddleware;
+    use Acme\Todo\UserController;
+
+    // …
+
+    $app->get('/user', new DemoMiddleware(), new UserController());
+    ```
+
+=== "Using middleware names"
+
+    ```php title="public/index.php"
+    <?php
+
+    use Acme\Todo\DemoMiddleware;
+    use Acme\Todo\UserController;
+
+    // …
+
+    $app->get('/user', DemoMiddleware::class, UserController::class);
+    ```
 
 This highlights how middleware classes provide the exact same functionaly as using inline functions,
 yet provide a cleaner and more reusable structure.
@@ -145,17 +161,31 @@ class UserController
 }
 ```
 
-```php
-# public/index.php
-<?php
+=== "Using middleware instances"
 
-use Acme\Todo\AdminMiddleware;
-use Acme\Todo\UserController;
+    ```php title="public/index.php"
+    <?php
 
-// …
+    use Acme\Todo\AdminMiddleware;
+    use Acme\Todo\UserController;
 
-$app->get('/user', new AdminMiddleware(), new UserController());
-```
+    // …
+
+    $app->get('/user', new AdminMiddleware(), new UserController());
+    ```
+
+=== "Using middleware names"
+
+    ```php title="public/index.php"
+    <?php
+
+    use Acme\Todo\AdminMiddleware;
+    use Acme\Todo\UserController;
+
+    // …
+
+    $app->get('/user', AdminMiddleware::class, UserController::class);
+    ```
 
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which then modifies this request and passes the modified request to the next controller function.
 This is commonly used for HTTP authentication, login handling and session handling.
@@ -210,16 +240,31 @@ class UserController
 }
 ```
 
-```php title="public/index.php"
-<?php
+=== "Using middleware instances"
 
-use Acme\Todo\ContentTypeMiddleware;
-use Acme\Todo\UserController;
+    ```php title="public/index.php"
+    <?php
 
-// …
+    use Acme\Todo\ContentTypeMiddleware;
+    use Acme\Todo\UserController;
 
-$app->get('/user', new ContentTypeMiddleware(), new UserController());
-```
+    // …
+
+    $app->get('/user', new ContentTypeMiddleware(), new UserController());
+    ```
+
+=== "Using middleware names"
+
+    ```php title="public/index.php"
+    <?php
+
+    use Acme\Todo\ContentTypeMiddleware;
+    use Acme\Todo\UserController;
+
+    // …
+
+    $app->get('/user', ContentTypeMiddleware::class, UserController::class);
+    ```
 
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which passes on the request to the controller function and then modifies the response that is returned by the controller function.
 This is commonly used for cache handling and response body transformations (compression etc.).
@@ -428,17 +473,33 @@ a response object synchronously:
     }
     ```
 
+<!-- -->
 
-```php title="public/index.php"
-<?php
+=== "Using middleware instances"
 
-use Acme\Todo\AsyncContentTypeMiddleware;
-use Acme\Todo\AsyncUserController;
+    ```php title="public/index.php"
+    <?php
 
-// …
+    use Acme\Todo\AsyncContentTypeMiddleware;
+    use Acme\Todo\AsyncUserController;
 
-$app->get('/user', new AsyncContentTypeMiddleware(), new AsyncUserController());
-```
+    // …
+
+    $app->get('/user', new AsyncContentTypeMiddleware(), new AsyncUserController());
+    ```
+
+=== "Using middleware names"
+
+    ```php title="public/index.php"
+    <?php
+
+    use Acme\Todo\AsyncContentTypeMiddleware;
+    use Acme\Todo\AsyncUserController;
+
+    // …
+
+    $app->get('/user', AsyncContentTypeMiddleware::class, AsyncUserController::class);
+    ```
 
 For example, an HTTP `GET` request for `/user` would first call the middleware handler which passes on the request to the controller function and then modifies the response that is returned by the controller function.
 This is commonly used for cache handling and response body transformations (compression etc.).
@@ -456,18 +517,35 @@ This is commonly used for cache handling and response body transformations (comp
 Additionally, you can also add middleware to the [`App`](app.md) object itself
 to register a global middleware handler:
 
-```php hl_lines="7" title="public/index.php"
-<?php
+=== "Using middleware instances"
 
-use Acme\Todo\AdminMiddleware;
-use Acme\Todo\UserController;
+    ```php hl_lines="6" title="public/index.php"
+    <?php
 
-$app = new FrameworkX\App(new AdminMiddleware());
+    use Acme\Todo\AsyncContentTypeMiddleware;
+    use Acme\Todo\AsyncUserController;
 
-$app->get('/user', new UserController());
+    $app = new FrameworkX\App(new AdminMiddleware());
 
-$app->run();
-```
+    $app->get('/user', new UserController());
+
+    $app->run();
+    ```
+
+=== "Using middleware names"
+
+    ```php hl_lines="6" title="public/index.php"
+    <?php
+
+    use Acme\Todo\AsyncContentTypeMiddleware;
+    use Acme\Todo\AsyncUserController;
+
+    $app = new FrameworkX\App(AdminMiddleware::class);
+
+    $app->get('/user', UserController::class);
+
+    $app->run();
+    ```
 
 Any global middleware handler will always be called for all registered routes
 and also any requests that can not be routed.

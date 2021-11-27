@@ -30,10 +30,23 @@ class RouteHandler
         $this->errorHandler = new ErrorHandler();
     }
 
-    public function map(array $methods, string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string[] $methods
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function map(array $methods, string $route, $handler, ...$handlers): void
     {
         if ($handlers) {
-            $handler = new MiddlewareHandler(array_merge([$handler], $handlers));
+            $handler = new MiddlewareHandler(array_map(
+                function ($handler) {
+                    return is_callable($handler) ? $handler : self::callable($handler);
+                },
+                array_merge([$handler], $handlers)
+            ));
+        } elseif (!is_callable($handler)) {
+            $handler = self::callable($handler);
         }
 
         $this->routeDispatcher = null;
@@ -70,4 +83,43 @@ class RouteHandler
                 return $handler($request);
         }
     } // @codeCoverageIgnore
+
+    /**
+     * @param class-string $class
+     * @return callable
+     */
+    private static function callable($class): callable
+    {
+        return function (ServerRequestInterface $request, callable $next = null) use ($class) {
+            // Check `$class` references a valid class name that can be autoloaded
+            if (!\class_exists($class, true)) {
+                throw new \BadMethodCallException('Unable to load request handler class "' . $class . '"');
+            }
+
+            // This initial version is intentionally limited to loading classes that require no arguments.
+            // A follow-up version will invoke a DI container here to load the appropriate hierarchy of arguments.
+            try {
+                $handler = new $class();
+            } catch (\Throwable $e) {
+                throw new \BadMethodCallException(
+                    'Unable to instantiate request handler class "' . $class . '": ' . $e->getMessage(),
+                    0,
+                    $e
+                );
+            }
+
+            // Check `$handler` references a class name that is callable, i.e. has an `__invoke()` method.
+            // This initial version is intentionally limited to checking the method name only.
+            // A follow-up version will likely use reflection to check request handler argument types.
+            if (!is_callable($handler)) {
+                throw new \BadMethodCallException('Unable to use request handler class "' . $class . '" because it has no "public function __invoke()"');
+            }
+
+            // invoke request handler as middleware handler or final controller
+            if ($next === null) {
+                return $handler($request);
+            }
+            return $handler($request, $next);
+        };
+    }
 }

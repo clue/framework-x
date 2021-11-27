@@ -7,6 +7,7 @@ use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 
@@ -88,6 +89,67 @@ class RouteHandlerTest extends TestCase
 
         $handler = new RouteHandler();
         $handler->map(['GET'], '/', function () use ($response) { return $response; });
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClass()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $controller = new class{
+            public static $response;
+            public function __invoke() {
+                return self::$response;
+            }
+        };
+        $controller::$response = $response;
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', $controller);
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassName()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $controller = new class{
+            public static $response;
+            public function __invoke() {
+                return self::$response;
+            }
+        };
+        $controller::$response = $response;
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', get_class($controller));
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerWithClassNameMiddleware()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $middleware = new class{
+            public function __invoke(ServerRequestInterface $request, callable $next) {
+                return $next($request);
+            }
+        };
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', get_class($middleware), function () use ($response) { return $response; });
 
         $ret = $handler($request);
 
