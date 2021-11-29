@@ -344,6 +344,13 @@ $ sudo systemctl status acme.service
 […]
 ```
 
+On top of this, you need to restart your service manually when the source code
+has been modified. In this case, simply execute the following command:
+
+```bash
+$ sudo systemctl restart acme.service
+```
+
 This should be enough to get you started with systemd. If you want to learn more
 about systemd, check out the
 [official documentation](https://www.freedesktop.org/software/systemd/man/systemd.service.html).
