@@ -5,7 +5,6 @@ namespace FrameworkX;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
-use React\EventLoop\LoopInterface;
 use React\Http\HttpServer;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -13,8 +12,6 @@ use React\Socket\SocketServer;
 
 class App
 {
-    private $loop;
-
     /** @var MiddlewareHandler */
     private $handler;
 
@@ -34,32 +31,13 @@ class App
      * // instantiate with global middleware
      * $app = new App($middleware);
      * $app = new App($middleware1, $middleware2);
-     *
-     * // instantiate with optional $loop
-     * $app = new App($loop);
-     * $app = new App($loop, $middleware);
-     * $app = new App($loop, $middleware1, $middleware2);
-     *
-     * // invalid $loop argument
-     * $app = new App(null);
-     * $app = new App(null, $middleware);
      * ```
      *
-     * @param callable|LoopInterface|null $loop
      * @param callable ...$middleware
-     * @throws \TypeError if given $loop argument is invalid
      */
-    public function __construct($loop = null, callable ...$middleware)
+    public function __construct(callable ...$middleware)
     {
         $errorHandler = new ErrorHandler();
-        if (\is_callable($loop)) {
-            \array_unshift($middleware, $loop);
-            $loop = null;
-        } elseif (\func_num_args() !== 0 && !$loop instanceof LoopInterface) {
-            throw new \TypeError('Argument 1 ($loop) must be callable|' . LoopInterface::class . ', ' . $errorHandler->describeType($loop) . ' given');
-        }
-
-        $this->loop = $loop ?? Loop::get();
         $this->router = new RouteHandler();
 
         // new MiddlewareHandler([$accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
@@ -133,12 +111,12 @@ class App
             $this->runOnce(); // @codeCoverageIgnore
         }
 
-        $this->loop->run();
+        Loop::run();
     }
 
     private function runLoop()
     {
-        $http = new HttpServer($this->loop, function (ServerRequestInterface $request) {
+        $http = new HttpServer(function (ServerRequestInterface $request) {
             return $this->handleRequest($request);
         });
 
@@ -147,7 +125,7 @@ class App
             $listen = '127.0.0.1:8080';
         }
 
-        $socket = new SocketServer($listen, [], $this->loop);
+        $socket = new SocketServer($listen);
         $http->listen($socket);
 
         $this->sapi->log('Listening on ' . \str_replace('tcp:', 'http:', $socket->getAddress()));
