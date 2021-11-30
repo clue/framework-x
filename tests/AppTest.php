@@ -11,7 +11,6 @@ use FrameworkX\SapiHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
@@ -21,43 +20,14 @@ use ReflectionMethod;
 use ReflectionProperty;
 use function React\Promise\reject;
 use function React\Promise\resolve;
+use React\EventLoop\Loop;
 
 class AppTest extends TestCase
 {
-    public function testConstructWithLoopAssignsGivenLoopInstance()
+    public function testConstructWithMiddlewareAssignsGivenMiddleware()
     {
-        $loop = $this->createMock(LoopInterface::class);
-        $app = new App($loop);
-
-        $ref = new ReflectionProperty($app, 'loop');
-        $ref->setAccessible(true);
-        $ret = $ref->getValue($app);
-
-        $this->assertSame($loop, $ret);
-    }
-
-    public function testConstructWithoutLoopAssignsGlobalLoopInstance()
-    {
-        $app = new App();
-
-        $ref = new ReflectionProperty($app, 'loop');
-        $ref->setAccessible(true);
-        $ret = $ref->getValue($app);
-
-        $this->assertSame(Loop::get(), $ret);
-    }
-
-    public function testConstructWithLoopAndMiddlewareAssignsGivenLoopInstanceAndMiddleware()
-    {
-        $loop = $this->createMock(LoopInterface::class);
         $middleware = function () { };
-        $app = new App($loop, $middleware);
-
-        $ref = new ReflectionProperty($app, 'loop');
-        $ref->setAccessible(true);
-        $ret = $ref->getValue($app);
-
-        $this->assertSame($loop, $ret);
+        $app = new App($middleware);
 
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
@@ -75,21 +45,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
     }
 
-    public function testConstructWithInvalidLoopThrows()
-    {
-        $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Argument 1 ($loop) must be callable|React\EventLoop\LoopInterface, stdClass given');
-        new App((object)[]);
-    }
-
-    public function testConstructWithNullLoopButMiddlwareThrows()
-    {
-        $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Argument 1 ($loop) must be callable|React\EventLoop\LoopInterface, null given');
-        new App(null, function () { });
-    }
-
-    public function testRunWillRunGivenLoopInstanceAndReportListeningAddress()
+    public function testRunWillReportListeningAddressAndRunLoopWithSocketServer()
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
         if ($socket === false) {
@@ -97,52 +53,71 @@ class AppTest extends TestCase
         }
         fclose($socket);
 
-        $loop = $this->createMock(LoopInterface::class);
-        $loop->expects($this->once())->method('run');
-        $app = new App($loop);
+        $app = new App();
+
+        // lovely: remove socket server on next tick to terminate loop
+        Loop::futureTick(function () {
+            $resources = get_resources();
+            $socket = end($resources);
+
+            Loop::removeReadStream($socket);
+            fclose($socket);
+        });
 
         $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:8080' . PHP_EOL, '/') . '$/');
         $app->run();
     }
 
-    public function testRunWillRunGivenLoopInstanceAndReportListeningAddressFromEnvironment()
+    public function testRunWillReportListeningAddressFromEnvironmentAndRunLoopWithSocketServer()
     {
         $socket = @stream_socket_server('127.0.0.1:0');
         $addr = stream_socket_get_name($socket, false);
         fclose($socket);
 
         putenv('X_LISTEN=' . $addr);
-        $loop = $this->createMock(LoopInterface::class);
-        $loop->expects($this->once())->method('run');
-        $app = new App($loop);
+        $app = new App();
+
+        // lovely: remove socket server on next tick to terminate loop
+        Loop::futureTick(function () {
+            $resources = get_resources();
+            $socket = end($resources);
+
+            Loop::removeReadStream($socket);
+            fclose($socket);
+        });
 
         $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '$/');
         $app->run();
     }
 
-    public function testRunWillRunGivenLoopInstanceAndReportListeningAddressFromEnvironmentWithRandomPort()
+    public function testRunWillReportListeningAddressFromEnvironmentWithRandomPortAndRunLoopWithSocketServer()
     {
         putenv('X_LISTEN=127.0.0.1:0');
-        $loop = $this->createMock(LoopInterface::class);
-        $loop->expects($this->once())->method('run');
-        $app = new App($loop);
+        $app = new App();
+
+        // lovely: remove socket server on next tick to terminate loop
+        Loop::futureTick(function () {
+            $resources = get_resources();
+            $socket = end($resources);
+
+            Loop::removeReadStream($socket);
+            fclose($socket);
+        });
 
         $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:', '/') . '\d+' . PHP_EOL . '$/');
         $app->run();
     }
 
-    public function testRunAppWithEmptyAddressThrowsWithoutRunningLoop()
+    public function testRunAppWithEmptyAddressThrows()
     {
         putenv('X_LISTEN=');
-        $loop = $this->createMock(LoopInterface::class);
-        $loop->expects($this->never())->method('run');
-        $app = new App($loop);
+        $app = new App();
 
         $this->expectException(\InvalidArgumentException::class);
         $app->run();
     }
 
-    public function testRunAppWithBusyPortThrowsWithoutRunningLoop()
+    public function testRunAppWithBusyPortThrows()
     {
         $socket = @stream_socket_server('127.0.0.1:0');
         $addr = stream_socket_get_name($socket, false);
@@ -152,9 +127,7 @@ class AppTest extends TestCase
         }
 
         putenv('X_LISTEN=' . $addr);
-        $loop = $this->createMock(LoopInterface::class);
-        $loop->expects($this->never())->method('run');
-        $app = new App($loop);
+        $app = new App();
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');
