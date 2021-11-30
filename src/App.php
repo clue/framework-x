@@ -33,9 +33,9 @@ class App
      * $app = new App($middleware1, $middleware2);
      * ```
      *
-     * @param callable ...$middleware
+     * @param callable|class-string ...$middleware
      */
-    public function __construct(callable ...$middleware)
+    public function __construct(...$middleware)
     {
         $errorHandler = new ErrorHandler();
         $this->router = new RouteHandler();
@@ -53,51 +53,103 @@ class App
         $this->sapi = new SapiHandler();
     }
 
-    public function get(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function get(string $route, $handler, ...$handlers): void
     {
         $this->map(['GET'], $route, $handler, ...$handlers);
     }
 
-    public function head(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function head(string $route, $handler, ...$handlers): void
     {
         $this->map(['HEAD'], $route, $handler, ...$handlers);
     }
 
-    public function post(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function post(string $route, $handler, ...$handlers): void
     {
         $this->map(['POST'], $route, $handler, ...$handlers);
     }
 
-    public function put(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function put(string $route, $handler, ...$handlers): void
     {
         $this->map(['PUT'], $route, $handler, ...$handlers);
     }
 
-    public function patch(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function patch(string $route, $handler, ...$handlers): void
     {
         $this->map(['PATCH'], $route, $handler, ...$handlers);
     }
 
-    public function delete(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function delete(string $route, $handler, ...$handlers): void
     {
         $this->map(['DELETE'], $route, $handler, ...$handlers);
     }
 
-    public function options(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function options(string $route, $handler, ...$handlers): void
     {
         $this->map(['OPTIONS'], $route, $handler, ...$handlers);
     }
 
-    public function any(string $route, callable $handler, callable ...$handlers): void
+    /**
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function any(string $route, $handler, ...$handlers): void
     {
         $this->map(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $route, $handler, ...$handlers);
     }
 
-    public function map(array $methods, string $route, callable $handler, callable ...$handlers): void
+    /**
+     *
+     * @param string[] $methods
+     * @param string $route
+     * @param callable|class-string $handler
+     * @param callable|class-string ...$handlers
+     */
+    public function map(array $methods, string $route, $handler, ...$handlers): void
     {
         $this->router->map($methods, $route, $handler, ...$handlers);
     }
 
+    /**
+     * @param string $route
+     * @param string $target
+     * @param int $code
+     */
     public function redirect(string $route, string $target, int $code = 302): void
     {
         $this->any($route, new RedirectHandler($target, $code));

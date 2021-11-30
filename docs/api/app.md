@@ -111,9 +111,27 @@ you keep adding more controllers to a single application.
 For this reason, we recommend using [controller classes](../best-practices/controllers.md)
 for production use-cases like this:
 
-```php title="public/index.php"
-$app->get('/', new Acme\Todo\HelloController());
-```
+=== "Using controller instances"
+
+    ```php title="public/index.php"
+    <?php
+
+    // …
+
+    $app->get('/', new Acme\Todo\HelloController());
+    ```
+
+=== "Using controller names"
+
+    ```php title="public/index.php"
+    <?php
+
+    // …
+
+    $app->get('/', Acme\Todo\HelloController::class);
+    ```
+
+<!-- -->
 
 ```php title="src/HelloController.php"
 <?php

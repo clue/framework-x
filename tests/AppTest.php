@@ -1046,6 +1046,116 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassDoesNotExist()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $line = __LINE__ + 2;
+        $app->get('/users', 'UnknownClass');
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Unable to load request handler class \"UnknownClass\"</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresConstructorParameter()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $controller = new class(42) {
+            public function __construct(int $value) { }
+        };
+
+        $line = __LINE__ + 2;
+        $app->get('/users', get_class($controller));
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Unable to instantiate request handler class \"%s\": %s</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $line = __LINE__ + 2;
+        $controller = new class {
+            public function __invoke(int $value) { }
+        };
+
+        $app->get('/users', get_class($controller));
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>TypeError</code> with message <code>%s</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n%a", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassHasNoInvokeMethod()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $controller = new class { };
+
+        $line = __LINE__ + 2;
+        $app->get('/users', get_class($controller));
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Unable to use request handler class \"%s\" because it has no \"public function __invoke()\"</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
+    }
+
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue()
     {
         $app = $this->createAppWithoutLogger();
