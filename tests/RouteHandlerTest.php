@@ -100,7 +100,7 @@ class RouteHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
 
-        $controller = new class{
+        $controller = new class {
             public static $response;
             public function __invoke() {
                 return self::$response;
@@ -121,7 +121,7 @@ class RouteHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
 
-        $controller = new class{
+        $controller = new class {
             public static $response;
             public function __invoke() {
                 return self::$response;
@@ -137,12 +137,80 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithOptionalConstructor()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $controller = new class {
+            public static $response;
+            public function __construct(int $value = null) {
+            }
+            public function __invoke() {
+                return self::$response;
+            }
+        };
+        $controller::$response = $response;
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', get_class($controller));
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithNullableConstructor()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $controller = new class(null) {
+            public static $response;
+            public function __construct(?int $value) {
+            }
+            public function __invoke() {
+                return self::$response;
+            }
+        };
+        $controller::$response = $response;
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', get_class($controller));
+
+        $ret = $handler($request);
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithRequiredResponseInConstructor()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response(500)) {
+            public static $response;
+            public function __construct(Response $response) {
+                self::$response = $response;
+            }
+            public function __invoke() {
+                return self::$response;
+            }
+        };
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', get_class($controller));
+
+        $ret = $handler($request);
+
+        $this->assertSame($controller::$response, $ret);
+    }
+
     public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerWithClassNameMiddleware()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
 
-        $middleware = new class{
+        $middleware = new class {
             public function __invoke(ServerRequestInterface $request, callable $next) {
                 return $next($request);
             }
