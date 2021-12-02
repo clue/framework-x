@@ -1,4 +1,6 @@
-# Controller classes to structure your app
+# Controller classes
+
+## First steps
 
 When starting with X, it's often easiest to start with simple closure definitions like suggested in the [quickstart guide](../getting-started/quickstart.md).
 
@@ -113,6 +115,8 @@ class UserController
 }
 ```
 
+## Composer autoloading
+
 Doesn't look too complex, right? Now, we only need to tell Composer's autoloader
 about our vendor namespace `Acme\Todo` in the `src/` folder. Make sure to include
 the following lines in your `composer.json` file:
@@ -142,7 +146,7 @@ assured this is the only time you have to worry about this, new classes can
 simply be added without having to run Composer again.
 
 Again, let's see our web application still works by using your favorite
-webbrowser or command line tool:
+web browser or command-line tool:
 
 ```bash
 $ curl http://localhost:8080/
@@ -150,3 +154,75 @@ Hello wörld!
 ```
 
 If everything works as expected, we can continue with writing our first tests to automate this.
+
+## Container
+
+X has a powerful, built-in dependency injection container (DI container or DIC).
+It allows you to automatically create request handler classes and their
+dependencies with zero configuration for most common use cases.
+
+> ℹ️ **Dependency Injection (DI)**
+>
+> Dependency injection (DI) is a technique in which an object receives other
+> objects that it depends on, rather than creating these dependencies within its
+> class. In its most basic form, this means creating all required object
+> dependencies upfront and manually injecting them into the controller class.
+> This can be done manually or you can use the optional container which does
+> this for you.
+
+### Autowiring
+
+To use autowiring, simply pass in the class name of your request handler classes
+like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$app = new FrameworkX\App();
+
+$app->get('/', Acme\Todo\HelloController::class);
+$app->get('/users/{name}', Acme\Todo\UserController::class);
+
+$app->run();
+```
+
+X will automatically take care of instantiating the required request handler
+classes and their dependencies when a request comes in. This autowiring feature
+covers most common use cases:
+
+* Names always reference existing class names.
+* Class names need to be loadable through the autoloader. See
+  [composer autoloading](#composer-autoloading) above.
+* Each class may or may not have a constructor.
+* If the constructor has an optional argument, it will be omitted.
+* If the constructor has a nullable argument, it will be given a `null` value.
+* If the constructor references another class, it will load this class next.
+
+This covers most common use cases where the request handler class uses a
+constructor with type definitions to explicitly reference other classes.
+
+### Container configuration
+
+> ⚠️ **Feature preview**
+>
+> This is a feature preview, i.e. it might not have made it into the current beta.
+> Give feedback to help us prioritize.
+> We also welcome [contributors](../getting-started/community.md) to help out!
+
+Autowiring should cover most common use cases with zero configuration. If you
+want to have more control over this behavior, you may also explicitly configure
+the dependency injection container. This can be useful in these cases:
+
+* Constructor parameter references an interface and you want to explicitly
+  define an instance that implements this interface.
+* Constructor parameter has a primitive type (scalars such as `int` or `string`
+  etc.) or has no type at all and you want to explicitly bind a given value.
+* Constructor parameter references a class, but you want to inject a specific
+  instance or subclass in place of a default class.
+
+In the future, we will also allow you to pass in a custom
+[PSR-11: Container interface](https://www.php-fig.org/psr/psr-11/) implementing
+the well-established `Psr\Container\ContainerInterface`.
+We love standards and interoperability.
