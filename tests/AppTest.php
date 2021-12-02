@@ -24,6 +24,29 @@ use React\EventLoop\Loop;
 
 class AppTest extends TestCase
 {
+    /**
+     * @var array
+     */
+    private $serverArgs;
+
+    protected function setUp(): void
+    {
+        // Store a snapshot of $_SERVER
+        $this->serverArgs = $_SERVER;
+    }
+
+    protected function tearDown(): void
+    {
+        // Restore $_SERVER as it was before
+        foreach ($_SERVER as $key => $value) {
+            if (!\array_key_exists($key, $this->serverArgs)) {
+                unset($_SERVER[$key]);
+                continue;
+            }
+            $_SERVER[$key] = $value;
+        }
+    }
+
     public function testConstructWithMiddlewareAssignsGivenMiddleware()
     {
         $middleware = function () { };
@@ -74,7 +97,7 @@ class AppTest extends TestCase
         $addr = stream_socket_get_name($socket, false);
         fclose($socket);
 
-        putenv('X_LISTEN=' . $addr);
+        $_SERVER['X_LISTEN'] = $addr;
         $app = new App();
 
         // lovely: remove socket server on next tick to terminate loop
@@ -92,7 +115,7 @@ class AppTest extends TestCase
 
     public function testRunWillReportListeningAddressFromEnvironmentWithRandomPortAndRunLoopWithSocketServer()
     {
-        putenv('X_LISTEN=127.0.0.1:0');
+        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
         $app = new App();
 
         // lovely: remove socket server on next tick to terminate loop
@@ -110,7 +133,7 @@ class AppTest extends TestCase
 
     public function testRunAppWithEmptyAddressThrows()
     {
-        putenv('X_LISTEN=');
+        $_SERVER['X_LISTEN'] = '';
         $app = new App();
 
         $this->expectException(\InvalidArgumentException::class);
@@ -126,7 +149,7 @@ class AppTest extends TestCase
             $this->markTestSkipped('System does not prevent listening on same address twice');
         }
 
-        putenv('X_LISTEN=' . $addr);
+        $_SERVER['X_LISTEN'] = $addr;
         $app = new App();
 
         $this->expectException(\RuntimeException::class);
