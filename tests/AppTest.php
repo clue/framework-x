@@ -13,6 +13,7 @@ use FrameworkX\Tests\Fixtures\InvalidConstructorInt;
 use FrameworkX\Tests\Fixtures\InvalidConstructorIntersection;
 use FrameworkX\Tests\Fixtures\InvalidConstructorPrivate;
 use FrameworkX\Tests\Fixtures\InvalidConstructorProtected;
+use FrameworkX\Tests\Fixtures\InvalidConstructorSelf;
 use FrameworkX\Tests\Fixtures\InvalidConstructorUnion;
 use FrameworkX\Tests\Fixtures\InvalidConstructorUnknown;
 use FrameworkX\Tests\Fixtures\InvalidConstructorUntyped;
@@ -1133,6 +1134,11 @@ class AppTest extends TestCase
         yield [
             InvalidConstructorUnknown::class,
             'Class UnknownClass not found'
+        ];
+
+        yield [
+            InvalidConstructorSelf::class,
+            'Argument 1 ($value) of %s::__construct() is recursive'
         ];
     }
 

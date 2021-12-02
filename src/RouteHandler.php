@@ -121,7 +121,7 @@ class RouteHandler
         };
     }
 
-    private static function load(string $name)
+    private static function load(string $name, int $depth = 64)
     {
         // Check `$name` references a valid class name that can be autoloaded
         if (!\class_exists($name, true) && !interface_exists($name, false) && !trait_exists($name, false)) {
@@ -181,7 +181,12 @@ class RouteHandler
                 throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
             }
 
-            $params[] = self::load($type->getName());
+            // abort for unreasonably deep nesting or recursive types
+            if ($depth < 1) {
+                throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
+            }
+
+            $params[] = self::load($type->getName(), --$depth);
         }
 
         // instantiate with list of parameters
