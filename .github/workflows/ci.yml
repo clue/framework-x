@@ -73,9 +73,6 @@ jobs:
           php-version: ${{ matrix.php }}
       - run: composer install --no-dev
       - run: docker run -d -v "$PWD":/home/framework-x php:${{ matrix.php }}-fpm
-        if: ${{ matrix.php != 8.1 }}
-      - run: docker run -d -v "$PWD":/home/framework-x php:8.1.0RC6-fpm
-        if: ${{ matrix.php == 8.1 }}
       - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD":/home/framework-x -v "$PWD"/examples/nginx/nginx.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
       - run: bash tests/await.sh http://localhost
       - run: bash tests/acceptance.sh http://localhost
@@ -99,9 +96,6 @@ jobs:
           php-version: ${{ matrix.php }}
       - run: composer install --no-dev
       - run: docker run -d -p 80:80 -v "$PWD":/home/framework-x php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/framework-x/examples/apache /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
-        if: ${{ matrix.php != 8.1 }}
-      - run: docker run -d -p 80:80 -v "$PWD":/home/framework-x php:8.1.0RC6-apache sh -c "rmdir /var/www/html;ln -s /home/framework-x/examples/apache /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
-        if: ${{ matrix.php == 8.1 }}
       - run: bash tests/await.sh http://localhost
       - run: bash tests/acceptance.sh http://localhost
 
