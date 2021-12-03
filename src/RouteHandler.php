@@ -27,11 +27,11 @@ class RouteHandler
     /** @var Container */
     private $container;
 
-    public function __construct()
+    public function __construct(Container $container = null)
     {
         $this->routeCollector = new RouteCollector(new RouteParser(), new RouteGenerator());
         $this->errorHandler = new ErrorHandler();
-        $this->container = new Container();
+        $this->container = $container ?? new Container();
     }
 
     /**
