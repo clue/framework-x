@@ -8,10 +8,21 @@ use FrameworkX\ErrorHandler;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use FrameworkX\SapiHandler;
+use FrameworkX\Tests\Fixtures\InvalidAbstract;
+use FrameworkX\Tests\Fixtures\InvalidConstructorInt;
+use FrameworkX\Tests\Fixtures\InvalidConstructorIntersection;
+use FrameworkX\Tests\Fixtures\InvalidConstructorPrivate;
+use FrameworkX\Tests\Fixtures\InvalidConstructorProtected;
+use FrameworkX\Tests\Fixtures\InvalidConstructorSelf;
+use FrameworkX\Tests\Fixtures\InvalidConstructorUnion;
+use FrameworkX\Tests\Fixtures\InvalidConstructorUnknown;
+use FrameworkX\Tests\Fixtures\InvalidConstructorUntyped;
+use FrameworkX\Tests\Fixtures\InvalidInterface;
+use FrameworkX\Tests\Fixtures\InvalidTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\LoopInterface;
+use React\EventLoop\Loop;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Promise\Promise;
@@ -20,7 +31,6 @@ use ReflectionMethod;
 use ReflectionProperty;
 use function React\Promise\reject;
 use function React\Promise\resolve;
-use React\EventLoop\Loop;
 
 class AppTest extends TestCase
 {
@@ -1050,7 +1060,6 @@ class AppTest extends TestCase
     {
         $app = $this->createAppWithoutLogger();
 
-        $line = __LINE__ + 2;
         $app->get('/users', 'UnknownClass');
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1068,19 +1077,81 @@ class AppTest extends TestCase
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Unable to load request handler class \"UnknownClass\"</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class UnknownClass not found</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresConstructorParameter()
+    public function provideInvalidClasses()
+    {
+        yield [
+            InvalidConstructorPrivate::class,
+            'Cannot instantiate class ' . addslashes(InvalidConstructorPrivate::class)
+        ];
+
+        yield [
+            InvalidConstructorProtected::class,
+            'Cannot instantiate class ' . addslashes(InvalidConstructorProtected::class)
+        ];
+
+        yield [
+            InvalidAbstract::class,
+            'Cannot instantiate abstract class ' . addslashes(InvalidAbstract::class)
+        ];
+
+        yield [
+            InvalidInterface::class,
+            'Cannot instantiate interface ' . addslashes(InvalidInterface::class)
+        ];
+
+        yield [
+            InvalidTrait::class,
+            'Cannot instantiate trait ' . addslashes(InvalidTrait::class)
+        ];
+
+        yield [
+            InvalidConstructorUntyped::class,
+            'Argument 1 ($value) of %s::__construct() has no type'
+        ];
+
+        yield [
+            InvalidConstructorInt::class,
+            'Argument 1 ($value) of %s::__construct() expects unsupported type int'
+        ];
+
+        if (PHP_VERSION_ID >= 80000) {
+            yield [
+                InvalidConstructorUnion::class,
+                'Argument 1 ($value) of %s::__construct() expects unsupported type int|float'
+            ];
+        }
+
+        if (PHP_VERSION_ID >= 80100) {
+            yield [
+                InvalidConstructorIntersection::class,
+                'Argument 1 ($value) of %s::__construct() expects unsupported type Traversable&amp;ArrayAccess'
+            ];
+        }
+
+        yield [
+            InvalidConstructorUnknown::class,
+            'Class UnknownClass not found'
+        ];
+
+        yield [
+            InvalidConstructorSelf::class,
+            'Argument 1 ($value) of %s::__construct() is recursive'
+        ];
+    }
+
+    /**
+     * @dataProvider provideInvalidClasses
+     * @param class-string $class
+     * @param string $error
+     */
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassIsInvalid(string $class, string $error)
     {
         $app = $this->createAppWithoutLogger();
 
-        $controller = new class(42) {
-            public function __construct(int $value) { }
-        };
-
-        $line = __LINE__ + 2;
-        $app->get('/users', get_class($controller));
+        $app->get('/users', $class);
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
@@ -1097,7 +1168,7 @@ class AppTest extends TestCase
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Unable to instantiate request handler class \"%s\": %s</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class " . addslashes($class) . " failed to load: $error</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter()
@@ -1135,7 +1206,6 @@ class AppTest extends TestCase
 
         $controller = new class { };
 
-        $line = __LINE__ + 2;
         $app->get('/users', get_class($controller));
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1153,7 +1223,7 @@ class AppTest extends TestCase
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Unable to use request handler class \"%s\" because it has no \"public function __invoke()\"</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class %s has no public __invoke() method</code> in <code title=\"See %s\">RouteHandler.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue()
