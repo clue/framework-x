@@ -24,6 +24,9 @@ class RouteHandler
     /** @var ErrorHandler */
     private $errorHandler;
 
+    /** @var array<string,mixed> */
+    private static $container = [];
+
     public function __construct()
     {
         $this->routeCollector = new RouteCollector(new RouteParser(), new RouteGenerator());
@@ -123,6 +126,10 @@ class RouteHandler
 
     private static function load(string $name, int $depth = 64)
     {
+        if (isset(self::$container[$name])) {
+            return self::$container[$name];
+        }
+
         // Check `$name` references a valid class name that can be autoloaded
         if (!\class_exists($name, true) && !interface_exists($name, false) && !trait_exists($name, false)) {
             throw new \BadMethodCallException('Class ' . $name . ' not found');
@@ -141,16 +148,11 @@ class RouteHandler
             throw new \BadMethodCallException('Cannot instantiate ' . $modifier . ' '. $name);
         }
 
-        // instantiate without parameters if class has no constructor
-        $ctor = $class->getConstructor();
-        if ($ctor === null) {
-            return new $name();
-        }
-
         // build list of constructor parameters based on parameter types
         $params = [];
-        assert($ctor instanceof \ReflectionMethod);
-        foreach ($ctor->getParameters() as $parameter) {
+        $ctor = $class->getConstructor();
+        assert($ctor === null || $ctor instanceof \ReflectionMethod);
+        foreach ($ctor !== null ? $ctor->getParameters() : [] as $parameter) {
             assert($parameter instanceof \ReflectionParameter);
 
             // stop building parameters when encountering first optional parameter
@@ -190,7 +192,7 @@ class RouteHandler
         }
 
         // instantiate with list of parameters
-        return $params === [] ? new $name() : $class->newInstance(...$params);
+        return self::$container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
     }
 
     private static function parameterError(\ReflectionParameter $parameter): string

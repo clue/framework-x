@@ -224,6 +224,27 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
+    public function testHandleRequestTwiceWithGetRequestCallsSameHandlerInstanceFromMatchingHandlerClassName()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class {
+            private $called = 0;
+            public function __invoke() {
+                return ++$this->called;
+            }
+        };
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', get_class($controller));
+
+        $ret = $handler($request);
+        $this->assertEquals(1, $ret);
+
+        $ret = $handler($request);
+        $this->assertEquals(2, $ret);
+    }
+
     public function testHandleRequestWithGetRequestWithHttpUrlInPathReturnsResponseFromMatchingHandler()
     {
         $request = new ServerRequest('GET', 'http://example.com/http://localhost/');
