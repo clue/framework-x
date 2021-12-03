@@ -3,6 +3,7 @@
 namespace FrameworkX\Tests;
 
 use FastRoute\RouteCollector;
+use FrameworkX\Container;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,60 @@ class RouteHandlerTest extends TestCase
         $ref->setValue($handler, $router);
 
         $handler->map(['GET'], '/', $middleware, $controller);
+    }
+
+    public function testMapRouteWithClassNameAddsRouteOnRouterWithControllerCallableFromContainer()
+    {
+        $controller = function () { };
+
+        $container = $this->createMock(Container::class);
+        $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($controller);
+
+        $handler = new RouteHandler($container);
+
+        $router = $this->createMock(RouteCollector::class);
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
+
+        $ref = new \ReflectionProperty($handler, 'routeCollector');
+        $ref->setAccessible(true);
+        $ref->setValue($handler, $router);
+
+        $handler->map(['GET'], '/', \stdClass::class);
+    }
+
+    public function testMapRouteWithContainerAndControllerAddsRouteOnRouterWithControllerOnly()
+    {
+        $controller = function () { };
+
+        $handler = new RouteHandler();
+
+        $router = $this->createMock(RouteCollector::class);
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
+
+        $ref = new \ReflectionProperty($handler, 'routeCollector');
+        $ref->setAccessible(true);
+        $ref->setValue($handler, $router);
+
+        $handler->map(['GET'], '/', new Container(), $controller);
+    }
+
+    public function testMapRouteWithContainerAndControllerClassNameAddsRouteOnRouterWithControllerCallableFromContainer()
+    {
+        $controller = function () { };
+
+        $container = $this->createMock(Container::class);
+        $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($controller);
+
+        $handler = new RouteHandler();
+
+        $router = $this->createMock(RouteCollector::class);
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
+
+        $ref = new \ReflectionProperty($handler, 'routeCollector');
+        $ref->setAccessible(true);
+        $ref->setValue($handler, $router);
+
+        $handler->map(['GET'], '/', $container, \stdClass::class);
     }
 
     public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
@@ -270,5 +325,17 @@ class RouteHandlerTest extends TestCase
         $ret = $handler($request);
 
         $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithContainerOnlyThrows()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', new Container());
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Container should not be used as final request handler');
+        $handler($request);
     }
 }

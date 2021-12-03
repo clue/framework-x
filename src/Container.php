@@ -12,6 +12,22 @@ class Container
     /** @var array<class-string,object> */
     private $container;
 
+    public function __invoke(ServerRequestInterface $request, callable $next = null)
+    {
+        if ($next === null) {
+            // You don't want to end up here. This only happens if you use the
+            // container as a final request handler instead of as a middleware.
+            // In this case, you should omit the container or add another final
+            // request handler behind the container in the middleware chain.
+            throw new \BadMethodCallException('Container should not be used as final request handler');
+        }
+
+        // If the container is used as a middleware, simply forward to the next
+        // request handler. As an additional optimization, the container would
+        // usually be filtered out from a middleware chain as this is a NO-OP.
+        return $next($request);
+    }
+
     /**
      * @param class-string $class
      * @return callable
