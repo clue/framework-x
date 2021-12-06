@@ -452,6 +452,112 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
+    public function testGlobalMiddlewareInstanceCallsNextReturnsResponseFromController()
+    {
+        $middleware = new class {
+            public function __invoke(ServerRequestInterface $request, callable $next)
+            {
+                return $next($request);
+            }
+        };
+
+        $app = $this->createAppWithoutLogger($middleware);
+
+        $app->get('/', function () {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            );
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        // $response = $app->handleRequest($request);
+        $ref = new \ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testGlobalMiddlewareClassNameCallsNextReturnsResponseFromController()
+    {
+        $middleware = new class {
+            public function __invoke(ServerRequestInterface $request, callable $next)
+            {
+                return $next($request);
+            }
+        };
+
+        $app = $this->createAppWithoutLogger(get_class($middleware));
+
+        $app->get('/', function () {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            );
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        // $response = $app->handleRequest($request);
+        $ref = new \ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testGlobalMiddlewareClassNameAndSameForRouterCallsSameMiddlewareInstanceTwiceAndNextReturnsResponseFromController()
+    {
+        $middleware = new class {
+            private $called = 0;
+            public function __invoke(ServerRequestInterface $request, callable $next)
+            {
+                return $next($request->withAttribute('called', ++$this->called));
+            }
+        };
+
+        $app = $this->createAppWithoutLogger(get_class($middleware));
+
+        $app->get('/', get_class($middleware), function (ServerRequestInterface $request) {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                $request->getAttribute('called') . "\n"
+            );
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        // $response = $app->handleRequest($request);
+        $ref = new \ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("2\n", (string) $response->getBody());
+    }
+
     public function testGlobalMiddlewareCallsNextWithModifiedRequestWillBeUsedForRouting()
     {
         $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
@@ -669,7 +775,8 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    private function createAppWithoutLogger(callable ...$middleware): App
+    /** @param callable|class-string ...$middleware */
+    private function createAppWithoutLogger(...$middleware): App
     {
         $app = new App(...$middleware);
 

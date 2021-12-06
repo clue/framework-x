@@ -37,8 +37,18 @@ class App
      */
     public function __construct(...$middleware)
     {
+        $container = new Container();
         $errorHandler = new ErrorHandler();
-        $this->router = new RouteHandler();
+        $this->router = new RouteHandler($container);
+
+        if ($middleware) {
+            $middleware = array_map(
+                function ($handler) use ($container) {
+                    return is_callable($handler) ? $handler : $container->callable($handler);
+                },
+                $middleware
+            );
+        }
 
         // new MiddlewareHandler([$accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
         \array_unshift($middleware, $errorHandler);
