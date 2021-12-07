@@ -379,23 +379,50 @@ acme/
 > see [controller classes](../best-practices/controllers.md) for more details.
 
 The main entry point [registers a route](../api/app.md#routing) for our
-controller and uses dependency injection (DI) to connect all classes:
+controller and uses dependency injection (DI) or a
+[DI container](../best-practices/controllers.md#container) to wire all classes:
 
-```php title="public/index.php"
-<?php
+=== "Constructor dependency injection"
 
-require __DIR__ . '/../vendor/autoload.php';
+    ```php title="public/index.php"
+    <?php
 
-$credentials = 'alice:secret@localhost/bookstore?idle=0.001';
-$db = (new React\Mysql\Factory())->createLazyConnection($credentials);
-$repository = new Acme\Todo\BookRepository($db);
+    require __DIR__ . '/../vendor/autoload.php';
 
-$app = new FrameworkX\App();
+    $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
+    $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
+    $repository = new Acme\Todo\BookRepository($db);
 
-$app->get('/book/{isbn}, new Acme\Todo\BookLookupController($repository));
 
-$app->run();
-```
+
+
+    $app = new FrameworkX\App();
+
+    $app->get('/book/{isbn}', new Acme\Todo\BookLookupController($repository));
+
+    $app->run();
+    ```
+
+=== "DI container"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        React\MySQL\ConnectionInterface::class => function () {
+            $credentials = 'alice:secret@localhost/bookstore?idle=0.001';
+            return (new React\MySQL\Factory())->createLazyConnection($credentials);
+        }
+    ]);
+
+    $app = new FrameworkX\App($container);
+
+    $app->get('/book/{isbn}', Acme\Todo\BookLookupController::class);
+
+    $app->run();
+    ```
 
 The main entity we're dealing with in this example is a plain PHP class which
 makes it super easy to write and to use in our code:

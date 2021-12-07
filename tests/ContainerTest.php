@@ -63,6 +63,75 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableForClassNameViaAutowiringWithFactoryFunctionForDependency()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function () {
+                return (object)['name' => 'Alice'];
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+    }
+
+    public function testCallableTwiceReturnsCallableForClassNameViaAutowiringWithFactoryFunctionForDependencyWillCallFactoryOnlyOnce()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function () {
+                static $called = 0;
+                return (object)['num' => ++$called];
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"num":1}', (string) $response->getBody());
+    }
+
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler()
     {
         $request = new ServerRequest('GET', 'http://example.com/');

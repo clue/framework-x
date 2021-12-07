@@ -9,10 +9,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Container
 {
-    /** @var array<class-string,object> */
+    /** @var array<class-string,object|callable():object> */
     private $container;
 
-    /** @var array<class-string,object> */
+    /** @var array<class-string,callable():object | object> */
     public function __construct(array $map = [])
     {
         $this->container = $map;
@@ -80,6 +80,10 @@ class Container
     private function load(string $name, int $depth = 64)
     {
         if (isset($this->container[$name])) {
+            if ($this->container[$name] instanceof \Closure) {
+                $this->container[$name] = ($this->container[$name])();
+            }
+
             return $this->container[$name];
         }
 
