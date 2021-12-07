@@ -205,15 +205,53 @@ constructor with type definitions to explicitly reference other classes.
 
 ### Container configuration
 
-> ⚠️ **Feature preview**
->
-> This is a feature preview, i.e. it might not have made it into the current beta.
-> Give feedback to help us prioritize.
-> We also welcome [contributors](../getting-started/community.md) to help out!
-
 Autowiring should cover most common use cases with zero configuration. If you
 want to have more control over this behavior, you may also explicitly configure
-the dependency injection container. This can be useful in these cases:
+the dependency injection container like this:
+
+=== "Arrow functions (PHP 7.4+)" 
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        Acme\Todo\HelloController::class => fn() => new Acme\Todo\HelloController();
+    ]);
+
+
+
+    $app = new FrameworkX\App($container);
+
+    $app->get('/', Acme\Todo\HelloController::class);
+    $app->get('/users/{name}', Acme\Todo\UserController::class);
+
+    $app->run();
+    ```
+
+=== "Closure" 
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        Acme\Todo\HelloController::class => function () {
+            return new Acme\Todo\HelloController();
+        }
+    ]);
+
+    $app = new FrameworkX\App($container);
+
+    $app->get('/', Acme\Todo\HelloController::class);
+    $app->get('/users/{name}', Acme\Todo\UserController::class);
+
+    $app->run();
+    ```
+
+This can be useful in these cases:
 
 * Constructor parameter references an interface and you want to explicitly
   define an instance that implements this interface.
@@ -221,6 +259,19 @@ the dependency injection container. This can be useful in these cases:
   etc.) or has no type at all and you want to explicitly bind a given value.
 * Constructor parameter references a class, but you want to inject a specific
   instance or subclass in place of a default class.
+
+The configured container instance can be passed into the application like any
+other middleware request handler. In most cases this means you create a single
+`Container` instance with a number of factory methods and pass this instance as
+the first argument to the `App`.
+
+### PSR-11 compatibility
+
+> ⚠️ **Feature preview**
+>
+> This is a feature preview, i.e. it might not have made it into the current beta.
+> Give feedback to help us prioritize.
+> We also welcome [contributors](../getting-started/community.md) to help out!
 
 In the future, we will also allow you to pass in a custom
 [PSR-11: Container interface](https://www.php-fig.org/psr/psr-11/) implementing

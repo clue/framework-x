@@ -5,16 +5,39 @@ namespace FrameworkX;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * @internal
+ * @final
  */
 class Container
 {
-    /** @var array<class-string,object> */
+    /** @var array<class-string,object|callable():object> */
     private $container;
+
+    /** @var array<class-string,callable():object | object> */
+    public function __construct(array $map = [])
+    {
+        $this->container = $map;
+    }
+
+    public function __invoke(ServerRequestInterface $request, callable $next = null)
+    {
+        if ($next === null) {
+            // You don't want to end up here. This only happens if you use the
+            // container as a final request handler instead of as a middleware.
+            // In this case, you should omit the container or add another final
+            // request handler behind the container in the middleware chain.
+            throw new \BadMethodCallException('Container should not be used as final request handler');
+        }
+
+        // If the container is used as a middleware, simply forward to the next
+        // request handler. As an additional optimization, the container would
+        // usually be filtered out from a middleware chain as this is a NO-OP.
+        return $next($request);
+    }
 
     /**
      * @param class-string $class
-     * @return callable
+     * @return callable(ServerRequestInterface,?callable=null)
+     * @internal
      */
     public function callable(string $class): callable
     {
@@ -57,6 +80,10 @@ class Container
     private function load(string $name, int $depth = 64)
     {
         if (isset($this->container[$name])) {
+            if ($this->container[$name] instanceof \Closure) {
+                $this->container[$name] = ($this->container[$name])();
+            }
+
             return $this->container[$name];
         }
 

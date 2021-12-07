@@ -43,16 +43,24 @@ class RouteHandler
     public function map(array $methods, string $route, $handler, ...$handlers): void
     {
         if ($handlers) {
-            $handler = new MiddlewareHandler(array_map(
-                function ($handler) {
-                    return is_callable($handler) ? $handler : $this->container->callable($handler);
-                },
-                array_merge([$handler], $handlers)
-            ));
-        } elseif (!is_callable($handler)) {
-            $handler = $this->container->callable($handler);
+            \array_unshift($handlers, $handler);
+            \end($handlers);
+        } else {
+            $handlers = [$handler];
         }
 
+        $last = key($handlers);
+        $container = $this->container;
+        foreach ($handlers as $i => $handler) {
+            if ($handler instanceof Container && $i !== $last) {
+                $container = $handler;
+                unset($handlers[$i]);
+            } elseif (!\is_callable($handler)) {
+                $handlers[$i] = $container->callable($handler);
+            }
+        }
+
+        $handler = \count($handlers) > 1 ? new MiddlewareHandler(array_values($handlers)) : \reset($handlers);
         $this->routeDispatcher = null;
         $this->routeCollector->addRoute($methods, $route, $handler);
     }

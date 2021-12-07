@@ -37,17 +37,18 @@ class App
      */
     public function __construct(...$middleware)
     {
-        $container = new Container();
         $errorHandler = new ErrorHandler();
-        $this->router = new RouteHandler($container);
 
+        $container = new Container();
         if ($middleware) {
-            $middleware = array_map(
-                function ($handler) use ($container) {
-                    return is_callable($handler) ? $handler : $container->callable($handler);
-                },
-                $middleware
-            );
+            foreach ($middleware as $i => $handler) {
+                if ($handler instanceof Container) {
+                    $container = $handler;
+                    unset($middleware[$i]);
+                } elseif (!\is_callable($handler)) {
+                    $middleware[$i] = $container->callable($handler);
+                }
+            }
         }
 
         // new MiddlewareHandler([$accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
@@ -58,6 +59,7 @@ class App
             \array_unshift($middleware, new AccessLogHandler());
         }
 
+        $this->router = new RouteHandler($container);
         $middleware[] = $this->router;
         $this->handler = new MiddlewareHandler($middleware);
         $this->sapi = new SapiHandler();

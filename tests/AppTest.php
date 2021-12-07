@@ -4,6 +4,7 @@ namespace FrameworkX\Tests;
 
 use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
+use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
@@ -53,6 +54,61 @@ class AppTest extends TestCase
         $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
         $this->assertSame($middleware, $handlers[2]);
         $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
+    }
+
+    public function testConstructWithContainerAssignsContainerForRouteHandlerOnly()
+    {
+        $container = new Container();
+        $app = new App($container);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        $this->assertCount(3, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
+
+        $routeHandler = $handlers[2];
+        $ref = new ReflectionProperty($routeHandler, 'container');
+        $ref->setAccessible(true);
+        $this->assertSame($container, $ref->getValue($routeHandler));
+    }
+
+    public function testConstructWithContainerAndMiddlewareClassNameAssignsCallableFromContainerAsMiddleware()
+    {
+        $middleware = function (ServerRequestInterface $request, callable $next) { };
+
+        $container = $this->createMock(Container::class);
+        $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($middleware);
+
+        $app = new App($container, \stdClass::class);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        $this->assertCount(4, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
+        $this->assertSame($middleware, $handlers[2]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
+
+        $routeHandler = $handlers[3];
+        $ref = new ReflectionProperty($routeHandler, 'container');
+        $ref->setAccessible(true);
+        $this->assertSame($container, $ref->getValue($routeHandler));
     }
 
     public function testRunWillReportListeningAddressAndRunLoopWithSocketServer()
