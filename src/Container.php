@@ -5,12 +5,18 @@ namespace FrameworkX;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * @internal
+ * @final
  */
 class Container
 {
     /** @var array<class-string,object> */
     private $container;
+
+    /** @var array<class-string,object> */
+    public function __construct(array $map = [])
+    {
+        $this->container = $map;
+    }
 
     public function __invoke(ServerRequestInterface $request, callable $next = null)
     {
@@ -30,7 +36,8 @@ class Container
 
     /**
      * @param class-string $class
-     * @return callable
+     * @return callable(ServerRequestInterface,?callable=null)
+     * @internal
      */
     public function callable(string $class): callable
     {
