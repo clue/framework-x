@@ -262,8 +262,13 @@ This can be useful in these cases:
 
 The configured container instance can be passed into the application like any
 other middleware request handler. In most cases this means you create a single
-`Container` instance with a number of factory methods and pass this instance as
+`Container` instance with a number of factory functions and pass this instance as
 the first argument to the `App`.
+
+In its most common form, each entry in the container configuration maps a class
+name to a factory function that will be invoked when this class is first
+requested. The factory function is responsible for returning an instance that
+implements the given class name.
 
 ### PSR-11 compatibility
 

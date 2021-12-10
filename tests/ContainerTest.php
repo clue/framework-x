@@ -132,6 +132,31 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"num":1}', (string) $response->getBody());
     }
 
+    public function testCtorThrowsWhenMapContainsInvalidInteger()
+    {
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Map for stdClass contains unexpected integer');
+
+        new Container([
+            \stdClass::class => 42
+        ]);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReturnsInvalidInteger()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => function () { return 42; }
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Factory for stdClass returned unexpected integer');
+        $callable($request);
+    }
+
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
