@@ -184,10 +184,7 @@ class App
             return $this->handleRequest($request);
         });
 
-        $listen = \getenv('X_LISTEN');
-        if ($listen === false) {
-            $listen = '127.0.0.1:8080';
-        }
+        $listen = $_SERVER['X_LISTEN'] ?? '127.0.0.1:8080';
 
         $socket = new SocketServer($listen);
         $http->listen($socket);
