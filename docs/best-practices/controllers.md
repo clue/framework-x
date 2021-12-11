@@ -270,6 +270,27 @@ name to a factory function that will be invoked when this class is first
 requested. The factory function is responsible for returning an instance that
 implements the given class name.
 
+The container configuration may also be used to map a class name to a different
+class name that implements the same interface, either by mapping between two
+class names or using a factory function that returns a class name. This is
+particularly useful when implementing an interface.
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$container = new FrameworkX\Container([
+    React\Cache\CacheInterface::class => React\Cache\ArrayCache::class,
+    Psr\Http\Message\ResponseInterface::class => function () {
+        // returns class implementing interface from factory function
+        return React\Http\Message\Response::class;
+    }
+]);
+
+// …
+```
+
 ### PSR-11 compatibility
 
 > ⚠️ **Feature preview**
