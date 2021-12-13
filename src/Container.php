@@ -9,12 +9,21 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Container
 {
-    /** @var array<class-string,object|callable():object> */
+    /** @var array<class-string,object|callable():(object|class-string)> */
     private $container;
 
-    /** @var array<class-string,callable():object | object> */
+    /** @var array<class-string,callable():(object|class-string) | object | class-string> */
     public function __construct(array $map = [])
     {
+        foreach ($map as $name => $value) {
+            if (\is_string($value)) {
+                $map[$name] = static function () use ($value) {
+                    return $value;
+                };
+            } elseif (!$value instanceof \Closure && !$value instanceof $name) {
+                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
+            }
+        }
         $this->container = $map;
     }
 
@@ -81,7 +90,19 @@ class Container
     {
         if (isset($this->container[$name])) {
             if ($this->container[$name] instanceof \Closure) {
-                $this->container[$name] = ($this->container[$name])();
+                $value = ($this->container[$name])();
+
+                if (\is_string($value)) {
+                    if ($depth < 1) {
+                        throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
+                    }
+
+                    $value = $this->load($value, $depth - 1);
+                } elseif (!$value instanceof $name) {
+                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
+                }
+
+                $this->container[$name] = $value;
             }
 
             return $this->container[$name];
