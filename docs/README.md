@@ -17,7 +17,7 @@ If you want to contribute to the documentation, it's easiest to just run
 this in a Docker container in the project root directory like this:
 
 ```bash
-$ docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material:7.3.6
+$ docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material:8.1.3
 ```
 
 You can access the documentation via `http://localhost:8000`.
@@ -29,7 +29,7 @@ If you want to generate a static HTML folder for deployment, you can again
 use a Docker container in the project root directory like this:
 
 ```bash
-$ docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material:7.3.6 build
+$ docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material:8.1.3 build
 ```
 
 The resulting `build/docs/` should then be deployed behind a web server.

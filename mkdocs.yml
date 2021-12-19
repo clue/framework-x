@@ -1,8 +1,6 @@
 site_name: Framework X documentation
 site_url: https://framework-x.org/docs/
 site_dir: build/docs
-extra:
-  homepage: ../
 
 repo_url: https://github.com/clue/framework-x
 repo_name: clue/framework-x
@@ -16,7 +14,8 @@ theme:
     repo: fontawesome/brands/github
 
 markdown_extensions:
-  - pymdownx.tabbed
+  - pymdownx.tabbed:
+      alternate_style: true 
   - pymdownx.highlight
   - pymdownx.superfences
   - toc:
