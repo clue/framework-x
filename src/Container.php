@@ -90,7 +90,12 @@ class Container
     {
         if (isset($this->container[$name])) {
             if ($this->container[$name] instanceof \Closure) {
-                $value = ($this->container[$name])();
+                // build list of factory parameters based on parameter types
+                $closure = new \ReflectionFunction($this->container[$name]);
+                $params = $this->loadFunctionParams($closure, $depth);
+
+                // invoke factory with list of parameters
+                $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
 
                 if (\is_string($value)) {
                     if ($depth < 1) {
@@ -127,10 +132,17 @@ class Container
         }
 
         // build list of constructor parameters based on parameter types
-        $params = [];
         $ctor = $class->getConstructor();
-        assert($ctor === null || $ctor instanceof \ReflectionMethod);
-        foreach ($ctor !== null ? $ctor->getParameters() : [] as $parameter) {
+        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth);
+
+        // instantiate with list of parameters
+        return $this->container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
+    }
+
+    private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth): array
+    {
+        $params = [];
+        foreach ($function->getParameters() as $parameter) {
             assert($parameter instanceof \ReflectionParameter);
 
             // stop building parameters when encountering first optional parameter
@@ -166,15 +178,19 @@ class Container
                 throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
             }
 
-            $params[] = $this->load($type->getName(), --$depth);
+            $params[] = $this->load($type->getName(), $depth - 1);
         }
 
-        // instantiate with list of parameters
-        return $this->container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
+        return $params;
     }
 
     private static function parameterError(\ReflectionParameter $parameter): string
     {
-        return 'Argument ' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . explode("\0", $parameter->getDeclaringClass()->getName())[0] . '::' . $parameter->getDeclaringFunction()->getName() . '()';
+        $name = $parameter->getDeclaringFunction()->getShortName();
+        if (!$parameter->getDeclaringFunction()->isClosure() && ($class = $parameter->getDeclaringClass()) !== null) {
+            $name = explode("\0", $class->getName())[0] . '::' . $name;
+        }
+
+        return 'Argument ' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . $name . '()';
     }
 }

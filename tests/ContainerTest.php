@@ -202,6 +202,40 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableForClassNameWithSubclassMappedFromFactoryWithClassDependency()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (\stdClass $dto) {
+                return new Response(200, [], json_encode($dto));
+            },
+            \stdClass::class => function () { return (object)['name' => 'Alice']; }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+    }
+
     public function testCtorThrowsWhenMapContainsInvalidInteger()
     {
         $this->expectException(\BadMethodCallException::class);
@@ -239,6 +273,51 @@ class ContainerTest extends TestCase
 
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Factory for stdClass returned unexpected integer');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresInvalidClassName()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => function (self $instance) { return $instance; }
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Class self not found');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresUntypedArgument()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => function ($data) { return $data; }
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Argument 1 ($data) of {closure}() has no type');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresRecursiveClass()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => function (\stdClass $data) { return $data; }
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Argument 1 ($data) of {closure}() is recursive');
         $callable($request);
     }
 

@@ -270,6 +270,28 @@ name to a factory function that will be invoked when this class is first
 requested. The factory function is responsible for returning an instance that
 implements the given class name.
 
+Factory functions used in the container configuration map may reference other
+classes that will automatically be injected from the container. This can be
+particularly useful when combining autowiring with some manual configuration
+like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$container = new FrameworkX\Container([
+    Acme\Todo\UserController::class => function (React\Http\Browser $browser) {
+        // example UserController class requires two arguments:
+        // - first argument will be autowired based on class reference
+        // - second argument expects some manual value
+        return new Acme\Todo\UserController($browser, 42);
+    }
+]);
+
+// …
+```
+
 The container configuration may also be used to map a class name to a different
 class name that implements the same interface, either by mapping between two
 class names or using a factory function that returns a class name. This is
