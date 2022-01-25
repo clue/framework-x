@@ -25,16 +25,18 @@ $app = new FrameworkX\App();
 
 $app->get('/', function () {
     return new React\Http\Message\Response(
-        200,
-        [],
+        200, [
+            "Content-Type" => "text/plain; charset=UTF-8"
+        ],
         "Hello wörld!\n"
     );
 });
 
 $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $request) {
     return new React\Http\Message\Response(
-        200,
-        [],
+        200, [
+            "Content-Type" => "text/plain; charset=UTF-8"
+        ],
         "Hello " . $request->getAttribute('name') . "!\n"
     );
 });
@@ -43,7 +45,14 @@ $app->run();
 ```
 
 Next, we need to install X and its dependencies to actually run this project.
-In your project directory, simply run the following command:
+In your project directory, simply run the following commands:
+
+```bash
+$ composer init
+```
+
+This will create an empty `composer.json` file. Just press return a few times
+to accept the default answers to any prompts when asked, and then run:
 
 ```bash
 $ composer require clue/framework-x:dev-main
