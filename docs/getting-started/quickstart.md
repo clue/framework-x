@@ -95,6 +95,13 @@ this:
 $ php public/index.php
 ```
 
+> ℹ️ **Framework X runs anywhere**
+>
+> This example uses the efficient built-in web server written in pure PHP.
+> We also support running behind traditional web server setups
+> like Apache, nginx, Docker, and more. See [production deployment](../best-practices/deployment.md)
+> for more details.
+
 You can now use your favorite web browser or command line tool to check your web
 application responds as expected:
 
