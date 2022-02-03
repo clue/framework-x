@@ -17,9 +17,9 @@ class RedirectHandler
     /** @var HtmlHandler */
     private $html;
 
-    public function __construct(string $target, int $redirectStatusCode = 302)
+    public function __construct(string $target, int $redirectStatusCode = Response::STATUS_FOUND)
     {
-        if ($redirectStatusCode < 300 || $redirectStatusCode === 304 || $redirectStatusCode >= 400) {
+        if ($redirectStatusCode < 300 || $redirectStatusCode === Response::STATUS_NOT_MODIFIED || $redirectStatusCode >= 400) {
             throw new \InvalidArgumentException('Invalid redirect status code given');
         }
 

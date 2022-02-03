@@ -19,7 +19,7 @@ skipif() {
     echo "$out" | grep "$@" >/dev/null && echo -n S && return 1 || return 0
 }
 
-out=$(curl -v $base/ 2>&1);         match "HTTP/.* 200" && notmatch -i "Content-Type:"
+out=$(curl -v $base/ 2>&1);         match "HTTP/.* 200" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
 out=$(curl -v $base/invalid 2>&1);  match "HTTP/.* 404" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 out=$(curl -v $base// 2>&1);        match "HTTP/.* 404"
 out=$(curl -v $base/ 2>&1 -X POST); match "HTTP/.* 405"

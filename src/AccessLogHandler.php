@@ -4,6 +4,7 @@ namespace FrameworkX;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
 use React\Stream\ReadableStreamInterface;
 
@@ -79,7 +80,7 @@ class AccessLogHandler
         $status = $response->getStatusCode();
 
         // HEAD requests and `204 No Content` and `304 Not Modified` always use an empty response body
-        if ($method === 'HEAD' || $status === 204 || $status === 304) {
+        if ($method === 'HEAD' || $status === Response::STATUS_NO_CONTENT || $status === Response::STATUS_NOT_MODIFIED) {
             $responseSize = 0;
         }
 

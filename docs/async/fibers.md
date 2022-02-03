@@ -28,9 +28,7 @@ $app->get('/book', function () use ($db) {
     ));
 
     $data = "Found " . $result->resultRows[0]['count'] . " books\n";
-    return new React\Http\Message\Response(
-        200,
-        [],
+    return React\Http\Message\Response::plaintext(
         $data
     );
 });
