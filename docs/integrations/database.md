@@ -27,9 +27,7 @@ Let's take a look at the most basic async database integration possible with X:
         ));
 
         $data = "Found " . $result->resultRows[0]['count'] . " books\n";
-        return new React\Http\Message\Response(
-            200,
-            [],
+        return React\Http\Message\Response::plaintext(
             $data
         );
     });
@@ -57,9 +55,7 @@ Let's take a look at the most basic async database integration possible with X:
         );
 
         $data = "Found " . $result->resultRows[0]['count'] . " books\n";
-        return new React\Http\Message\Response(
-            200,
-            [],
+        return React\Http\Message\Response::plaintext(
             $data
         );
     });
@@ -86,9 +82,7 @@ Let's take a look at the most basic async database integration possible with X:
             'SELECT COUNT(*) AS count FROM book'
         )->then(function (React\MySQL\QueryResult $result) {
             $data = "Found " . $result->resultRows[0]['count'] . " books\n";
-            return new React\Http\Message\Response(
-                200,
-                [],
+            return React\Http\Message\Response::plaintext(
                 $data
             );
         });
@@ -234,17 +228,13 @@ from a [route placeholder](../api/app.md#routing) like this:
         assert($result instanceof React\MySQL\QueryResult);
 
         if (count($result->resultRows) === 0) {
-            return new React\Http\Message\Response(
-                404,
-                [],
+            return React\Http\Message\Response::plaintext(
                 "Book not found\n"
-            );
+            )->withStatus(React\Http\Message\Response::STATUS_NOT_FOUND);
         }
 
         $data = $result->resultRows[0]['title'];
-        return new React\Http\Message\Response(
-            200,
-            [],
+        return React\Http\Message\Response::plaintext(
             $data
         );
 
@@ -276,17 +266,13 @@ from a [route placeholder](../api/app.md#routing) like this:
         assert($result instanceof React\MySQL\QueryResult);
 
         if (count($result->resultRows) === 0) {
-            return new React\Http\Message\Response(
-                404,
-                [],
+            return React\Http\Message\Response::plaintext(
                 "Book not found\n"
-            );
+            )->withStatus(React\Http\Message\Response::STATUS_NOT_FOUND);
         }
 
         $data = $result->resultRows[0]['title'];
-        return new React\Http\Message\Response(
-            200,
-            [],
+        return React\Http\Message\Response::plaintext(
             $data
         );
 
@@ -318,17 +304,13 @@ from a [route placeholder](../api/app.md#routing) like this:
 
 
             if (count($result->resultRows) === 0) {
-                return new React\Http\Message\Response(
-                    404,
-                    [],
+                return React\Http\Message\Response::plaintext(
                     "Book not found\n"
-                );
+                )->withStatus(React\Http\Message\Response::STATUS_NOT_FOUND);
             }
 
             $data = $result->resultRows[0]['title'];
-            return new React\Http\Message\Response(
-                200,
-                [],
+            return React\Http\Message\Response::plaintext(
                 $data
             );
         });
@@ -560,17 +542,13 @@ interface with each other using a simple async API:
 
 
             if ($book === null) {
-                return new Response(
-                    404,
-                    [],
+                return Response::plaintext(
                     "Book not found\n"
-                );
+                )->withStatus(Response::STATUS_NOT_FOUND);
             }
 
             $data = $book->title;
-            return new Response(
-                200,
-                [],
+            return Response::plaintext(
                 $data
             );
         }
@@ -641,17 +619,13 @@ interface with each other using a simple async API:
             assert($book === null || $book instanceof Book);
 
             if ($book === null) {
-                return new Response(
-                    404,
-                    [],
+                return Response::plaintext(
                     "Book not found\n"
-                );
+                )->withStatus(Response::STATUS_NOT_FOUND);
             }
 
             $data = $book->title;
-            return new Response(
-                200,
-                [],
+            return Response::plaintext(
                 $data
             );
         }
@@ -721,17 +695,13 @@ interface with each other using a simple async API:
             return $this->repository->findBook($isbn)->then(function (?Book $book) {
 
                 if ($book === null) {
-                    return new Response(
-                        404,
-                        [],
+                    return Response::plaintext(
                         "Book not found\n"
-                    );
+                    )->withStatus(Response::STATUS_NOT_FOUND);
                 }
 
                 $data = $book->title;
-                return new Response(
-                    200,
-                    [],
+                return Response::plaintext(
                     $data
                 );
             });

@@ -20,7 +20,7 @@ $app->get(
     '/user',
     function (Psr\Http\Message\ServerRequestInterface $request, callable $next) {
         // optionally return response without passing to next handler
-        // return new React\Http\Message\Response(403, [], "Forbidden!\n");
+        // return React\Http\Message\Response::plaintext("Done.\n");
         
         // optionally modify request before passing to next handler
         // $request = $request->withAttribute('admin', false);
@@ -36,7 +36,7 @@ $app->get(
     },
     function (Psr\Http\Message\ServerRequestInterface $request) {
         $role = $request->getAttribute('admin') ? 'admin' : 'user';
-        return new React\Http\Message\Response(200, [], "Hello $role!\n");
+        return React\Http\Message\Response::plaintext("Hello $role!\n");
     }
 );
 ```
@@ -65,7 +65,7 @@ class DemoMiddleware
     public function __invoke(ServerRequestInterface $request, callable $next)
     {
         // optionally return response without passing to next handler
-        // return new React\Http\Message\Response(403, [], "Forbidden!\n");
+        // return React\Http\Message\Response::plaintext("Done.\n");
 
         // optionally modify request before passing to next handler
         // $request = $request->withAttribute('admin', false);
@@ -156,7 +156,7 @@ class UserController
     public function __invoke(ServerRequestInterface $request)
     {
         $role = $request->getAttribute('admin') ? 'admin' : 'user';
-        return new Response(200, [], "Hello $role!\n");
+        return Response::plaintext("Hello $role!\n");
     }
 }
 ```
@@ -235,7 +235,7 @@ class UserController
     public function __invoke(ServerRequestInterface $request)
     {
         $name = 'Alice';
-        return new Response(200, [], "Hello $name!\n");
+        return Response::plaintext("Hello $name!\n");
     }
 }
 ```
@@ -416,7 +416,7 @@ a response object synchronously:
             $name = yield $promise;
             assert(is_string($name));
 
-            return new Response(200, [], "Hello $name!\n");
+            return Response::plaintext("Hello $name!\n");
         }
 
         /**
@@ -455,7 +455,7 @@ a response object synchronously:
         {
             // async pseudo code to load some data from an external source
             return $this->fetchRandomUserName()->then(function (string $name) {
-                return new Response(200, [], "Hello $name!\n");
+                return Response::plaintext("Hello $name!\n");
             });
         }
 

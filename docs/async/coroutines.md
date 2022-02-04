@@ -26,9 +26,7 @@ $app->get('/book', function () use ($db) {
     );
 
     $data = "Found " . $result->resultRows[0]['count'] . " books\n";
-    return new React\Http\Message\Response(
-        200,
-        [],
+    return React\Http\Message\Response::plaintext(
         $data
     );
 });
@@ -72,9 +70,7 @@ $app->get('/book', function () use ($db) {
     );
 
     $data = "Found " . $result->resultRows[0]['count'] . " books\n";
-    return new React\Http\Message\Response(
-        200,
-        [],
+    return React\Http\Message\Response::plaintext(
         $data
     );
 });
@@ -158,17 +154,13 @@ class BookLookupController
         assert($book === null || $book instanceof Book);
 
         if ($book === null) {
-            return new Response(
-                404,
-                [],
+            return Response::plaintext(
                 "Book not found\n"
-            );
+            )->withStatus(Response::STATUS_NOT_FOUND);
         }
 
         $data = $book->title;
-        return new Response(
-            200,
-            [],
+        return Response::plaintext(
             $data
         );
     }

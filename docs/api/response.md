@@ -26,6 +26,10 @@ Here's everything you need to know to get started.
 You can send JSON data as an HTTP response body like this:
 
 ```php
+<?php
+
+// …
+
 $app->get('/user', function () {
     $data = [
         [
@@ -36,47 +40,18 @@ $app->get('/user', function () {
         ]
     ];
 
-    return new React\Http\Message\Response(
-        200,
-        ['Content-Type' => 'application/json'],
-        json_encode($data)
+    return React\Http\Message\Response::json(
+        $data
     );
 });
 ```
 
-An HTTP request can be sent like this:
+This example returns a simple JSON response from some static data.
+In real-world applications, you may want to load this from a
+[database](../integrations/database.md).
+For common API usage, you may also want to receive a [JSON request](request.md#json).
 
-```bash
-$ curl http://localhost:8080/user
-[{"name":"Alice"},{"name":"Bob"}]
-```
-
-If you want to return pretty-printed JSON, all you need to do is passing the
-correct flags when encoding:
-
-```php hl_lines="14-17"
-$app->get('/user', function () {
-    $data = [
-        [
-            'name' => 'Alice'
-        ],
-        [
-            'name' => 'Bob'
-        ]
-    ];
-
-    return new React\Http\Message\Response(
-        200,
-        ['Content-Type' => 'application/json'],
-        json_encode(
-            $data,
-            JSON_PRETTY_PRINT |  JSON_UNESCAPED_SLASHES |  JSON_UNESCAPED_UNICODE
-        )
-    );
-});
-```
-
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
 ```bash
 $ curl http://localhost:8080/user
@@ -85,39 +60,60 @@ $ curl http://localhost:8080/user
         "name": "Alice"
     },
     {
-        "name":"Bob"
+        "name": "Bob"
     }
 ]
 ```
 
-This example returns a simple JSON response from some static data.
-In real-world applications, you may want to load this from a
-[database](../integrations/database.md).
-For common API usage, you may also want to receive a [JSON request](request.md#json).
+> By default, the response will use the `200 OK` status code and will
+> automatically include an appropriate `Content-Type: application/json` response
+> header, see also [status codes](#status-codes) and [response headers](#headers)
+> below for more details.
+>
+> If you want more control over the response such as using custom JSON flags,
+> you can also manually create a [`React\Http\Message\Response`](https://reactphp.org/http/#response)
+> object like this:
+>
+> ```php
+> <?php
+>
+> // …
+>
+> $app->get('/user', function () {
+>     $data = [];
+>
+>     return new React\Http\Message\Response(
+>         React\Http\Message\Response::STATUS_OK,
+>         [
+>             'Content-Type' => 'application/json'
+>         ],
+>         json_encode(
+>             $data,
+>             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+>         ) . "\n"
+>     );
+> });
+> ```
 
 ## HTML
 
 You can send HTML data as an HTTP response body like this:
 
 ```php
+<?php
+
+// …
+
 $app->get('/user', function () {
     $html = <<<HTML
 <h1>Hello Alice</h1>
+
 HTML;
 
-    return new React\Http\Message\Response(
-        200,
-        ['Content-Type' => 'text/html; charset=utf-8'],
+    return React\Http\Message\Response::html(
         $html
     );
 });
-```
-
-An HTTP request can be sent like this:
-
-```bash
-$ curl http://localhost:8080/user
-<h1>Hello Alice</h1>
 ```
 
 This example returns a simple HTML response from some static data.
@@ -125,32 +121,67 @@ In real-world applications, you may want to load this from a
 [database](../integrations/database.md) and perhaps use
 [templates](../integrations/templates.md) to render your HTML.
 
+You can try out this example by sending an HTTP request like this:
+
+```bash
+$ curl http://localhost:8080/user
+<h1>Hello Alice</h1>
+```
+
+> By default, the response will use the `200 OK` status code and will
+> automatically include an appropriate `Content-Type: text/html; charset=utf-8`
+> response header, see also [status codes](#status-codes) and
+> [response headers](#headers) below for more details.
+>
+> If you want more control over this behavior, you can also manually create a
+> [`React\Http\Message\Response`](https://reactphp.org/http/#response) object
+> like this:
+>
+> ```php
+> <?php
+>
+> // …
+>
+> $app->get('/user', function () {
+>     $html = "Hello Wörld!\n";
+>
+>     return new React\Http\Message\Response(
+>         React\Http\Message\Response::STATUS_OK,
+>         [
+>             'Content-Type' => 'text/html; charset=utf-8'
+>         ],
+>         $html
+>     );
+> });
+> ```
+
 ## Status Codes
 
-You can assign status codes like this:
+The [`json()`](#json) and [`html()`](#html) methods used above automatically use
+a `200 OK` status code by default. You can assign status codes like this:
 
-```php hl_lines="5 12"
+```php hl_lines="10"
+<?php
+
+// …
+
 $app->get('/user/{id}', function (Psr\Http\Message\ServerRequestInterface $request) {
     $id = $request->getAttribute('id');
     if ($id === 'admin') {
-        return new React\Http\Message\Response(
-            403,
-            [],
-            'Forbidden'
-        );
+        return React\Http\Message\Response::html(
+            "Forbidden\n"
+        )->withStatus(React\Http\Message\Response::STATUS_FORBIDDEN);
     }
 
-    return new React\Http\Message\Response(
-        200,
-        [],
-        "Hello $id"
+    return React\Http\Message\Response::html(
+        "Hello $id\n"
     );
 });
 ```
 
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
-```bash hl_lines="2 6"
+```bash
 $ curl -I http://localhost:8080/user/Alice
 HTTP/1.1 200 OK
 …
@@ -160,51 +191,77 @@ HTTP/1.1 403 Forbidden
 …
 ```
 
-Each HTTP response message contains a status code that describes whether the
-HTTP request has been successfully completed.
-Here's a list of the most common HTTP status codes:
-
-* `200 OK`
-* `301 Permanent Redirect`
-* `302 Found` (previously `302 Temporary Redirect`)
-* `304 Not Modified` (see [HTTP caching](#http-caching) below)
-* `403 Forbidden`
-* `404 Not Found`
-* `500 Internal Server Error`
-* …
-
-See [list of HTTP status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) for more details.
+> Each HTTP response message contains a status code that describes whether the
+> HTTP request has been successfully completed. Here's a list with some of the
+> most common HTTP status codes:
+>
+> * `200 OK`
+> * `301 Moved Permanently`
+> * `302 Found` (previously `302 Temporary Redirect`)
+> * `304 Not Modified` (see [HTTP caching](#http-caching) below)
+> * `403 Forbidden`
+> * `404 Not Found`
+> * `500 Internal Server Error`
+> * …
+>
+> See [list of HTTP status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
+> for more details. Each status code can be referenced by its matching status code
+> constant name such as `React\Http\Message\Response::STATUS_OK` or `React\Http\Message\Response::STATUS_NOT_FOUND`
+> or by its status code number.
 
 ## Headers
 
-You can assign HTTP response headers like this:
+The [`json()`](#json) and [`html()`](#html) methods used above automatically use
+an appropriate `Content-Type` response header by default. You can assign HTTP
+response headers like this:
 
-```php hl_lines="4"
+```php hl_lines="8"
+<?php
+
+// …
+
 $app->get('/user', function () {
-    return new React\Http\Message\Response(
-        200,
-        ['Content-Type' => 'text/plain; charset=utf-8'],
-        "Hello wörld"
-    );
+    return React\Http\Message\Response::html(
+        "Hello wörld!\n"
+    )->withHeader('Cache-Control', 'public');
 });
 ```
 
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
-```bash  hl_lines="3"
+```bash
 $ curl -I http://localhost:8080/user
 HTTP/1.1 200 OK
-Content-Type: text/plain; charset=utf-8
-…
+Content-Type: text/html; charset=utf-8
+Cache-Control: public
+
+Hello wörld!
 ```
 
-Each HTTP response message can contain an arbitrary number of response headers.
-You can pass these headers as an associative array to the response object.
-
-Additionally, the application will automatically include default headers required
-by the HTTP protocol.
-It's not recommended to mess with these default headers unless you're sure you
-know what you're doing.
+> Each HTTP response message can contain an arbitrary number of response
+> headers. Additionally, the application will automatically include default
+> headers required by the HTTP protocol. It's not recommended to mess with these
+> default headers unless you're sure you know what you're doing.
+>
+> If you want more control over this behavior, you can also manually create a
+> [`React\Http\Message\Response`](https://reactphp.org/http/#response) object like this:
+>
+> ```php
+> <?php
+>
+> // …
+>
+> $app->get('/user', function () {
+>     return new React\Http\Message\Response(
+>         React\Http\Message\Response::STATUS_OK,
+>         [
+>             'Content-Type' => 'text/html; charset=utf-8',
+>             'Cache-Control' => 'public'
+>         ],
+>         "Hello wörld!\n"
+>     );
+> });
+> ```
 
 ## HTTP caching
 
@@ -228,6 +285,7 @@ response header to control the lifetime of a cached response like this:
 
 ```php
 <?php
+
 // …
 
 $app->get('/user', function () {
@@ -235,18 +293,13 @@ $app->get('/user', function () {
 <h1>Hello Alice</h1>
 HTML;
 
-    return new Response(
-        200,
-        [
-            'Content-Type' => 'text/html; charset=utf-8',
-            'Cache-Control' => 'max-age=3600',
-        ],
+    return new React\Http\Message\Response::html(
         $html
-    );
+    )->withHeader('Cache-Control', 'max-age=3600');
 });
 ```
 
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
 ```bash
 $ curl -I http://localhost:8080/user
@@ -269,6 +322,7 @@ response and omit the response body like this:
 
 ```php
 <?php
+
 // …
 
 $app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
@@ -279,8 +333,8 @@ HTML;
 
     $etag = '"' . sha1($html) . '"';
     if ($request->getHeaderLine('If-None-Match') === $etag) {
-        return new Response(
-            304,
+        return new React\Http\Message\Response(
+            React\Http\Message\Response::STATUS_NOT_MODIFIED,
             [
                 'Cache-Control' => 'max-age=0, must-revalidate',
                 'ETag' => $etag
@@ -288,8 +342,8 @@ HTML;
         );
     }
 
-    return new Response(
-        200,
+    return new React\Http\Message\Response(
+        React\Http\Message\Response::STATUS_OK,
         [
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'max-age=0, must-revalidate',
@@ -300,7 +354,7 @@ HTML;
 });
 ```
 
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
 ```bash
 $ curl http://localhost:8080/user
@@ -327,6 +381,7 @@ response and omit the response body like this:
 
 ```php
 <?php
+
 // …
 
 $app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
@@ -341,8 +396,8 @@ HTML;
 
     $modified = $date->setTimezone(new DateTimeZone('UTC'))->format(DATE_RFC7231);
     if ($request->getHeaderLine('If-Modified-Since') === $modified) {
-        return new Response(
-            304,
+        return new React\Http\Message\Response(
+            React\Http\Message\Response::STATUS_NOT_MODIFIED,
             [
                 'Cache-Control' => 'max-age=0, must-revalidate',
                 'Last-Modified' => $modified
@@ -350,8 +405,8 @@ HTML;
         );
     }
 
-    return new Response(
-        200,
+    return new React\Http\Message\Response(
+        React\Http\Message\Response::STATUS_OK,
         [
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'max-age=0, must-revalidate',
@@ -362,7 +417,7 @@ HTML;
 });
 ```
 
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
 ```bash
 $ curl http://localhost:8080/user
@@ -411,6 +466,7 @@ to catch any output and return it as a response body like this:
 
 ```php
 <?php
+
 // …
 
 $app->get('/dump', function () {
@@ -419,15 +475,13 @@ $app->get('/dump', function () {
     var_dump(42);
     $body = ob_get_clean();
 
-    return new React\Http\Message\Response(
-        200,
-        ['Content-Type' => 'text/plain; charset=utf-8'],
+    return React\Http\Message\Response::plaintext(
         $body
     );
 });
 ```
 
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
 ```bash
 $ curl http://localhost:8080/dump
@@ -460,12 +514,16 @@ HTTP request will automatically be rejected with a `500 Internal Server Error`
 HTTP error response:
 
 ```php
+<?php
+
+// …
+
 $app->get('/user', function () {
     throw new BadMethodCallException();
 });
 ```
 
-An HTTP request can be sent like this:
+You can try out this example by sending an HTTP request like this:
 
 ```bash hl_lines="2"
 $ curl -I http://localhost:8080/user

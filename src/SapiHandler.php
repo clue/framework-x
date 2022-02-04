@@ -4,6 +4,7 @@ namespace FrameworkX;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Stream\ReadableStreamInterface;
 
@@ -87,10 +88,10 @@ class SapiHandler
 
         header($_SERVER['SERVER_PROTOCOL'] . ' ' . $status . ' ' . $response->getReasonPhrase());
 
-        if ($status === 204) {
-            // 204 MUST NOT include "Content-Length" response header
+        if ($status === Response::STATUS_NO_CONTENT) {
+            // `204 No Content` MUST NOT include "Content-Length" response header
             $response = $response->withoutHeader('Content-Length');
-        } elseif (!$response->hasHeader('Content-Length') && $body->getSize() !== null && ($status !== 304 || $body->getSize() !== 0)) {
+        } elseif (!$response->hasHeader('Content-Length') && $body->getSize() !== null && ($status !== Response::STATUS_NOT_MODIFIED || $body->getSize() !== 0)) {
             // automatically assign "Content-Length" response header if known and not already present
             $response = $response->withHeader('Content-Length', (string) $body->getSize());
         }
@@ -111,7 +112,7 @@ class SapiHandler
         }
         ini_set('default_charset', $old);
 
-        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' || $status === 204 || $status === 304) {
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' || $status === Response::STATUS_NO_CONTENT || $status === Response::STATUS_NOT_MODIFIED) {
             $body->close();
             return;
         }

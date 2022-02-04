@@ -23,12 +23,12 @@ multiple routes using inline closures like this:
 
 ```php
 $app->get('/user', function () {
-    return new React\Http\Message\Response(200, [], "hello everybody!");
+    return React\Http\Message\Response::plaintext("Hello everybody!\n");
 });
 
 $app->get('/user/{id}', function (Psr\Http\Message\ServerRequestInterface $request) {
     $id = $request->getAttribute('id');
-    return new React\Http\Message\Response(200, [], "hello $id");
+    return React\Http\Message\Response::plaintext("Hello $id!\n");
 });
 ```
 
@@ -76,17 +76,17 @@ The `App` also offers a convenient helper method to redirect a matching route to
 a new URL like this:
 
 ```php
-$app->redirect('/promo/reactphp', 'http://reactphp.org/');
+$app->redirect('/promo/reactphp', 'https://reactphp.org/');
 ```
 
 Browsers and search engine crawlers will automatically follow the redirect with
 the `302 Found` status code by default. You can optionally pass a custom redirect
 status code in the `3xx` range to use. If this is a permanent redirect, you may
-want to use the `301 Permanent Redirect` status code to instruct search engine
+want to use the `301 Moved Permanently` status code to instruct search engine
 crawlers to update their index like this:
 
 ```php
-$app->redirect('/blog.html', '/blog', 301);
+$app->redirect('/blog.html', '/blog', React\Http\Message\Response::STATUS_MOVED_PERMANENTLY);
 ```
 
 See [response status codes](response.md#status-codes) for more details.
@@ -98,9 +98,7 @@ examples more concise:
 
 ```
 $app->get('/', function () {
-    return new React\Http\Message\Response(
-        200,
-        [],
+    return React\Http\Message\Response::plaintext(
         "Hello wörld!\n"
     );
 });
@@ -144,9 +142,7 @@ class HelloController
 {
     public function __invoke()
     {
-        return new Response(
-            200,
-            [],
+        return Response::plaintext(
             "Hello wörld!\n"
         );
     }

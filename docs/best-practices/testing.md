@@ -33,9 +33,7 @@ class HelloController
 {
     public function __invoke()
     {
-        return new Response(
-            200,
-            [],
+        return Response::plaintext(
             "Hello wörld!\n"
         );
     }
@@ -127,9 +125,7 @@ class UserController
 {
     public function __invoke(ServerRequestInterface $request)
     {
-        return new Response(
-            200,
-            [],
+        return Response::plaintext(
             "Hello " . $request->getAttribute('name') . "!\n"
         );
     }

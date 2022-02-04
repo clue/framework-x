@@ -88,11 +88,7 @@ class FilesystemHandler
             }
             $response .= '</ul>' . "\n";
 
-            return new Response(
-                200,
-                [
-                    'Content-Type' => 'text/html; charset=utf-8'
-                ],
+            return Response::html(
                 $response
             );
         } elseif ($valid && \is_file($path)) {
@@ -112,12 +108,12 @@ class FilesystemHandler
                 $headers['Last-Modified'] = \gmdate('D, d M Y H:i:s', $stat['mtime']) . ' GMT';
 
                 if ($request->getHeaderLine('If-Modified-Since') === $headers['Last-Modified']) {
-                    return new Response(304);
+                    return new Response(Response::STATUS_NOT_MODIFIED);
                 }
             }
 
             return new Response(
-                200,
+                Response::STATUS_OK,
                 $headers,
                 \file_get_contents($path)
             );

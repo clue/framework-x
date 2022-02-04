@@ -4,6 +4,7 @@ namespace FrameworkX;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
 
 /**
@@ -107,7 +108,7 @@ class ErrorHandler
     public function requestNotFound(): ResponseInterface
     {
         return $this->htmlResponse(
-            404,
+            Response::STATUS_NOT_FOUND,
             'Page Not Found',
             'Please check the URL in the address bar and try again.'
         );
@@ -118,7 +119,7 @@ class ErrorHandler
         $methods = \implode('/', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods));
 
         return $this->htmlResponse(
-            405,
+            Response::STATUS_METHOD_NOT_ALLOWED,
             'Method Not Allowed',
             'Please check the URL in the address bar and try again with ' . $methods . ' request.'
         )->withHeader('Allow', \implode(', ', $allowedMethods));
@@ -127,7 +128,7 @@ class ErrorHandler
     public function requestProxyUnsupported(): ResponseInterface
     {
         return $this->htmlResponse(
-            400,
+            Response::STATUS_BAD_REQUEST,
             'Proxy Requests Not Allowed',
             'Please check your settings and retry.'
         );
@@ -139,7 +140,7 @@ class ErrorHandler
         $message = '<code>' . $this->html->escape($e->getMessage()) . '</code>';
 
         return $this->htmlResponse(
-            500,
+            Response::STATUS_INTERNAL_SERVER_ERROR,
             'Internal Server Error',
             'The requested page failed to load, please try again later.',
             'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got uncaught <code>' . \get_class($e) . '</code> with message ' . $message . $where . '.'
@@ -149,7 +150,7 @@ class ErrorHandler
     public function errorInvalidResponse($value): ResponseInterface
     {
         return $this->htmlResponse(
-            500,
+            Response::STATUS_INTERNAL_SERVER_ERROR,
             'Internal Server Error',
             'The requested page failed to load, please try again later.',
             'Expected request handler to return <code>' . ResponseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>.'
@@ -161,7 +162,7 @@ class ErrorHandler
         $where = ' near or before '. $this->where($file, $line) . '.';
 
         return $this->htmlResponse(
-            500,
+            Response::STATUS_INTERNAL_SERVER_ERROR,
             'Internal Server Error',
             'The requested page failed to load, please try again later.',
             'Expected request handler to yield <code>' . PromiseInterface::class . '</code> but got <code>' . $this->describeType($value) . '</code>' . $where

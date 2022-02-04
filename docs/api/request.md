@@ -33,7 +33,7 @@ You can access request attributes like this:
 $app->get('/user/{id}', function (Psr\Http\Message\ServerRequestInterface $request) {
     $id = $request->getAttribute('id');
 
-    return new React\Http\Message\Response(200, [], "Hello $id");
+    return React\Http\Message\Response::plaintext("Hello $id!\n");
 });
 ```
 
@@ -41,7 +41,7 @@ An HTTP request can be sent like this:
 
 ```bash
 $ curl http://localhost:8080/user/Alice
-Hello Alice
+Hello Alice!
 ```
 
 These custom attributes are most commonly used when using URI placeholders
@@ -63,7 +63,7 @@ $app->post('/user', function (Psr\Http\Message\ServerRequestInterface $request) 
     $data = json_decode((string) $request->getBody());
     $name = $data->name ?? 'anonymous';
 
-    return new React\Http\Message\Response(200, [], "Hello $name");
+    return React\Http\Message\Response::plaintext("Hello $name!\n");
 });
 ```
 
@@ -71,7 +71,7 @@ An HTTP request can be sent like this:
 
 ```bash
 $ curl http://localhost:8080/user --data '{"name":"Alice"}'
-Hello Alice
+Hello Alice!
 ```
 
 Additionally, you may want to validate the `Content-Type: application/json` request header
@@ -89,7 +89,7 @@ $app->post('/user', function (Psr\Http\Message\ServerRequestInterface $request) 
     $data = $request->getParsedBody();
     $name = $data['name'] ?? 'Anonymous';
 
-    return new React\Http\Message\Response(200, [], "Hello $name");
+    return React\Http\Message\Response::plaintext("Hello $name!\n");
 });
 ```
 
@@ -98,7 +98,7 @@ An HTTP request can be sent like this:
 
 ```bash
 $ curl http://localhost:8080/user -d name=Alice
-Hello Alice
+Hello Alice!
 ```
 
 This method returns a possibly nested array of form fields, very similar to
@@ -113,7 +113,7 @@ $app->post('/user', function (Psr\Http\Message\ServerRequestInterface $request) 
     $files = $request->getUploadedFiles();
     $name = isset($files['image']) ? $files['image']->getClientFilename() : 'x';
 
-    return new React\Http\Message\Response(200, [], "Uploaded $name");
+    return React\Http\Message\Response::plaintext("Uploaded $name\n");
 });
 ```
 
@@ -161,7 +161,7 @@ You can access all HTTP request headers like this:
 $app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
     $agent = $request->getHeaderLine('User-Agent');
 
-    return new React\Http\Message\Response(200, [], "Hello $agent");
+    return React\Http\Message\Response::plaintext("Hello $agent\n");
 });
 ```
 
@@ -184,7 +184,7 @@ $app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
     $params = $request->getServerParams();
     $ip = $params['REMOTE_ADDR'] ?? 'unknown';
 
-    return new React\Http\Message\Response(200, [], "Hello $ip");
+    return React\Http\Message\Response::plaintext("Hello $ip\n");
 });
 ```
 

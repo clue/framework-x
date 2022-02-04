@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
 use React\Http\HttpServer;
+use React\Http\Message\Response;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Socket\SocketServer;
@@ -162,7 +163,7 @@ class App
      * @param string $target
      * @param int $code
      */
-    public function redirect(string $route, string $target, int $code = 302): void
+    public function redirect(string $route, string $target, int $code = Response::STATUS_FOUND): void
     {
         $this->any($route, new RedirectHandler($target, $code));
     }

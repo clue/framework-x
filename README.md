@@ -24,17 +24,13 @@ require __DIR__ . '/../vendor/autoload.php';
 $app = new FrameworkX\App();
 
 $app->get('/', function () {
-    return new React\Http\Message\Response(
-        200,
-        [],
+    return React\Http\Message\Response::plaintext(
         "Hello wörld!\n"
     );
 });
 
 $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $request) {
-    return new React\Http\Message\Response(
-        200,
-        [],
+    return React\Http\Message\Response::plaintext(
         "Hello " . $request->getAttribute('name') . "!\n"
     );
 });
