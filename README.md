@@ -70,7 +70,7 @@ Hooked?
 See [website](https://framework-x.org/) for full documentation.
 
 Found a typo or want to contribute?
-The website documentation is build from the source documentation files in
+The website documentation is built from the source documentation files in
 the [docs/](docs/) folder.
 
 ## Tests
