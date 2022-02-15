@@ -23,22 +23,14 @@ class FiberHandlerTest extends TestCase
         }
     }
 
-    public function testInvokeWithHandlerReturningResponseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningResponseReturnsSameResponse()
     {
         $handler = new FiberHandler();
 
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response();
 
-        $promise = $handler($request, function () use ($response) { return $response; });
-
-        /** @var PromiseInterface $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $ret = null;
-        $promise->then(function ($value) use (&$ret) {
-            $ret = $value;
-        });
+        $ret = $handler($request, function () use ($response) { return $response; });
 
         $this->assertSame($response, $ret);
     }
@@ -63,61 +55,54 @@ class FiberHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningResponseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseReturnsGeneratorReturningSameResponse()
     {
         $handler = new FiberHandler();
 
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response();
 
-        $promise = $handler($request, function () use ($response) {
+        $generator = $handler($request, function () use ($response) {
             if (false) {
                 yield;
             }
             return $response;
         });
 
-        /** @var PromiseInterface $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $ret = null;
-        $promise->then(function ($value) use (&$ret) {
-            $ret = $value;
-        });
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $ret = $generator->getReturn();
 
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingResolvedPromiseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingResolvedPromiseReturnsGeneratorReturningSameResponse()
     {
         $handler = new FiberHandler();
 
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response();
 
-        $promise = $handler($request, function () use ($response) {
+        $generator = $handler($request, function () use ($response) {
             return yield resolve($response);
         });
 
-        /** @var PromiseInterface $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $ret = null;
-        $promise->then(function ($value) use (&$ret) {
-            $ret = $value;
-        });
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $generator->send($response);
+        $ret = $generator->getReturn();
 
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingRejectedPromiseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingRejectedPromiseReturnsGeneratorReturningSameResponse()
     {
         $handler = new FiberHandler();
 
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response();
 
-        $promise = $handler($request, function () use ($response) {
+        $generator = $handler($request, function () use ($response) {
             try {
                 yield reject(new \RuntimeException('Foo'));
             } catch (\RuntimeException $e) {
@@ -125,34 +110,23 @@ class FiberHandlerTest extends TestCase
             }
         });
 
-        /** @var PromiseInterface $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $ret = null;
-        $promise->then(function ($value) use (&$ret) {
-            $ret = $value;
-        });
+        /** @var \Generator $generator */
+        $this->assertInstanceOf(\Generator::class, $generator);
+        $generator->throw(new \RuntimeException('Foo'));
+        $ret = $generator->getReturn();
 
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningResponseAfterAwaitingResolvedPromiseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningResponseAfterAwaitingResolvedPromiseReturnsSameResponse()
     {
         $handler = new FiberHandler();
 
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response();
 
-        $promise = $handler($request, function () use ($response) {
+        $ret = $handler($request, function () use ($response) {
             return await(resolve($response));
-        });
-
-        /** @var PromiseInterface $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $ret = null;
-        $promise->then(function ($value) use (&$ret) {
-            $ret = $value;
         });
 
         $this->assertSame($response, $ret);

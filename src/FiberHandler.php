@@ -5,7 +5,6 @@ namespace FrameworkX;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\Deferred;
-use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 
 /**
@@ -22,50 +21,40 @@ use React\Promise\PromiseInterface;
 class FiberHandler
 {
     /**
-     * @return PromiseInterface<ResponseInterface,void>
-     *     Returns a promise that is fulfilled with a `ResponseInterface` on
-     *     success. This method never throws or resolves a rejected promise.
-     *     If the request can not be routed or the handler fails, it will be
-     *     turned into a valid error response before returning.
+     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>|\Generator
+     *     Returns a `ResponseInterface` from the next request handler in the
+     *     chain. If the next request handler returns immediately, this method
+     *     will return immediately. If the next request handler suspends the
+     *     fiber (see `await()`), this method will return a `PromiseInterface`
+     *     that is fulfilled with a `ResponseInterface` when the fiber is
+     *     terminated successfully. If the next request handler returns a
+     *     promise, this method will return a promise that follows its
+     *     resolution. If the next request handler returns a Generator-based
+     *     coroutine, this method returns a `Generator`. This method never
+     *     throws or resolves a rejected promise. If the handler fails, it will
+     *     be turned into a valid error response before returning.
      * @throws void
      */
-    public function __invoke(ServerRequestInterface $request, callable $next): PromiseInterface
+    public function __invoke(ServerRequestInterface $request, callable $next): mixed
     {
-        return new Promise(function ($resolve) use ($next, $request) {
-            $fiber = new \Fiber(function () use ($resolve, $next, $request) {
-                $response = $next($request);
-                if ($response instanceof \Generator) {
-                    $response = $this->coroutine($response);
-                }
+        $deferred = null;
+        $fiber = new \Fiber(function () use ($request, $next, &$deferred) {
+            $response = $next($request);
+            assert($response instanceof ResponseInterface || $response instanceof PromiseInterface || $response instanceof \Generator);
 
-                $resolve($response);
-            });
-            $fiber->start();
-        });
-    }
-
-    private function coroutine(\Generator $generator): PromiseInterface
-    {
-        $next = null;
-        $deferred = new Deferred();
-        $next = function () use ($generator, &$next, $deferred) {
-            if (!$generator->valid()) {
-                $deferred->resolve($generator->getReturn());
-                return;
+            if ($deferred !== null) {
+                $deferred->resolve($response);
             }
 
-            $promise = $generator->current();
-            $promise->then(function ($value) use ($generator, $next) {
-                $generator->send($value);
-                $next();
-            }, function ($reason) use ($generator, $next) {
-                $generator->throw($reason);
-                $next();
-            });
-        };
+            return $response;
+        });
 
-        $next();
+        $fiber->start();
+        if ($fiber->isTerminated()) {
+            return $fiber->getReturn();
+        }
 
+        $deferred = new Deferred();
         return $deferred->promise();
     }
 }
