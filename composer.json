@@ -17,7 +17,8 @@
         "react/promise": "^2.7"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5 || ^7.5"
+        "phpunit/phpunit": "^9.5 || ^7.5",
+        "react/async": "^4@dev || ^3@dev"
     },
     "autoload": {
         "psr-4": {

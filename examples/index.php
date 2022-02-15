@@ -24,6 +24,22 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
     );
 });
 
+$app->get('/sleep/promise', function () {
+    return React\Promise\Timer\sleep(0.1)->then(function () {
+        return React\Http\Message\Response::plaintext("OK\n");
+    });
+});
+$app->get('/sleep/coroutine', function () {
+    yield React\Promise\Timer\sleep(0.1);
+    return React\Http\Message\Response::plaintext("OK\n");
+});
+if (PHP_VERSION_ID >= 80100 && function_exists('React\Async\async')) { // requires PHP 8.1+ with react/async 4+
+    $app->get('/sleep/fiber', function () {
+        React\Async\await(React\Promise\Timer\sleep(0.1));
+        return React\Http\Message\Response::plaintext("OK\n");
+    });
+}
+
 $app->get('/uri[/{path:.*}]', function (ServerRequestInterface $request) {
     return React\Http\Message\Response::plaintext(
         (string) $request->getUri() . "\n"

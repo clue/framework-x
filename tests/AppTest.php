@@ -6,6 +6,7 @@ use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
 use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
+use FrameworkX\FiberHandler;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use FrameworkX\SapiHandler;
@@ -30,6 +31,7 @@ use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use ReflectionMethod;
 use ReflectionProperty;
+use function React\Async\await;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
@@ -72,6 +74,11 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
 
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
         $this->assertCount(4, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
         $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
@@ -92,6 +99,11 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
 
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -121,6 +133,11 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
 
         $this->assertCount(4, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -225,7 +242,7 @@ class AppTest extends TestCase
 
     public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromHandler()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $response = new Response();
         $app->get('/', function () use ($response) {
@@ -251,7 +268,7 @@ class AppTest extends TestCase
 
     public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromDeferredHandler()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $response = new Response();
         $app->get('/', function () use ($response) {
@@ -467,7 +484,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $request = new ServerRequest('GET', 'http://google.com/');
         $request = $request->withRequestTarget('http://google.com/');
@@ -489,7 +506,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $request = new ServerRequest('GET', 'http://localhost/invalid');
 
@@ -510,7 +527,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithSingleMethodNotAllowedMessage()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users', function () { });
 
@@ -534,7 +551,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMultipleMethodNotAllowedMessage()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users', function () { });
         $app->head('/users', function () { });
@@ -560,7 +577,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users', function () {
             return new Response(
@@ -588,7 +605,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyRouteHandler()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->options('', function () {
             return new Response(
@@ -681,7 +698,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseWithoutYielding()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users', function () {
             if (false) {
@@ -820,9 +837,89 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
+    public function testHandleRequestWithMatchingRouteReturnsPromiseResolvingWithResponseWhenHandlerReturnsResponse()
+    {
+        if (PHP_VERSION_ID < 80100) {
+            $this->markTestSkipped('Requires PHP 8.1+');
+        }
+
+        $app = $this->createAppWithoutLogger();
+
+        $app->get('/users', function () {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            );
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $promise = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsPromiseResolvingWithResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse()
+    {
+        if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
+        }
+
+        $app = $this->createAppWithoutLogger();
+
+        $app->get('/users', function () {
+            return await(resolve(new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            )));
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $promise = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
     public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users/{name}', function (ServerRequestInterface $request) {
             $name = $request->getAttribute('name');
@@ -852,7 +949,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
@@ -983,7 +1080,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionWithoutYielding()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $line = __LINE__ + 5;
         $app->get('/users', function () {
@@ -1019,6 +1116,45 @@ class AppTest extends TestCase
         $app->get('/users', function () {
             yield resolve(null);
             throw new \RuntimeException('Foo');
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $promise = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException()
+    {
+        if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
+        }
+
+        $app = $this->createAppWithoutLogger();
+
+        $line = __LINE__ + 2;
+        $app->get('/users', function () {
+            return await(reject(new \RuntimeException('Foo')));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1084,7 +1220,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNullImmediately()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $line = __LINE__ + 3;
         $app->get('/users', function () {
@@ -1111,7 +1247,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users', function () {
             return null;
@@ -1137,7 +1273,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassDoesNotExist()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users', 'UnknownClass');
 
@@ -1228,7 +1364,7 @@ class AppTest extends TestCase
      */
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassIsInvalid(string $class, string $error)
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $app->get('/users', $class);
 
@@ -1252,7 +1388,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $line = __LINE__ + 2;
         $controller = new class {
@@ -1281,7 +1417,7 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassHasNoInvokeMethod()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $controller = new class { };
 
@@ -1386,8 +1522,45 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($middleware);
 
-        unset($handlers[0]);
-        $ref->setValue($middleware, array_values($handlers));
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+
+            $next = array_shift($handlers);
+            $this->assertInstanceOf(AccessLogHandler::class, $next);
+
+            array_unshift($handlers, $next, $first);
+        }
+
+        $first = array_shift($handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $first);
+
+        $ref->setValue($middleware, $handlers);
+
+        return $app;
+    }
+
+    private function createAppWithoutFibersOrLogger(): App
+    {
+        $app = new App();
+
+        $ref = new \ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $middleware = $ref->getValue($app);
+
+        $ref = new \ReflectionProperty($middleware, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($middleware);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
+        $first = array_shift($handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $first);
+
+        $ref->setValue($middleware, $handlers);
 
         return $app;
     }

@@ -2,7 +2,9 @@
 
 namespace FrameworkX\Tests;
 
+use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
+use FrameworkX\FiberHandler;
 use FrameworkX\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -169,7 +171,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsResponseFromRouter()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request);
@@ -203,7 +205,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextWithModifiedRequestReturnsResponseFromRouter()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request->withAttribute('name', 'Alice'));
@@ -237,7 +239,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextReturnsResponseModifiedInMiddlewareFromRouter()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $response = $next($request);
@@ -364,7 +366,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareCallsNextWhichThrowsExceptionReturnsInternalServerErrorResponse()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $middleware = function (ServerRequestInterface $request, callable $next) {
             return $next($request);
@@ -395,7 +397,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testMiddlewareWhichThrowsExceptionReturnsInternalServerErrorResponse()
     {
-        $app = $this->createAppWithoutLogger();
+        $app = $this->createAppWithoutFibersOrLogger();
 
         $line = __LINE__ + 2;
         $middleware = function (ServerRequestInterface $request, callable $next) {
@@ -424,7 +426,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsResponseFromController()
     {
-        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutFibersOrLogger(function (ServerRequestInterface $request, callable $next) {
             return $next($request);
         });
 
@@ -461,7 +463,7 @@ class AppMiddlewareTest extends TestCase
             }
         };
 
-        $app = $this->createAppWithoutLogger($middleware);
+        $app = $this->createAppWithoutFibersOrLogger($middleware);
 
         $app->get('/', function () {
             return new Response(
@@ -496,7 +498,7 @@ class AppMiddlewareTest extends TestCase
             }
         };
 
-        $app = $this->createAppWithoutLogger(get_class($middleware));
+        $app = $this->createAppWithoutFibersOrLogger(get_class($middleware));
 
         $app->get('/', function () {
             return new Response(
@@ -532,7 +534,7 @@ class AppMiddlewareTest extends TestCase
             }
         };
 
-        $app = $this->createAppWithoutLogger(get_class($middleware));
+        $app = $this->createAppWithoutFibersOrLogger(get_class($middleware));
 
         $app->get('/', get_class($middleware), function (ServerRequestInterface $request) {
             return new Response(
@@ -560,7 +562,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextWithModifiedRequestWillBeUsedForRouting()
     {
-        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutFibersOrLogger(function (ServerRequestInterface $request, callable $next) {
             return $next($request->withUri($request->getUri()->withPath('/users')));
         });
 
@@ -590,7 +592,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareCallsNextReturnsModifiedResponseWhenModifyingResponseFromRouter()
     {
-        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutFibersOrLogger(function (ServerRequestInterface $request, callable $next) {
             $response = $next($request);
             assert($response instanceof ResponseInterface);
 
@@ -621,7 +623,7 @@ class AppMiddlewareTest extends TestCase
 
     public function testGlobalMiddlewareReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
     {
-        $app = $this->createAppWithoutLogger(function () {
+        $app = $this->createAppWithoutFibersOrLogger(function () {
             return new Response(
                 200,
                 [
@@ -788,8 +790,46 @@ class AppMiddlewareTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($middleware);
 
-        unset($handlers[0]);
-        $ref->setValue($middleware, array_values($handlers));
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+
+            $next = array_shift($handlers);
+            $this->assertInstanceOf(AccessLogHandler::class, $next);
+
+            array_unshift($handlers, $next, $first);
+        }
+
+        $first = array_shift($handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $first);
+
+        $ref->setValue($middleware, $handlers);
+
+        return $app;
+    }
+
+    /** @param callable|class-string ...$middleware */
+    private function createAppWithoutFibersOrLogger(...$middleware): App
+    {
+        $app = new App(...$middleware);
+
+        $ref = new \ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $middleware = $ref->getValue($app);
+
+        $ref = new \ReflectionProperty($middleware, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($middleware);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
+        $first = array_shift($handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $first);
+
+        $ref->setValue($middleware, $handlers);
 
         return $app;
     }
