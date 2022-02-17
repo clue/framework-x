@@ -54,7 +54,7 @@ At the moment, fibers are available as a development version by installing
 like this:
 
 ```bash
-$ composer require react/async:dev-main
+$ composer require react/async:^4@dev
 ```
 
 Installing this package version requires PHP 8.1+ (2021-11-25) as fibers are a
@@ -71,7 +71,7 @@ limited concurrency. You can install either supported development version like
 this:
 
 ```bash
-$ composer require react/async:"dev-main || 3.x-dev"
+$ composer require react/async:"^4@dev || ^3@dev"
 ```
 
 This way, you have a much smoother upgrade path, as you can already start using
