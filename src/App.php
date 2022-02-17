@@ -52,12 +52,17 @@ class App
             }
         }
 
-        // new MiddlewareHandler([$accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
+        // new MiddlewareHandler([$fiberHandler, $accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
         \array_unshift($middleware, $errorHandler);
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
         if (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') {
             \array_unshift($middleware, new AccessLogHandler());
+        }
+
+        // automatically start new fiber for each request on PHP 8.1+
+        if (\PHP_VERSION_ID >= 80100) {
+            \array_unshift($middleware, new FiberHandler()); // @codeCoverageIgnore
         }
 
         $this->router = new RouteHandler($container);

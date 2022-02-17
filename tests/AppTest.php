@@ -6,6 +6,7 @@ use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
 use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
+use FrameworkX\FiberHandler;
 use FrameworkX\MiddlewareHandler;
 use FrameworkX\RouteHandler;
 use FrameworkX\SapiHandler;
@@ -26,10 +27,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use ReflectionMethod;
 use ReflectionProperty;
+use function React\Async\await;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
@@ -72,6 +75,11 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
 
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
         $this->assertCount(4, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
         $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
@@ -92,6 +100,11 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
 
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -121,6 +134,11 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
 
         $this->assertCount(4, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -820,6 +838,57 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
+    public function testHandleRequestWithMatchingRouteReturnsPromiseResolvingWithResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse()
+    {
+        if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
+        }
+
+        $app = $this->createAppWithoutLogger();
+
+        $deferred = new Deferred();
+
+        $app->get('/users', function () use ($deferred) {
+            return await($deferred->promise());
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $promise = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        $this->assertNull($response);
+
+        $deferred->resolve(new Response(
+            200,
+            [
+                'Content-Type' => 'text/html'
+            ],
+            "OK\n"
+        ));
+
+        // await next tick: https://github.com/reactphp/async/issues/27
+        await(new Promise(function ($resolve) {
+            Loop::futureTick($resolve);
+        }));
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
     public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
     {
         $app = $this->createAppWithoutLogger();
@@ -1035,6 +1104,58 @@ class AppTest extends TestCase
         $promise->then(function ($value) use (&$response) {
             $response = $value;
         });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException()
+    {
+        if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
+        }
+
+        $app = $this->createAppWithoutLogger();
+
+        $deferred = new Deferred();
+
+        $line = __LINE__ + 1;
+        $exception = new \RuntimeException('Foo');
+
+        $app->get('/users', function () use ($deferred) {
+            return await($deferred->promise());
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $promise = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $promise = $ref->invoke($app, $request);
+
+        /** @var PromiseInterface $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $response = null;
+        $promise->then(function ($value) use (&$response) {
+            $response = $value;
+        });
+
+        $this->assertNull($response);
+
+        $deferred->reject($exception);
+
+        // await next tick: https://github.com/reactphp/async/issues/27
+        await(new Promise(function ($resolve) {
+            Loop::futureTick($resolve);
+        }));
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -1386,8 +1507,20 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($middleware);
 
-        unset($handlers[0]);
-        $ref->setValue($middleware, array_values($handlers));
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+
+            $next = array_shift($handlers);
+            $this->assertInstanceOf(AccessLogHandler::class, $next);
+
+            array_unshift($handlers, $next, $first);
+        }
+
+        $first = array_shift($handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $first);
+
+        $ref->setValue($middleware, $handlers);
 
         return $app;
     }
