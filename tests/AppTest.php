@@ -877,11 +877,6 @@ class AppTest extends TestCase
             "OK\n"
         ));
 
-        // await next tick: https://github.com/reactphp/async/issues/27
-        await(new Promise(function ($resolve) {
-            Loop::futureTick($resolve);
-        }));
-
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
@@ -1151,11 +1146,6 @@ class AppTest extends TestCase
         $this->assertNull($response);
 
         $deferred->reject($exception);
-
-        // await next tick: https://github.com/reactphp/async/issues/27
-        await(new Promise(function ($resolve) {
-            Loop::futureTick($resolve);
-        }));
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);

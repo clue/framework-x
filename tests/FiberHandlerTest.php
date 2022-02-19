@@ -157,11 +157,6 @@ class FiberHandlerTest extends TestCase
 
         $deferred->resolve($response);
 
-        // await next tick: https://github.com/reactphp/async/issues/27
-        await(new Promise(function ($resolve) {
-            Loop::futureTick($resolve);
-        }));
-
         $this->assertSame($response, $ret);
     }
 }
