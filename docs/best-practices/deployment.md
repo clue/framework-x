@@ -185,6 +185,9 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule .* index.php
+
+# This adds support for authorization header
+SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
 ```
 
 > ℹ️ **New to mod_rewrite?**
