@@ -6,6 +6,7 @@ Framework X – the simple and fast micro framework for building reactive web ap
 
 * [Quickstart](#quickstart)
 * [Documentation](#documentation)
+* [Contribute](#contribute)
 * [Tests](#tests)
 * [License](#license)
 
@@ -72,6 +73,24 @@ See [website](https://framework-x.org/) for full documentation.
 Found a typo or want to contribute?
 The website documentation is built from the source documentation files in
 the [docs/](docs/) folder.
+
+## Contribute
+
+You want to contribute to the Framework X source code or documentation? You've
+come to the right place!
+
+To contribute to the source code just locate the [src/](src/) folder and you'll find all
+content in there. Additionally, our [tests/](tests/) folder contains all our unit
+tests and acceptance tests to assure our code works as expected. For more
+information on how to run the test suite check out our [testing chapter](#tests).
+
+If you want to contribute to the [documentation](#documentation) of Framework X
+found on the website, take a look inside the [docs/](docs/) folder. You'll find further
+instructions inside the `README.md` in there.
+
+Found a typo on our [website](https://framework-x.org/)? Simply go to our
+[website repository](https://github.com/clue/framework-x-website)
+and follow the instructions found in the `README`.
 
 ## Tests
 
