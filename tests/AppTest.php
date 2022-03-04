@@ -171,7 +171,7 @@ class AppTest extends TestCase
             fclose($socket);
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:8080' . PHP_EOL, '/') . '$/');
+        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:8080' . PHP_EOL, '/') . '.*/');
         $app->run();
     }
 
@@ -193,7 +193,7 @@ class AppTest extends TestCase
             fclose($socket);
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '$/');
+        $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '.*/');
         $app->run();
     }
 
@@ -211,7 +211,7 @@ class AppTest extends TestCase
             fclose($socket);
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:', '/') . '\d+' . PHP_EOL . '$/');
+        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:', '/') . '\d+' . PHP_EOL . '.*/');
         $app->run();
     }
 
@@ -838,6 +838,34 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
+    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $app->get('/users', function () {
+            return await(resolve(new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            )));
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
     public function testHandleRequestWithMatchingRouteReturnsPromiseResolvingWithResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse()
     {
         if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
@@ -1099,6 +1127,33 @@ class AppTest extends TestCase
         $promise->then(function ($value) use (&$response) {
             $response = $value;
         });
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
+
+        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
+        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $line = __LINE__ + 2;
+        $app->get('/users', function () {
+            return await(reject(new \RuntimeException('Foo')));
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);
