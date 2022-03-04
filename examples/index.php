@@ -109,6 +109,31 @@ $app->any('/method', function (ServerRequestInterface $request) {
         $request->getMethod() . "\n"
     );
 });
+$app->get('/method/get', function (ServerRequestInterface $request) {
+    return React\Http\Message\Response::plaintext(
+        "GET\n"
+    )->withHeader('X-Is-Head', $request->getMethod() === 'HEAD' ? 'true' : 'false');
+});
+$app->head('/method/head', function (ServerRequestInterface $request) {
+   return new React\Http\Message\Response(
+        React\Http\Message\Response::STATUS_OK,
+        [
+            'Content-Length' => 5,
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'X-Is-Head' => 'true'
+        ]
+    );
+});
+$app->get('/method/head', function (ServerRequestInterface $request) {
+    return new React\Http\Message\Response(
+        React\Http\Message\Response::STATUS_OK,
+        [
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'X-Is-Head' => 'false'
+        ],
+        "HEAD\n"
+    );
+});
 
 $app->get('/etag/', function (ServerRequestInterface $request) {
     $etag = '"_"';
