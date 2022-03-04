@@ -70,6 +70,11 @@ you can use this additional shortcut:
 $app->any('/user/{id}', $controller);
 ```
 
+Any registered `GET` routes will also match HTTP `HEAD` requests by default,
+unless a more explicit `HEAD` route can also be matched. Responses to HTTP `HEAD`
+requests can never have a response body, so X will automatically discard any
+HTTP response body in this case.
+
 ## Redirects
 
 The `App` also offers a convenient helper method to redirect a matching route to
