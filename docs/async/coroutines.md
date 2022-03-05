@@ -176,7 +176,7 @@ for more details.
 
 ## FAQ
 
-### When to coroutines?
+### When to use coroutines?
 
 As a rule of thumb, you'll likely want to use coroutines when you're working with
 async APIs in your controllers with PHP < 8.1 and want to use these async APIs
@@ -187,7 +187,7 @@ additional improvement as it allows you to use async APIs that look just like
 their synchronous counterparts. This makes them much easier to integrate and
 there's hope this will foster an even larger async ecosystem in the future.
 
-Additionally, also provide support for [promises](promises.md) on all supported
+Additionally, we also provide support for [promises](promises.md) on all supported
 PHP versions as an alternative. You can directly use promises as a core building
 block used in all our async APIs for maximum performance.
 

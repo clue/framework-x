@@ -220,7 +220,7 @@ If you're not already running an Apache server, you can run your X project with
 Apache in a temporary Docker container like this:
 
 ```bash
-$ docker run -it --rm -p 80:80 -v "$PWD":/srv php:8.0-apache sh -c "rmdir /var/www/html;ln -s /srv/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+$ docker run -it --rm -p 80:80 -v "$PWD":/srv php:8.1-apache sh -c "rmdir /var/www/html;ln -s /srv/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
 ```
 
 In order to check your web application responds as expected, you can use your
