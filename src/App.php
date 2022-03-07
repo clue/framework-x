@@ -180,8 +180,6 @@ class App
         } else {
             $this->runOnce(); // @codeCoverageIgnore
         }
-
-        Loop::run();
     }
 
     private function runLoop()
@@ -208,6 +206,13 @@ class App
 
             \fwrite(STDERR, (string)$orig);
         });
+
+        do {
+            Loop::run();
+
+            // Fiber compatibility mode for PHP < 8.1: Restart loop as long as socket is available
+            $this->sapi->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
+        } while ($socket->getAddress() !== null);
     }
 
     private function runOnce()
@@ -223,6 +228,8 @@ class App
                 $this->sapi->sendResponse($response);
             });
         }
+
+        Loop::run();
     }
 
     /**
