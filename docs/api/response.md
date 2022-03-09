@@ -496,7 +496,7 @@ int(42)
 >
 > As a rule of thumb, output buffering should only be used as a last resort and
 > directly working with `string` values is usually preferable. For instance,
-> [`print_r()`](https://www.php.net/manual/en/function.print_r.php),
+> [`print_r()`](https://www.php.net/manual/en/function.print-r.php),
 > [`var_export()`](https://www.php.net/manual/en/function.var-export.php) and
 > others accept optional boolean flags to return the value instead of printing
 > to the output buffer. In many other cases, PHP also provides alternative
