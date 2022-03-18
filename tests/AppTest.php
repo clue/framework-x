@@ -169,6 +169,8 @@ class AppTest extends TestCase
 
             Loop::removeReadStream($socket);
             fclose($socket);
+
+            Loop::stop();
         });
 
         $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:8080' . PHP_EOL, '/') . '.*/');
@@ -191,6 +193,8 @@ class AppTest extends TestCase
 
             Loop::removeReadStream($socket);
             fclose($socket);
+
+            Loop::stop();
         });
 
         $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '.*/');
@@ -209,6 +213,8 @@ class AppTest extends TestCase
 
             Loop::removeReadStream($socket);
             fclose($socket);
+
+            Loop::stop();
         });
 
         $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:', '/') . '\d+' . PHP_EOL . '.*/');
@@ -228,12 +234,48 @@ class AppTest extends TestCase
             Loop::futureTick(function () use ($socket) {
                 Loop::removeReadStream($socket);
                 fclose($socket);
+
+                Loop::stop();
             });
 
             Loop::stop();
         });
 
         $this->expectOutputRegex('/' . preg_quote('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.' . PHP_EOL, '/') . '$/');
+        $app->run();
+    }
+    
+    /**
+     * @requires function pcntl_signal
+     * @requires function posix_kill
+     */
+    public function testRunWillStopWhenReceivingSigint()
+    {
+        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
+        $app = new App();
+
+        Loop::futureTick(function () {
+            posix_kill(getmypid(), defined('SIGINT') ? SIGINT : 2);
+        });
+
+        $this->expectOutputRegex('/' . preg_quote('Received SIGINT, stopping loop' . PHP_EOL, '/') . '$/');
+        $app->run();
+    }
+    
+    /**
+     * @requires function pcntl_signal
+     * @requires function posix_kill
+     */
+    public function testRunWillStopWhenReceivingSigterm()
+    {
+        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
+        $app = new App();
+
+        Loop::futureTick(function () {
+            posix_kill(getmypid(), defined('SIGTERM') ? SIGTERM : 15);
+        });
+
+        $this->expectOutputRegex('/' . preg_quote('Received SIGTERM, stopping loop' . PHP_EOL, '/') . '$/');
         $app->run();
     }
 
