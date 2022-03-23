@@ -24,7 +24,7 @@ body { display: grid; justify-content: center; align-items: center; grid-auto-ro
 h1 { margin: 0 .5em 0 0; border-right: calc(2 * max(0px, min(100vw - 700px + 1px, 1px))) solid #e3e4e7; padding-right: .5em; color: #aebdcc; font-size: 3em; }
 strong { color: #111827; font-size: 3em; }
 p { margin: .5em 0 0 0; grid-column: 2; color: #6b7280; }
-code { padding: 0 .3em; background-color: #f5f6f9; }
+code { padding: 0 .3em; background-color: #f5f6f9; } code span { padding: 0 .2em; border-radius: 3px; background-color: #0001; }
 a { color: inherit; }
 </style>
 </head>
@@ -50,13 +50,16 @@ HTML;
 
     public function escape(string $s): string
     {
-        return \addcslashes(
+        return \preg_replace_callback(
+            '/[\x00-\x1F]+/',
+            function (array $match): string {
+                return '<span>' . \addcslashes($match[0], "\x00..\xff") . '</span>';
+            },
             \preg_replace(
                 '/(^| ) |(?: $)/',
                 '$1&nbsp;',
                 \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
-            ),
-            "\0..\032\\"
+            )
         );
     }
 }

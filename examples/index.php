@@ -191,6 +191,7 @@ $app->get('/error/null', function () {
 $app->get('/error/yield', function () {
     yield null;
 });
+$app->get('/error/class', 'Acme\Http\UnknownDeleteUserController');
 
 // OPTIONS *
 $app->options('', function () {
