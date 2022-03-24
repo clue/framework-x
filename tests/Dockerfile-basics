@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:1
+FROM php:8.1-cli
+
+WORKDIR /app/
+COPY public/ public/
+COPY vendor/ vendor/
+
+ENV X_LISTEN 0.0.0.0:8080
+EXPOSE 8080
+
+ENTRYPOINT php public/index.php
