@@ -1329,27 +1329,27 @@ class AppTest extends TestCase
     {
         yield [
             InvalidConstructorPrivate::class,
-            'Cannot instantiate class ' . addslashes(InvalidConstructorPrivate::class)
+            'Cannot instantiate class ' . InvalidConstructorPrivate::class
         ];
 
         yield [
             InvalidConstructorProtected::class,
-            'Cannot instantiate class ' . addslashes(InvalidConstructorProtected::class)
+            'Cannot instantiate class ' . InvalidConstructorProtected::class
         ];
 
         yield [
             InvalidAbstract::class,
-            'Cannot instantiate abstract class ' . addslashes(InvalidAbstract::class)
+            'Cannot instantiate abstract class ' . InvalidAbstract::class
         ];
 
         yield [
             InvalidInterface::class,
-            'Cannot instantiate interface ' . addslashes(InvalidInterface::class)
+            'Cannot instantiate interface ' . InvalidInterface::class
         ];
 
         yield [
             InvalidTrait::class,
-            'Cannot instantiate trait ' . addslashes(InvalidTrait::class)
+            'Cannot instantiate trait ' . InvalidTrait::class
         ];
 
         yield [
@@ -1413,7 +1413,7 @@ class AppTest extends TestCase
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class " . addslashes($class) . " failed to load: $error</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
+        $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class " . $class . " failed to load: $error</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
     public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter()

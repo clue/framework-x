@@ -407,15 +407,15 @@ class ErrorHandlerTest extends TestCase
             ],
             [
                 "new\n line",
-                'new\n line'
+                'new<span>\n</span> line'
             ],
             [
                 'sla/she\'s\\n',
-                'sla/she\'s\\\\n'
+                'sla/she\'s\\n'
             ],
             [
                 "hello\r\nworld",
-                'hello\r\nworld'
+                'hello<span>\r\n</span>world'
             ],
             [
                 '"with"<html>',

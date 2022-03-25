@@ -44,15 +44,15 @@ class HtmlHandlerTest extends TestCase
             ],
             [
                 "hello\nworld",
-                'hello\nworld'
+                'hello<span>\n</span>world'
             ],
             [
                 "hello\tworld",
-                'hello\tworld'
+                'hello<span>\t</span>world'
             ],
             [
                 "hello\\nworld",
-                'hello\\\\nworld'
+                'hello\nworld'
             ],
             [
                 'h<e>llo',
