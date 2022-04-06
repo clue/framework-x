@@ -470,8 +470,111 @@ Hello wörld!
 
 ### Docker containers
 
-> ⚠️ **Documentation still under construction**
+X supports running inside Docker containers out of the box. Thanks to the
+powerful combination of the built-in web server and Docker containers, your
+web application can be built and shipped anywhere with ease. No matter if you
+want to have a reproducible development environment or want to scale your
+production cloud, we've got you covered.
+
+Assuming you've followed the [quickstart guide](../getting-started/quickstart.md),
+all you need to do is to build and run a Docker image of your project. This can
+be achieved by using a `Dockerfile` with the following contents:
+
+=== "Dockerfile basics for development"
+
+    ```docker title="Dockerfile"
+    # syntax=docker/dockerfile:1
+    FROM php:8.1-cli
+
+    WORKDIR /app/
+    COPY public/ public/
+    COPY vendor/ vendor/
+
+    ENV X_LISTEN 0.0.0.0:8080
+    EXPOSE 8080
+
+    ENTRYPOINT php public/index.php
+    ```
+
+=== "Dockerfile for minimal production image"
+
+    ```docker title="Dockerfile"
+    # syntax=docker/dockerfile:1
+    FROM composer:2 AS build
+
+    WORKDIR /app/
+    COPY composer.json composer.lock ./
+    RUN composer install --no-dev --ignore-platform-reqs --optimize-autoloader
+
+    FROM php:8.1-alpine
+
+    # recommended: install optional extensions ext-ev and ext-sockets
+    RUN apk --no-cache add ${PHPIZE_DEPS} libev \ 
+        && pecl install ev \
+        && docker-php-ext-enable ev \
+        && docker-php-ext-install sockets \
+        && apk del ${PHPIZE_DEPS}
+
+    WORKDIR /app/
+    COPY public/ public/
+    # COPY src/ src/
+    COPY --from=build /app/vendor/ vendor/
+
+    ENV X_LISTEN 0.0.0.0:8080
+    EXPOSE 8080
+
+    USER nobody:nobody
+    ENTRYPOINT php public/index.php
+    ```
+
+Simply place the `Dockerfile` in your project directory like this:
+
+```
+acme/
+├── public/
+│   └── index.php
+├── vendor/
+├── composer.json
+├── composer.lock
+└── Dockerfile
+```
+
+As a next step, you need to build a Docker image for your project from the `Dockerfile`:
+
+```bash
+$ docker build -t acme .
+```
+
+Once the Docker image is built, you can run a Docker container from this image:
+
+=== "Temporary container in foreground"
+
+    ```bash
+    $ docker run -it --rm -p 8080:8080 acme
+    ```
+
+=== "Detached container in background"
+
+    ```bash
+    $ docker run -d -p 8080:8080 acme
+    ```
+
+Once running, you can check your web application responds as expected. Use your
+favorite web browser or command-line tool:
+
+```bash
+$ curl http://localhost:8080/
+Hello wörld!
+```
+
+This should be enough to get you started with Docker.
+
+> ℹ️ **Getting fancy with Docker**
 >
-> You're seeing an early draft of the documentation that is still in the works.
-> Give feedback to help us prioritize.
-> We also welcome [contributors](../getting-started/community.md) to help out!
+> A complete Docker tutorial is out of scope for this guide, but here are some
+> interesting pointers for you: If you want to share your application, you may
+> push your Docker image to your image registry of choice (private or public).
+> This allows you to pull and reuse your application image on any infrastructure.
+> Speaking of scalable infrastructure, you may also use X in serverless
+> environments and autoscale your application with your load, anywhere from zero
+> to hundreds of servers and beyond. Endless options!
