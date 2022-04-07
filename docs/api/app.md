@@ -94,7 +94,8 @@ crawlers to update their index like this:
 $app->redirect('/blog.html', '/blog', React\Http\Message\Response::STATUS_MOVED_PERMANENTLY);
 ```
 
-See [response status codes](response.md#status-codes) for more details.
+See [response status codes](response.md#status-codes) and [HTTP redirects](response.md#http-redirects)
+for more details.
 
 ## Controllers
 
