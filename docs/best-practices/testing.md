@@ -148,7 +148,7 @@ class UserControllerTest extends TestCase
 {
     public function testControllerReturnsValidResponse()
     {
-        $request = new ServerRequest('http://example.com/users/Alice');
+        $request = new ServerRequest('GET', 'http://example.com/users/Alice');
         $request = $request->withAttribute('name', 'Alice');
 
         $controller = new UserController();
