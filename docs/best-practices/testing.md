@@ -70,7 +70,7 @@ class HelloControllerTest extends TestCase
 {
     public function testControllerReturnsValidResponse()
     {
-        $request = new ServerRequest('http://example.com/');
+        $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new HelloController();
         $response = $controller($request);
