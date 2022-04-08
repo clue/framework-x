@@ -5,35 +5,8 @@ on:
   pull_request:
 
 jobs:
-  PHPUnit:
-    name: PHPUnit (PHP ${{ matrix.php }} on ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-          - ubuntu-20.04
-          - windows-2019
-        php:
-          - 8.1
-          - 8.0
-          - 7.4
-          - 7.3
-          - 7.2
-          - 7.1
-    steps:
-      - uses: actions/checkout@v2
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: xdebug
-      - run: composer install
-      - run: vendor/bin/phpunit --coverage-text --stderr
-        if: ${{ matrix.php >= 7.3 }}
-      - run: vendor/bin/phpunit --coverage-text --stderr -c phpunit.xml.legacy
-        if: ${{ matrix.php < 7.3 }}
-
-  Built-in-webserver:
-    name: Built-in webserver (PHP ${{ matrix.php }})
+  PHP-Matrix:
+    name: PHP ${{ matrix.php }}
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -44,11 +17,46 @@ jobs:
           - 7.3
           - 7.2
           - 7.1
+    outputs:
+      php: ${{ steps.version.outputs.version }}
+    steps:
+      - run: |
+          printf "PHP %s\r\n" ${{ matrix.php }}
+          printf "::set-output name=version::%s" ${{ matrix.php }}
+        id: version
+
+  PHPUnit:
+    name: PHPUnit (PHP ${{ matrix.php }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs:
+      - PHP-Matrix
+    strategy:
+      matrix:
+        os:
+          - ubuntu-20.04
+          - windows-2019
     steps:
       - uses: actions/checkout@v2
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: ${{ needs.PHP-Matrix.outputs.php }}
+          coverage: xdebug
+      - run: composer install
+      - run: vendor/bin/phpunit --coverage-text --stderr
+        if: ${{ matrix.php >= 7.3 }}
+      - run: vendor/bin/phpunit --coverage-text --stderr -c phpunit.xml.legacy
+        if: ${{ matrix.php < 7.3 }}
+
+  Built-in-webserver:
+    name: Built-in webserver (PHP ${{ matrix.php }})
+    runs-on: ubuntu-20.04
+    needs:
+      - PHP-Matrix
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ needs.PHP-Matrix.outputs.php }}
       - run: composer install -d tests/install-as-dep/
       - run: php tests/install-as-dep/public/index.php &
       - run: bash tests/await.sh
@@ -79,15 +87,12 @@ jobs:
   nginx-webserver:
     name: nginx + PHP-FPM (PHP ${{ matrix.php }})
     runs-on: ubuntu-20.04
+    needs:
+      - PHP-Matrix
     strategy:
       matrix:
         php:
-          - 8.1
-          - 8.0
-          - 7.4
-          - 7.3
-          - 7.2
-          - 7.1
+          - ${{ needs.PHP-Matrix.outputs.php }}
     steps:
       - uses: actions/checkout@v2
       - uses: shivammathur/setup-php@v2
@@ -102,15 +107,12 @@ jobs:
   Apache-webserver:
     name: Apache webserver (PHP ${{ matrix.php }})
     runs-on: ubuntu-20.04
+    needs:
+      - PHP-Matrix
     strategy:
       matrix:
         php:
-          - 8.1
-          - 8.0
-          - 7.4
-          - 7.3
-          - 7.2
-          - 7.1
+          - ${{ needs.PHP-Matrix.outputs.php }}
     steps:
       - uses: actions/checkout@v2
       - uses: shivammathur/setup-php@v2
@@ -124,15 +126,12 @@ jobs:
   PHP-webserver:
     name: PHP webserver (PHP ${{ matrix.php }})
     runs-on: ubuntu-20.04
+    needs:
+      - PHP-Matrix
     strategy:
       matrix:
         php:
-          - 8.1
-          - 8.0
-          - 7.4
-          - 7.3
-          - 7.2
-          - 7.1
+          - ${{ needs.PHP-Matrix.outputs.php }}
     steps:
       - uses: actions/checkout@v2
       - uses: shivammathur/setup-php@v2
