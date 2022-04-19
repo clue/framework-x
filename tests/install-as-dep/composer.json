@@ -1,0 +1,15 @@
+{
+    "require": {
+        "clue/framework-x": "*@dev",
+        "react/async": "^4@dev || ^3@dev"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../",
+            "options": {
+                "symlink": false
+            }
+        }
+    ]
+}
