@@ -9,6 +9,7 @@
     <testsuites>
         <testsuite name="Framework X test suite">
             <directory>./tests/</directory>
+            <exclude>./tests/install-as-dep/</exclude>
         </testsuite>
     </testsuites>
     <coverage>

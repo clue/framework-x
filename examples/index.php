@@ -3,7 +3,9 @@
 use Psr\Http\Message\ServerRequestInterface;
 use React\Stream\ThroughStream;
 
-require __DIR__ . '/../vendor/autoload.php';
+// example uses `@include` for test suite only, real-world examples should use `require` instead
+// require __DIR__ . '/../vendor/autoload.php';
+@include __DIR__ . '/../vendor/autoload.php';
 
 $app = new FrameworkX\App();
 

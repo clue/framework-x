@@ -49,8 +49,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-      - run: composer remove --dev phpunit/phpunit
-      - run: php examples/index.php &
+      - run: composer install -d tests/install-as-dep/
+      - run: php tests/install-as-dep/public/index.php &
       - run: bash tests/await.sh
       - run: bash tests/acceptance.sh
 
@@ -71,9 +71,9 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-      - run: composer remove --dev phpunit/phpunit
-      - run: docker run -d -v "$PWD":/home/framework-x php:${{ matrix.php }}-fpm
-      - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD":/home/framework-x -v "$PWD"/examples/nginx/nginx.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
+      - run: composer install -d tests/install-as-dep/
+      - run: docker run -d -v "$PWD/tests/install-as-dep/":/home/framework-x/ -v "$PWD/examples/index.php":/home/framework-x/public/index.php -v "$PWD/LICENSE":/home/framework-x/LICENSE -v "$PWD/tests/":/home/framework-x/tests/ php:${{ matrix.php }}-fpm
+      - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD/tests/install-as-dep/":/home/framework-x/ -v "$PWD"/examples/nginx/nginx.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
       - run: bash tests/await.sh http://localhost
       - run: bash tests/acceptance.sh http://localhost
 
@@ -94,8 +94,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-      - run: composer remove --dev phpunit/phpunit
-      - run: docker run -d -p 80:80 -v "$PWD":/home/framework-x php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/framework-x/examples/apache /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+      - run: composer install -d tests/install-as-dep/
+      - run: docker run -d -p 80:80 -v "$PWD/tests/install-as-dep/":/home/framework-x/ -v "$PWD/examples/index.php":/home/framework-x/public/index.php -v "$PWD/LICENSE":/home/framework-x/LICENSE -v "$PWD/tests/":/home/framework-x/tests/ -v "$PWD/examples/apache/.htaccess":/home/framework-x/public/.htaccess php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/framework-x/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
       - run: bash tests/await.sh http://localhost
       - run: bash tests/acceptance.sh http://localhost
 
@@ -116,7 +116,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-      - run: composer remove --dev phpunit/phpunit
-      - run: php -S localhost:8080 examples/index.php &
+      - run: composer install -d tests/install-as-dep/
+      - run: php -S localhost:8080 tests/install-as-dep/public/index.php &
       - run: bash tests/await.sh
       - run: bash tests/acceptance.sh
