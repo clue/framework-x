@@ -210,9 +210,13 @@ class App
         do {
             Loop::run();
 
-            // Fiber compatibility mode for PHP < 8.1: Restart loop as long as socket is available
-            $this->sapi->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
-        } while ($socket->getAddress() !== null);
+            if ($socket->getAddress() !== null) {
+                // Fiber compatibility mode for PHP < 8.1: Restart loop as long as socket is available
+                $this->sapi->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
+            } else {
+                break;
+            }
+        } while (true);
     }
 
     private function runOnce()

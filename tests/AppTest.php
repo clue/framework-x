@@ -215,6 +215,28 @@ class AppTest extends TestCase
         $app->run();
     }
 
+    public function testRunWillRestartLoopUntilSocketIsClosed()
+    {
+        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
+        $app = new App();
+
+        // lovely: remove socket server on next tick to terminate loop
+        Loop::futureTick(function () {
+            $resources = get_resources();
+            $socket = end($resources);
+
+            Loop::futureTick(function () use ($socket) {
+                Loop::removeReadStream($socket);
+                fclose($socket);
+            });
+
+            Loop::stop();
+        });
+
+        $this->expectOutputRegex('/' . preg_quote('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.' . PHP_EOL, '/') . '$/');
+        $app->run();
+    }
+
     public function testRunAppWithEmptyAddressThrows()
     {
         $_SERVER['X_LISTEN'] = '';
