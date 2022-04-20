@@ -207,12 +207,40 @@ class App
             \fwrite(STDERR, (string)$orig);
         });
 
+        try {
+            Loop::addSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 = function () use ($socket) {
+                if (\PHP_VERSION_ID >= 70200 && \stream_isatty(\STDIN)) {
+                    echo "\r";
+                }
+                $this->sapi->log('Received SIGINT, stopping loop');
+
+                $socket->close();
+                Loop::stop();
+            });
+            Loop::addSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 = function () use ($socket) {
+                $this->sapi->log('Received SIGTERM, stopping loop');
+
+                $socket->close();
+                Loop::stop();
+            });
+        } catch (\BadMethodCallException $e) { // @codeCoverageIgnoreStart
+            $this->sapi->log('Notice: No signal handler support, installing ext-ev or ext-pcntl recommended for production use.');
+        } // @codeCoverageIgnoreEnd
+
         do {
             Loop::run();
 
-            // Fiber compatibility mode for PHP < 8.1: Restart loop as long as socket is available
-            $this->sapi->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
-        } while ($socket->getAddress() !== null);
+            if ($socket->getAddress() !== null) {
+                // Fiber compatibility mode for PHP < 8.1: Restart loop as long as socket is available
+                $this->sapi->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
+            } else {
+                break;
+            }
+        } while (true);
+
+        // remove signal handlers when loop stops (if registered)
+        Loop::removeSignal(\defined('SIGINT') ? \SIGINT : 2, $f1);
+        Loop::removeSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 ?? 'printf');
     }
 
     private function runOnce()
