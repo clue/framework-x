@@ -54,6 +54,28 @@ jobs:
       - run: bash tests/await.sh
       - run: bash tests/acceptance.sh
 
+  Docker:
+    name: Docker (${{ matrix.dockerfile }})
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        dockerfile:
+          - "Dockerfile-basics"
+          - "Dockerfile-production"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.1
+      - run: composer install -d tests/install-as-dep/
+      - run: docker build -f tests/${{ matrix.dockerfile }} tests/install-as-dep/
+      - run: docker run -d -p 8080:8080 -v "$PWD/examples/index.php":/app/public/index.php -v "$PWD/composer.json":/app/composer.json -v "$PWD/LICENSE":/app/LICENSE -v "$PWD/tests/":/app/tests/ $(docker images -q | head -n1)
+      - run: bash tests/await.sh
+      - run: bash tests/acceptance.sh
+      - run: docker stop $(docker ps -qn1)
+      - run: docker logs $(docker ps -qn1)
+        if: ${{ always() }}
+
   nginx-webserver:
     name: nginx + PHP-FPM (PHP ${{ matrix.php }})
     runs-on: ubuntu-20.04
