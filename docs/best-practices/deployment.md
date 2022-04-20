@@ -524,7 +524,7 @@ be achieved by using a `Dockerfile` with the following contents:
     EXPOSE 8080
 
     USER nobody:nobody
-    ENTRYPOINT php public/index.php
+    ENTRYPOINT ["php", "public/index.php"]
     ```
 
 Simply place the `Dockerfile` in your project directory like this:
