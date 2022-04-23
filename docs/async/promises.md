@@ -154,7 +154,7 @@ class BookLookupController
             if ($book === null) {
                 return Response::plaintext(
                     "Book not found\n"
-                )->withStatus(Response::STATUS_NOT_FOUND;
+                )->withStatus(Response::STATUS_NOT_FOUND);
             }
 
             $data = $book->title;
