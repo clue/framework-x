@@ -263,6 +263,51 @@ Hello wörld!
 > });
 > ```
 
+## HTTP Redirects
+
+To redirect incoming HTTP requests to a new location you can define your HTTP
+response like this:
+
+```php
+<?php
+
+// …
+
+$app->get('/blog.html', function () {
+    return new React\Http\Message\Response(
+        React\Http\Message\Response::STATUS_FOUND,
+        [
+            'Location' => '/blog'
+        ]
+    );
+});
+```
+
+Redirect responses have a [status code](#status-codes) in the `3xx` range.
+Here's a list with some of the most common HTTP redirect status codes:
+
+* `301 Moved Permanently`
+* `302 Found` (previously `302 Temporary Redirect`)
+* `303 See Other`
+* `307 Temporary Redirect`
+* `308 Permanent Redirect`
+
+Each status code can be referenced by its matching status code
+constant name such as `React\Http\Message\Response::STATUS_MOVED_PERMANENTLY` or `React\Http\Message\Response::STATUS_FOUND`
+or by its status code number.
+
+The [`Location`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location)
+response header holds the URL to redirect to. When a Browser or a search engine
+crawler receives a redirect, they will automatically follow the new URL provided
+in the `Location` header.
+
+You can also use the [redirect helper method](app.md#redirects)
+for simpler use cases:
+
+```php
+$app->redirect('/promo/reactphp', 'https://reactphp.org/');
+```
+
 ## HTTP caching
 
 HTTP caching can be used to significantly improve the performance of web
