@@ -277,6 +277,32 @@ or `[::]` IPv6 address like this:
 $ X_LISTEN=0.0.0.0:8080 php public/index.php
 ```
 
+### Memory limit
+
+X is carefully designed to minimize memory usage. Depending on your application
+workload, it may need anywhere from a few kilobytes to a couple of megabytes per
+request. Once the request is completely handled, used memory will be freed again.
+Under load spikes, memory may temporarily increase to handle concurrent requests.
+PHP can handle this load just fine, but many default setups use a rather low
+memory limit that is more suited for single requests only.
+
+```
+Fatal error: Allowed memory size of 134217728 bytes exhausted […]
+```
+
+When using the built-in web server, we highly recommend increasing the memory
+limit to match your concurrency workload. On Ubuntu- or Debian-based systems,
+you may change your PHP configuration like this:
+
+```bash
+$ sudoedit /etc/php/8.1/cli/php.ini
+```
+
+```diff title="/etc/php/8.1/cli/php.ini"
+- memory_limit = 128M
++ memory_limit = -1
+```
+
 ### Systemd
 
 So far, we're manually executing the application server on the command line and
@@ -513,7 +539,8 @@ be achieved by using a `Dockerfile` with the following contents:
         && pecl install ev \
         && docker-php-ext-enable ev \
         && docker-php-ext-install sockets \
-        && apk del ${PHPIZE_DEPS}
+        && apk del ${PHPIZE_DEPS} \
+        && echo "memory_limit = -1" >> "$PHP_INI_DIR/conf.d/acme.ini"
 
     WORKDIR /app/
     COPY public/ public/
