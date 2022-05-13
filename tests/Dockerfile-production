@@ -15,7 +15,8 @@ RUN apk --no-cache add ${PHPIZE_DEPS} libev \
     && pecl install ev \
     && docker-php-ext-enable ev \
     && docker-php-ext-install sockets \
-    && apk del ${PHPIZE_DEPS}
+    && apk del ${PHPIZE_DEPS} \
+    && echo "memory_limit = -1" >> "$PHP_INI_DIR/conf.d/acme.ini"
 
 WORKDIR /app/
 COPY public/ public/
