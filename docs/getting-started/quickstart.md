@@ -51,13 +51,13 @@ Thanks to [Composer](https://getcomposer.org/), this installation only requires 
 
 > ℹ️ **New to Composer?**
 >
-> If you haven't heard about Composer before, Composer is *the* package manager for PHP-based projects.
-> You can think of it as what NPM is to JavaScript, *but better*.
+> If you haven't heard about Composer before, Composer is *the* package or dependency manager for PHP-based projects.
+> It takes care of installing PHP projects and any libraries your projects depends on.
 > If you haven't used it before, you have to install a recent PHP version and Composer before you can proceed.
 > On Ubuntu- or Debian-based systems, this would be as simple as this:
 >
 > ```bash
-> $ sudo apt install php-cli php-mbstring php-xml composer
+> $ sudo apt install php-cli composer
 > ```
 
 In your project directory, simply run the following command:
@@ -66,7 +66,7 @@ In your project directory, simply run the following command:
 $ composer require clue/framework-x:dev-main
 ```
 
-This isn't NPM, so this should only take a moment or two.
+X is carefully designed to be super lightweight, so this should only take a moment or two.
 
 Once installed, your project directory should now look like this:
 
