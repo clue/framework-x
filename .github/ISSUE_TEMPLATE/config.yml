@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Feature request
+    url: https://github.com/clue/framework-x/discussions/categories/ideas
+    about: 'You have ideas to improve our project? Start a new discussion in our "ideas" category.'
+  - name: Questions
+    url: https://github.com/clue/framework-x/discussions/categories/q-a
+    about: 'We are happy to answer your questions! Start a new discussion in our "Q&A" category.'
