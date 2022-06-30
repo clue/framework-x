@@ -4,6 +4,8 @@ namespace FrameworkX\Tests;
 
 use FrameworkX\Container;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -336,6 +338,50 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
+    public function testCallableReturnsCallableForClassNameViaPsrContainer()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class {
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200);
+            }
+        };
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->never())->method('has');
+        $psr->expects($this->once())->method('get')->with(get_class($controller))->willReturn($controller);
+
+        $container = new Container($psr);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReturnsInvalidClassNameViaPsrContainer()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $exception = new class('Unable to load class') extends \RuntimeException implements NotFoundExceptionInterface { };
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->never())->method('has');
+        $psr->expects($this->once())->method('get')->with('FooBar')->willThrowException($exception);
+
+        $container = new Container($psr);
+
+        $callable = $container->callable('FooBar');
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Request handler class FooBar failed to load: Unable to load class');
+        $callable($request);
+    }
+
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -356,5 +402,12 @@ class ContainerTest extends TestCase
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Container should not be used as final request handler');
         $container($request);
+    }
+
+    public function testCtorWithInvalidValueThrows()
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, stdClass given');
+        new Container((object) []);
     }
 }

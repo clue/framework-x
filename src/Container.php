@@ -2,6 +2,7 @@
 
 namespace FrameworkX;
 
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -9,22 +10,28 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Container
 {
-    /** @var array<class-string,object|callable():(object|class-string)> */
+    /** @var array<class-string,object|callable():(object|class-string)>|ContainerInterface */
     private $container;
 
-    /** @var array<class-string,callable():(object|class-string) | object | class-string> */
-    public function __construct(array $map = [])
+    /** @var array<class-string,callable():(object|class-string) | object | class-string>|ContainerInterface $loader */
+    public function __construct($loader = [])
     {
-        foreach ($map as $name => $value) {
+        if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
+            throw new \TypeError(
+                'Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . (\is_object($loader) ? get_class($loader) : gettype($loader)) . ' given'
+            );
+        }
+
+        foreach (($loader instanceof ContainerInterface ? [] : $loader) as $name => $value) {
             if (\is_string($value)) {
-                $map[$name] = static function () use ($value) {
+                $loader[$name] = static function () use ($value) {
                     return $value;
                 };
             } elseif (!$value instanceof \Closure && !$value instanceof $name) {
                 throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
             }
         }
-        $this->container = $map;
+        $this->container = $loader;
     }
 
     public function __invoke(ServerRequestInterface $request, callable $next = null)
@@ -52,12 +59,16 @@ class Container
     {
         return function (ServerRequestInterface $request, callable $next = null) use ($class) {
             // Check `$class` references a valid class name that can be autoloaded
-            if (!\class_exists($class, true) && !interface_exists($class, false) && !trait_exists($class, false)) {
+            if (\is_array($this->container) && !\class_exists($class, true) && !interface_exists($class, false) && !trait_exists($class, false)) {
                 throw new \BadMethodCallException('Request handler class ' . $class . ' not found');
             }
 
             try {
-                $handler = $this->load($class);
+                if ($this->container instanceof ContainerInterface) {
+                    $handler = $this->container->get($class);
+                } else {
+                    $handler = $this->load($class);
+                }
             } catch (\Throwable $e) {
                 throw new \BadMethodCallException(
                     'Request handler class ' . $class . ' failed to load: ' . $e->getMessage(),
