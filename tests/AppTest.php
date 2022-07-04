@@ -181,7 +181,7 @@ class AppTest extends TestCase
     public function testConstructWithErrorHandlerClassThrows()
     {
         $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('ErrorHandler may currently only be passed as instance');
+        $this->expectExceptionMessage('ErrorHandler may currently only be passed as a middleware instance');
         new App(ErrorHandler::class);
     }
 
@@ -239,6 +239,88 @@ class AppTest extends TestCase
         $this->assertSame($middleware, $handlers[2]);
         $this->assertSame($errorHandler, $handlers[3]);
         $this->assertInstanceOf(RouteHandler::class, $handlers[4]);
+    }
+
+    public function testConstructWithAccessLogHandlerAndErrorHandlerAssignsHandlersAsGiven()
+    {
+        $accessLogHandler = new AccessLogHandler();
+        $errorHandler = new ErrorHandler();
+
+        $app = new App($accessLogHandler, $errorHandler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
+        $this->assertCount(3, $handlers);
+        $this->assertSame($accessLogHandler, $handlers[0]);
+        $this->assertSame($errorHandler, $handlers[1]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
+    }
+
+    public function testConstructWithMiddlewareBeforeAccessLogHandlerAndErrorHandlerAssignsDefaultErrorHandlerAsFirstHandlerFollowedByGivenHandlers()
+    {
+        $middleware = static function (ServerRequestInterface $request, callable $next) { };
+        $accessLog = new AccessLogHandler();
+        $errorHandler = new ErrorHandler();
+
+        $app = new App($middleware, $accessLog, $errorHandler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
+        $this->assertCount(5, $handlers);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[0]);
+        $this->assertNotSame($errorHandler, $handlers[0]);
+        $this->assertSame($middleware, $handlers[1]);
+        $this->assertSame($accessLog, $handlers[2]);
+        $this->assertSame($errorHandler, $handlers[3]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[4]);
+    }
+
+    public function testConstructWithAccessLogHandlerOnlyThrows()
+    {
+        $accessLogHandler = new AccessLogHandler();
+
+        $this->expectException(\TypeError::class);
+        new App($accessLogHandler);
+    }
+
+    public function testConstructWithAccessLogHandlerClassThrows()
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('AccessLogHandler may currently only be passed as a middleware instance');
+        new App(AccessLogHandler::class);
+    }
+
+    public function testConstructWithAccessLogHandlerFollowedByMiddlewareThrows()
+    {
+        $accessLogHandler = new AccessLogHandler();
+        $middleware = function (ServerRequestInterface $request, callable $next) { };
+
+        $this->expectException(\TypeError::class);
+        new App($accessLogHandler, $middleware);
     }
 
     public function testRunWillReportListeningAddressAndRunLoopWithSocketServer()
@@ -570,6 +652,22 @@ class AppTest extends TestCase
         $ref->setValue($app, $router);
 
         $app->map(['GET', 'POST'], '/', function () { });
+    }
+
+    public function testGetWithAccessLogHandlerAsMiddlewareThrows()
+    {
+        $app = new App();
+
+        $this->expectException(\TypeError::class);
+        $app->get('/', new AccessLogHandler(), function () { });
+    }
+
+    public function testGetWithAccessLogHandlerClassAsMiddlewareThrows()
+    {
+        $app = new App();
+
+        $this->expectException(\TypeError::class);
+        $app->get('/', AccessLogHandler::class, function () { });
     }
 
     public function testRedirectMethodAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation()

@@ -55,6 +55,8 @@ class RouteHandler
             if ($handler instanceof Container && $i !== $last) {
                 $container = $handler;
                 unset($handlers[$i]);
+            } elseif ($handler instanceof AccessLogHandler || $handler === AccessLogHandler::class) {
+                throw new \TypeError('AccessLogHandler may currently only be passed as a global middleware instance');
             } elseif (!\is_callable($handler)) {
                 $handlers[$i] = $container->callable($handler);
             }
