@@ -305,15 +305,46 @@ $container = new FrameworkX\Container([
 // …
 ```
 
-### PSR-11 compatibility
+### PSR-11: Container interface
 
-> ⚠️ **Feature preview**
->
-> This is a feature preview, i.e. it might not have made it into the current beta.
-> Give feedback to help us prioritize.
-> We also welcome [contributors](../getting-started/community.md) to help out!
+X has a powerful, built-in dependency injection container (DI container or DIC)
+that has a strong focus on simplicity and should cover most common use cases.
+Sometimes, you might need a little more control over this and may want to use a
+custom container implementation instead.
 
-In the future, we will also allow you to pass in a custom
-[PSR-11: Container interface](https://www.php-fig.org/psr/psr-11/) implementing
-the well-established `Psr\Container\ContainerInterface`.
-We love standards and interoperability.
+We love standards and interoperability, that's why we support the
+[PSR-11: Container interface](https://www.php-fig.org/psr/psr-11/). This is a
+common interface that is used by most DI containers in PHP. In the following
+example, we're using [PHP-DI](https://php-di.org/), but you may likewise use any
+other implementation of this interface:
+
+```bash
+composer require php-di/php-di
+```
+
+In order to use an external DI container, you first have to instantiate your
+custom container as per its documentation. If this instance implements the
+`Psr\Container\ContainerInterface`, you can then pass it into the X container that
+acts as an adapter for the application like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+// $builder = new DI\ContainerBuilder();
+// $builder->...
+// $container = $builder->build();
+$container = new DI\Container();
+
+$app = new FrameworkX\App(new FrameworkX\Container($container));
+
+$app->get('/', Acme\Todo\HelloController::class);
+$app->get('/users/{name}', Acme\Todo\UserController::class);
+
+$app->run();
+```
+
+We expect most applications to work just fine with the built-in DI container.
+If you need to use a custom container, the above logic should work with any of the
+[PSR-11 container implementations](https://packagist.org/providers/psr/container-implementation).
