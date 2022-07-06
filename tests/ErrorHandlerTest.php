@@ -441,7 +441,11 @@ class ErrorHandlerTest extends TestCase
 
         $line = __LINE__ + 1;
         $e = new \RuntimeException($in);
-        $response = $handler->errorInvalidException($e);
+
+        // $response = $handler->errorInvalidException($e);
+        $ref = new \ReflectionMethod($handler, 'errorInvalidException');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($handler, $e);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
@@ -494,7 +498,10 @@ class ErrorHandlerTest extends TestCase
     {
         $handler = new ErrorHandler();
 
-        $response = $handler->errorInvalidResponse($value);
+        // $response = $handler->errorInvalidResponse($value);
+        $ref = new \ReflectionMethod($handler, 'errorInvalidResponse');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($handler, $value);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
@@ -511,7 +518,11 @@ class ErrorHandlerTest extends TestCase
 
         $file = __FILE__;
         $line = __LINE__;
-        $response = $handler->errorInvalidCoroutine($value, $file, $line);
+
+        // $response = $handler->errorInvalidCoroutine($value, $file, $line);
+        $ref = new \ReflectionMethod($handler, 'errorInvalidCoroutine');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($handler, $value, $file, $line);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());

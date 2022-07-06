@@ -163,3 +163,58 @@ One of the main features of the `App` is middleware support.
 Middleware allows you to extract common functionality such as HTTP login, session handling or logging into reusable components.
 These middleware components can be added to both individual routes or globally to all registered routes.
 See [middleware documentation](middleware.md) for more details.
+
+## Error handling
+
+Each controller function needs to return a response object in order to send
+an HTTP response message. If the controller function throws an `Exception` (or
+`Throwable`) or returns any invalid type, the HTTP request will automatically be
+rejected with a `500 Internal Server Error` HTTP error response:
+
+```php
+<?php
+
+// …
+
+$app->get('/user', function () {
+    throw new BadMethodCallException();
+});
+```
+
+You can try out this example by sending an HTTP request like this:
+
+```bash hl_lines="2"
+$ curl -I http://localhost:8080/user
+HTTP/1.1 500 Internal Server Error
+…
+```
+
+Internally, the `App` will automatically add a default error handler by adding
+the [`ErrorHandler`](middleware.md#errorhandler) to the list of middleware used.
+You may also explicitly pass an [`ErrorHandler`](middleware.md#errorhandler)
+middleware to the `App` like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$app = new FrameworkX\App(
+    new FrameworkX\ErrorHandler()
+);
+
+// Register routes here, see routing…
+
+$app->run();
+```
+
+> ⚠️ **Feature preview**
+>
+> Note that the [`ErrorHandler`](middleware.md#errorhandler) may currently only
+> be passed as a middleware instance and not as a middleware name to the `App`.
+
+By default, this error message contains only few details to the client to avoid
+leaking too much internal information.
+If you want to implement custom error handling, you're recommended to either
+catch any exceptions your own or use a custom [middleware handler](middleware.md)
+to catch any exceptions in your application.

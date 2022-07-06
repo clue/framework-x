@@ -152,6 +152,95 @@ class AppTest extends TestCase
         $this->assertSame($container, $ref->getValue($routeHandler));
     }
 
+    public function testConstructWithErrorHandlerOnlyAssignsErrorHandlerAfterDefaultAccessLogHandler()
+    {
+        $errorHandler = new ErrorHandler();
+
+        $app = new App($errorHandler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
+        $this->assertCount(3, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertSame($errorHandler, $handlers[1]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
+    }
+
+    public function testConstructWithErrorHandlerClassThrows()
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('ErrorHandler may currently only be passed as instance');
+        new App(ErrorHandler::class);
+    }
+
+    public function testConstructWithContainerAndErrorHandlerAssignsErrorHandlerAfterDefaultAccessLogHandler()
+    {
+        $errorHandler = new ErrorHandler();
+
+        $app = new App(new Container(), $errorHandler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
+        $this->assertCount(3, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertSame($errorHandler, $handlers[1]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
+    }
+
+    public function testConstructWithMiddlewareAndErrorHandlerAssignsGivenErrorHandlerAfterMiddlewareAndDefaultAccessLogHandlerAndErrorHandlerFirst()
+    {
+        $middleware = function (ServerRequestInterface $request, callable $next) { };
+        $errorHandler = new ErrorHandler();
+
+        $app = new App($middleware, $errorHandler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+
+        if (PHP_VERSION_ID >= 80100) {
+            $first = array_shift($handlers);
+            $this->assertInstanceOf(FiberHandler::class, $first);
+        }
+
+        $this->assertCount(5, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
+        $this->assertNotSame($errorHandler, $handlers[1]);
+        $this->assertSame($middleware, $handlers[2]);
+        $this->assertSame($errorHandler, $handlers[3]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[4]);
+    }
+
     public function testRunWillReportListeningAddressAndRunLoopWithSocketServer()
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
@@ -244,7 +333,7 @@ class AppTest extends TestCase
         $this->expectOutputRegex('/' . preg_quote('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.' . PHP_EOL, '/') . '$/');
         $app->run();
     }
-    
+
     /**
      * @requires function pcntl_signal
      * @requires function posix_kill
@@ -261,7 +350,7 @@ class AppTest extends TestCase
         $this->expectOutputRegex('/' . preg_quote('Received SIGINT, stopping loop' . PHP_EOL, '/') . '$/');
         $app->run();
     }
-    
+
     /**
      * @requires function pcntl_signal
      * @requires function posix_kill

@@ -553,10 +553,9 @@ int(42)
 ## Internal Server Error
 
 Each controller function needs to return a response object in order to send
-an HTTP response message.
-If the controller functions throws an `Exception` (or `Throwable`) or any other type, the
-HTTP request will automatically be rejected with a `500 Internal Server Error`
-HTTP error response:
+an HTTP response message. If the controller function throws an `Exception` (or
+`Throwable`) or returns any invalid type, the HTTP request will automatically be
+rejected with a `500 Internal Server Error` HTTP error response:
 
 ```php
 <?php
@@ -576,8 +575,5 @@ HTTP/1.1 500 Internal Server Error
 …
 ```
 
-This error message contains only few details to the client to avoid leaking
-internal information.
-If you want to implement custom error handling, you're recommended to either
-catch any exceptions your own or use a [middleware handler](middleware.md) to
-catch any exceptions in your application.
+This default error handling can be configured through the [`App`](app.md).
+See [error handling](app.md#error-handling) for more details.
