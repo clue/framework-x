@@ -2,6 +2,11 @@
 
 namespace FrameworkX;
 
+use FrameworkX\Io\FiberHandler;
+use FrameworkX\Io\MiddlewareHandler;
+use FrameworkX\Io\RedirectHandler;
+use FrameworkX\Io\RouteHandler;
+use FrameworkX\Io\SapiHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;

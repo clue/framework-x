@@ -2,6 +2,7 @@
 
 namespace FrameworkX;
 
+use FrameworkX\Io\SapiHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;

@@ -4,8 +4,8 @@ namespace FrameworkX\Tests;
 
 use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
-use FrameworkX\FiberHandler;
-use FrameworkX\RouteHandler;
+use FrameworkX\Io\FiberHandler;
+use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

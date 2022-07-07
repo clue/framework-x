@@ -1,8 +1,8 @@
 <?php
 
-namespace FrameworkX\Tests;
+namespace FrameworkX\Tests\Io;
 
-use FrameworkX\MiddlewareHandler;
+use FrameworkX\Io\MiddlewareHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

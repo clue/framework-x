@@ -1,14 +1,12 @@
 <?php
 
-namespace Framework\Tests;
+namespace Framework\Tests\Io;
 
-use FrameworkX\FiberHandler;
+use FrameworkX\Io\FiberHandler;
 use PHPUnit\Framework\TestCase;
-use React\EventLoop\Loop;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Promise\Deferred;
-use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use function React\Async\await;
 use function React\Promise\reject;

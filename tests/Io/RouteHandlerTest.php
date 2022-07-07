@@ -1,11 +1,11 @@
 <?php
 
-namespace FrameworkX\Tests;
+namespace FrameworkX\Tests\Io;
 
 use FastRoute\RouteCollector;
 use FrameworkX\Container;
-use FrameworkX\MiddlewareHandler;
-use FrameworkX\RouteHandler;
+use FrameworkX\Io\MiddlewareHandler;
+use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
