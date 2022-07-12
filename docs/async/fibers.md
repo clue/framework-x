@@ -43,32 +43,44 @@ return value.
 
 ## Requirements
 
-At the moment, fibers are available as a development version by installing
-[react/async](https://github.com/reactphp/async) from a development branch
-like this:
+X provides support for fibers out of the box, so there's nothing special you
+have to install. You wouldn't usually have to directly interface with fibers,
+but the underlying APIs are provided thanks to the common
+[reactphp/async](https://github.com/reactphp/async) package.
 
-```bash
-$ composer require react/async:^4@dev
-```
+Fibers are a core ingredient of PHP 8.1+ (released 2021-11-25), but the same
+syntax also works on older PHP versions to some degree if you only have limited
+concurrency. For production usage, we highly recommend using PHP 8.1+.
 
-Installing this package version requires PHP 8.1+ (2021-11-25) as fibers are a
-core ingredient of PHP 8.1+. We understand that adoption of this very new PHP
-version is going to take some time, so we also provide a limited
-[compatibility mode](#compatibility-mode) that also works on PHP 7.1+ to ease
-upgrading.
-
-> ℹ️ **Coroutines and Promises work anywhere**
+> ⚠️ **Compatibility mode**
 >
-> Remember, we also provide support for [coroutines](coroutines.md) and
-> [promises](promises.md) on all supported PHP versions as an alternative.
-> Coroutines allow consuming async APIs in a way that resembles a synchronous
-> code flow using the `yield` keyword. You can also directly use promises as a
-> core building block used in all our async APIs for maximum performance.
+> For production usage, we highly recommend using PHP 8.1+. If you're using the
+> `await()` function in compatibility mode with older PHP versions, it may stop
+> the loop from running and may print a warning like this:
+>
+> ```
+> Warning: Loop restarted. Upgrade to react/async v4 recommended […]
+> ```
+>
+> Internally, the compatibility mode will cause recursive loop executions when
+> dealing with concurrent requests. This should work fine for development
+> purposes and fast controllers with low concurrency, but may cause issues in
+> production with high concurrency.
+>
+> We understand that adoption of this very new PHP version is going to take some
+> time and we acknowledge that this is probably one of the largest limitations
+> of using fibers at the moment for many. We're committed to providing long-term
+> support (LTS) options and providing a smooth upgrade path. As such, we also
+> provide limited support for older PHP versions using a compatible API without
+> taking advantage of newer language features. This way, you have a much
+> smoother upgrade path, as you can already start using the future API for
+> testing and development purposes and upgrade your PHP version for production
+> use at a later time.
 
 ## Usage
 
-Once installed (see requirements above), fibers are very easy to use – because
-you simply can't see them – which in turn makes them quite hard to explain.
+Fibers are very easy to use – because you simply can't see them – which in turn
+makes them a bit harder to explain.
 
 The gist is that whenever you're working with an async API that returns a
 promise, you simply call the `await()` function on it in order to "await" its
@@ -123,56 +135,6 @@ We also provide support for [coroutines](coroutines.md) and
 Coroutines allow consuming async APIs in a way that resembles a synchronous
 code flow using the `yield` keyword. You can also directly use promises as a
 core building block used in all our async APIs for maximum performance.
-
-### Compatibility mode
-
-Fibers are a core ingredient of PHP 8.1+, but the same syntax also works on
-older PHP versions to some degree if you only have limited concurrency.
-
-For production usage, we highly recommend using PHP 8.1+. At the moment, fibers
-are available as a development version by installing
-[react/async](https://github.com/reactphp/async) from a development branch
-like this:
-
-```bash
-$ composer require react/async:^4@dev
-```
-
-Installing this package version requires PHP 8.1+ (2021-11-25) as fibers are a
-core ingredient of PHP 8.1+. We understand that adoption of this very new PHP
-version is going to take some time, so we acknowledge that this is probably one
-of the largest limitations of using fibers at the moment.
-
-But don't worry, we're committed to providing long-term support (LTS) options
-and providing a smooth upgrade path. As such, we also provide limited support
-for older PHP versions using a compatible API without taking advantage of newer
-language features. By installing the v3 development version of this package, the
-same `await()` syntax also works on PHP 7.1+ to some degree if you only have
-limited concurrency. You can install either supported development version like
-this:
-
-```bash
-$ composer require react/async:"^4@dev || ^3@dev"
-```
-
-This way, you have a much smoother upgrade path, as you can already start using
-the future API for testing and development purposes and upgrade your PHP version
-for production use at a later time.
-
-> ⚠️ **Production usage**
->
-> For production usage, we highly recommend using PHP 8.1+. If you're using the
-> `await()` function in compatibility mode, it may stop the loop from running and
-> may print a warning like this:
->
-> ```
-> Warning: Loop restarted. Upgrade to react/async v4 recommended […]
-> ```
->
-> Internally, the compatibility mode will cause recursive loop executions when
-> dealing with concurrent requests. This should work fine for development
-> purposes and fast controllers with low concurrency, but may cause issues in
-> production with high concurrency.
 
 ### How do fibers work?
 
