@@ -340,6 +340,23 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
+    public function testCallableReturnsCallableThatThrowsWhenFactoryIsRecursiveClassName()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => function (): string {
+                return \stdClass::class;
+            }
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Factory for stdClass is recursive');
+        $callable($request);
+    }
+
     public function testCallableReturnsCallableForClassNameViaPsrContainer()
     {
         $request = new ServerRequest('GET', 'http://example.com/');

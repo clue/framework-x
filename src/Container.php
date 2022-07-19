@@ -23,11 +23,7 @@ class Container
         }
 
         foreach (($loader instanceof ContainerInterface ? [] : $loader) as $name => $value) {
-            if (\is_string($value)) {
-                $loader[$name] = static function () use ($value) {
-                    return $value;
-                };
-            } elseif (!$value instanceof \Closure && !$value instanceof $name) {
+            if (!\is_string($value) && !$value instanceof \Closure && !$value instanceof $name) {
                 throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
             }
         }
@@ -126,7 +122,13 @@ class Container
     private function load(string $name, int $depth = 64)
     {
         if (isset($this->container[$name])) {
-            if ($this->container[$name] instanceof \Closure) {
+            if (\is_string($this->container[$name])) {
+                if ($depth < 1) {
+                    throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
+                }
+
+                $this->container[$name] = $this->load($this->container[$name], $depth - 1);
+            } elseif ($this->container[$name] instanceof \Closure) {
                 // build list of factory parameters based on parameter types
                 $closure = new \ReflectionFunction($this->container[$name]);
                 $params = $this->loadFunctionParams($closure, $depth);
