@@ -209,7 +209,7 @@ the dependency injection container like this:
     require __DIR__ . '/../vendor/autoload.php';
 
     $container = new FrameworkX\Container([
-        Acme\Todo\HelloController::class => fn() => new Acme\Todo\HelloController();
+        Acme\Todo\HelloController::class => fn() => new Acme\Todo\HelloController()
     ]);
 
 
@@ -283,6 +283,36 @@ $container = new FrameworkX\Container([
 
 // …
 ```
+
+Factory functions used in the container configuration map may also reference
+string variables defined in the container configuration. This can be
+particularly useful when combining autowiring with some manual configuration
+like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$container = new FrameworkX\Container([
+    Acme\Todo\UserController::class => function (string $name) {
+        // example UserController class requires single string argument
+        return new Acme\Todo\UserController($name);
+    },
+    'name' => 'Acme'
+]);
+
+// …
+```
+
+> ℹ️ **Avoiding name conflicts**
+>
+> Note that class names and string variables share the same container
+> configuration map and as such might be subject to name collisions as a single
+> entry may only have a single value. For this reason, container variables will
+> only be used for container functions by default. We highly recommend using
+> namespaced class names like in the previous example. You may also want to make
+> sure that container variables use unique names prefixed with your vendor name.
 
 The container configuration may also be used to map a class name to a different
 class name that implements the same interface, either by mapping between two

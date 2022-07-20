@@ -10,10 +10,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Container
 {
-    /** @var array<class-string,object|callable():(object|class-string)>|ContainerInterface */
+    /** @var array<string,object|callable():(object|class-string)|string>|ContainerInterface */
     private $container;
 
-    /** @var array<class-string,callable():(object|class-string) | object | class-string>|ContainerInterface $loader */
+    /** @var array<string,callable():(object|class-string) | object | string>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
@@ -63,7 +63,7 @@ class Container
                 if ($this->container instanceof ContainerInterface) {
                     $handler = $this->container->get($class);
                 } else {
-                    $handler = $this->load($class);
+                    $handler = $this->loadObject($class);
                 }
             } catch (\Throwable $e) {
                 throw new \BadMethodCallException(
@@ -98,7 +98,7 @@ class Container
                 return new AccessLogHandler();
             }
         }
-        return $this->load(AccessLogHandler::class);
+        return $this->loadObject(AccessLogHandler::class);
     }
 
     /** @internal */
@@ -111,15 +111,16 @@ class Container
                 return new ErrorHandler();
             }
         }
-        return $this->load(ErrorHandler::class);
+        return $this->loadObject(ErrorHandler::class);
     }
 
     /**
-     * @param class-string $name
-     * @return object
-     * @throws \BadMethodCallException
+     * @template T
+     * @param class-string<T> $name
+     * @return T
+     * @throws \BadMethodCallException if object of type $name can not be loaded
      */
-    private function load(string $name, int $depth = 64)
+    private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
         if (isset($this->container[$name])) {
             if (\is_string($this->container[$name])) {
@@ -127,7 +128,7 @@ class Container
                     throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
                 }
 
-                $value = $this->load($this->container[$name], $depth - 1);
+                $value = $this->loadObject($this->container[$name], $depth - 1);
                 if (!$value instanceof $name) {
                     throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
                 }
@@ -136,7 +137,7 @@ class Container
             } elseif ($this->container[$name] instanceof \Closure) {
                 // build list of factory parameters based on parameter types
                 $closure = new \ReflectionFunction($this->container[$name]);
-                $params = $this->loadFunctionParams($closure, $depth);
+                $params = $this->loadFunctionParams($closure, $depth, true);
 
                 // invoke factory with list of parameters
                 $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
@@ -146,7 +147,7 @@ class Container
                         throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
                     }
 
-                    $value = $this->load($value, $depth - 1);
+                    $value = $this->loadObject($value, $depth - 1);
                 }
                 if (!$value instanceof $name) {
                     throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
@@ -154,6 +155,8 @@ class Container
 
                 $this->container[$name] = $value;
             }
+
+            assert($this->container[$name] instanceof $name);
 
             return $this->container[$name];
         }
@@ -178,13 +181,14 @@ class Container
 
         // build list of constructor parameters based on parameter types
         $ctor = $class->getConstructor();
-        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth);
+        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false);
 
         // instantiate with list of parameters
         return $this->container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
     }
 
-    private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth): array
+    /** @throws \BadMethodCallException if either parameter can not be loaded */
+    private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables): array
     {
         $params = [];
         foreach ($function->getParameters() as $parameter) {
@@ -214,6 +218,14 @@ class Container
             }
 
             assert($type instanceof \ReflectionNamedType);
+
+            // load string variables from container
+            if ($allowVariables && $type->getName() === 'string') {
+                $params[] = $this->loadVariable($parameter->getName());
+                continue;
+            }
+
+            // abort for other primitive types
             if ($type->isBuiltin()) {
                 throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
             }
@@ -223,12 +235,28 @@ class Container
                 throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
             }
 
-            $params[] = $this->load($type->getName(), $depth - 1);
+            $params[] = $this->loadObject($type->getName(), $depth - 1);
         }
 
         return $params;
     }
 
+    /** @throws \BadMethodCallException if $name is not a valid string variable */
+    private function loadVariable(string $name): string
+    {
+        if (!isset($this->container[$name])) {
+            throw new \BadMethodCallException('Container variable $' . $name . ' is not defined');
+        }
+
+        $value = $this->container[$name];
+        if (!\is_string($value)) {
+            throw new \BadMethodCallException('Container variable $' . $name . ' expected type string, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+        }
+
+        return $value;
+    }
+
+    /** @throws void */
     private static function parameterError(\ReflectionParameter $parameter): string
     {
         $name = $parameter->getDeclaringFunction()->getShortName();
