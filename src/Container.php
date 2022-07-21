@@ -10,10 +10,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Container
 {
-    /** @var array<string,object|callable():(object|string)|string>|ContainerInterface */
+    /** @var array<string,object|callable():(object|scalar)|scalar>|ContainerInterface */
     private $container;
 
-    /** @var array<string,callable():(object|string) | object | string>|ContainerInterface $loader */
+    /** @var array<string,callable():(object|scalar) | object | scalar>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
@@ -23,7 +23,7 @@ class Container
         }
 
         foreach (($loader instanceof ContainerInterface ? [] : $loader) as $name => $value) {
-            if (!\is_string($value) && !$value instanceof \Closure && !$value instanceof $name) {
+            if (!\is_scalar($value) && !$value instanceof \Closure && !$value instanceof $name) {
                 throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
             }
         }
@@ -154,6 +154,8 @@ class Container
                 }
 
                 $this->container[$name] = $value;
+            } elseif (\is_scalar($this->container[$name])) {
+                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . \gettype($this->container[$name]));
             }
 
             assert($this->container[$name] instanceof $name);
@@ -219,13 +221,13 @@ class Container
 
             assert($type instanceof \ReflectionNamedType);
 
-            // load string variables from container
-            if ($allowVariables && $type->getName() === 'string') {
-                $params[] = $this->loadVariable($parameter->getName(), $depth);
+            // load variables from container for primitive/scalar types
+            if ($allowVariables && \in_array($type->getName(), ['string', 'int', 'float', 'bool'])) {
+                $params[] = $this->loadVariable($parameter->getName(), $type->getName(), $depth);
                 continue;
             }
 
-            // abort for other primitive types
+            // abort for other primitive types (array etc.)
             if ($type->isBuiltin()) {
                 throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
             }
@@ -241,8 +243,11 @@ class Container
         return $params;
     }
 
-    /** @throws \BadMethodCallException if $name is not a valid string variable */
-    private function loadVariable(string $name, int $depth): string
+    /**
+     * @return string|int|float|bool
+     * @throws \BadMethodCallException if $name is not a valid scalar variable
+     */
+    private function loadVariable(string $name, string $type, int $depth) /*: string|int|float|bool (PHP 8.0+) */
     {
         if (!isset($this->container[$name])) {
             throw new \BadMethodCallException('Container variable $' . $name . ' is not defined');
@@ -260,16 +265,20 @@ class Container
             // invoke factory with list of parameters
             $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
 
-            if (!\is_string($value)) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' expected type string from factory, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+            if (!\is_scalar($value)) {
+                throw new \BadMethodCallException('Container variable $' . $name . ' expected scalar type from factory, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
             }
 
             $this->container[$name] = $value;
         }
 
         $value = $this->container[$name];
-        if (!\is_string($value)) {
-            throw new \BadMethodCallException('Container variable $' . $name . ' expected type string, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+        if (!\is_scalar($value)) {
+            throw new \BadMethodCallException('Container variable $' . $name . ' expected scalar type, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+        }
+
+        if (($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))) {
+            throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . \gettype($value));
         }
 
         return $value;

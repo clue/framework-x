@@ -240,7 +240,7 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
     }
 
-    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresStringVariable()
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresScalarVariables()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -259,10 +259,13 @@ class ContainerTest extends TestCase
         };
 
         $container = new Container([
-            \stdClass::class => function (string $username) {
-                return (object) ['name' => $username];
+            \stdClass::class => function (string $username, int $age, bool $admin, float $percent) {
+                return (object) ['name' => $username, 'age' => $age, 'admin' => $admin, 'percent' => $percent];
             },
-            'username' => 'Alice'
+            'username' => 'Alice',
+            'age' => 42,
+            'admin' => true,
+            'percent' => 0.5
         ]);
 
         $callable = $container->callable(get_class($controller));
@@ -271,10 +274,10 @@ class ContainerTest extends TestCase
         $response = $callable($request);
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+        $this->assertEquals('{"name":"Alice","age":42,"admin":true,"percent":0.5}', (string) $response->getBody());
     }
 
-    public function testCallableReturnsCallableForClassNameMappedFromFactoryWithStringVariableMappedFromFactory()
+    public function testCallableReturnsCallableForClassNameMappedFromFactoryWithScalarVariablesMappedFromFactory()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -293,12 +296,13 @@ class ContainerTest extends TestCase
         };
 
         $container = new Container([
-            \stdClass::class => function (string $username) {
-                return (object) ['name' => $username];
+            \stdClass::class => function (string $username, int $age, bool $admin, float $percent) {
+                return (object) ['name' => $username, 'age' => $age, 'admin' => $admin, 'percent' => $percent];
             },
-            'username' => function () {
-                return 'Alice';
-            }
+            'username' => function () { return 'Alice'; },
+            'age' => function () { return 42; },
+            'admin' => function () { return true; },
+            'percent' => function () { return 0.5; }
         ]);
 
         $callable = $container->callable(get_class($controller));
@@ -306,7 +310,7 @@ class ContainerTest extends TestCase
         $response = $callable($request);
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+        $this->assertEquals('{"name":"Alice","age":42,"admin":true,"percent":0.5}', (string) $response->getBody());
     }
 
     public function testCallableReturnsCallableForClassNameReferencingVariableMappedFromFactoryReferencingVariable()
@@ -436,7 +440,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $stdClass expected type string, but got stdClass');
+        $this->expectExceptionMessage('Container variable $stdClass expected scalar type, but got stdClass');
         $callable($request);
     }
 
@@ -463,18 +467,146 @@ class ContainerTest extends TestCase
                 return (object) ['name' => $http];
             },
             'http' => function () {
-                return 3;
+                return tmpfile();
             }
         ]);
 
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $http expected type string from factory, but got integer');
+        $this->expectExceptionMessage('Container variable $http expected scalar type from factory, but got resource');
         $callable($request);
     }
 
-    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesClassNameButGetsArbitraryString()
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesStringVariableMappedFromFactoryWithReturnsUnexpectedInteger()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (string $http) {
+                return (object) ['name' => $http];
+            },
+            'http' => 1
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Container variable $http expected type string, but got integer');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesIntVariableMappedFromFactoryWithReturnsUnexpectedString()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (int $http) {
+                return (object) ['name' => $http];
+            },
+            'http' => '1.1'
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Container variable $http expected type int, but got string');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesFloatVariableMappedFromFactoryWithReturnsUnexpectedString()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (float $percent) {
+                return (object) ['percent' => $percent];
+            },
+            'percent' => '100%'
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Container variable $percent expected type float, but got string');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesBoolVariableMappedFromFactoryWithReturnsUnexpectedString()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (bool $admin) {
+                return (object) ['admin' => $admin];
+            },
+            'admin' => 'Yes'
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Container variable $admin expected type bool, but got string');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesClassNameButGetsStringVariable()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -500,6 +632,35 @@ class ContainerTest extends TestCase
 
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Class Yes not found');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesClassNameButGetsIntVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => 42
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Map for stdClass contains unexpected integer');
         $callable($request);
     }
 
@@ -532,13 +693,13 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
-    public function testCtorThrowsWhenMapContainsInvalidInteger()
+    public function testCtorThrowsWhenMapContainsInvalidResource()
     {
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for stdClass contains unexpected integer');
+        $this->expectExceptionMessage('Map for stdClass contains unexpected resource');
 
         new Container([
-            \stdClass::class => 42
+            \stdClass::class => tmpfile()
         ]);
     }
 
