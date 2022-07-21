@@ -426,7 +426,7 @@ class ErrorHandlerTest extends TestCase
                 "bin��������ary"
             ],
             [
-                utf8_decode("hellö!"),
+                "hell\xF6!",
                 "hell�!"
             ]
         ];

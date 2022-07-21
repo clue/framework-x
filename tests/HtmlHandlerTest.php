@@ -59,7 +59,7 @@ class HtmlHandlerTest extends TestCase
                 'h&lt;e&gt;llo'
             ],
             [
-                utf8_decode('hellö.txt'),
+                "hell\xF6.txt",
                 'hell�.txt'
             ],
             [
