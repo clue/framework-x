@@ -280,6 +280,36 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
+    public function testCallableReturnsCallableThatThrowsWhenMapReferencesClassNameThatDoesNotMatchType()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => Response::class
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Factory for stdClass returned unexpected React\Http\Message\Response');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReturnsClassNameThatDoesNotMatchType()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => function () { return Response::class; }
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Factory for stdClass returned unexpected React\Http\Message\Response');
+        $callable($request);
+    }
+
     public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresInvalidClassName()
     {
         $request = new ServerRequest('GET', 'http://example.com/');

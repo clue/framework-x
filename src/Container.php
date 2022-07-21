@@ -127,7 +127,12 @@ class Container
                     throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
                 }
 
-                $this->container[$name] = $this->load($this->container[$name], $depth - 1);
+                $value = $this->load($this->container[$name], $depth - 1);
+                if (!$value instanceof $name) {
+                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
+                }
+
+                $this->container[$name] = $value;
             } elseif ($this->container[$name] instanceof \Closure) {
                 // build list of factory parameters based on parameter types
                 $closure = new \ReflectionFunction($this->container[$name]);
@@ -142,7 +147,8 @@ class Container
                     }
 
                     $value = $this->load($value, $depth - 1);
-                } elseif (!$value instanceof $name) {
+                }
+                if (!$value instanceof $name) {
                     throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
                 }
 
