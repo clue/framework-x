@@ -10,10 +10,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Container
 {
-    /** @var array<string,object|callable():(object|class-string)|string>|ContainerInterface */
+    /** @var array<string,object|callable():(object|string)|string>|ContainerInterface */
     private $container;
 
-    /** @var array<string,callable():(object|class-string) | object | string>|ContainerInterface $loader */
+    /** @var array<string,callable():(object|string) | object | string>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
@@ -221,7 +221,7 @@ class Container
 
             // load string variables from container
             if ($allowVariables && $type->getName() === 'string') {
-                $params[] = $this->loadVariable($parameter->getName());
+                $params[] = $this->loadVariable($parameter->getName(), $depth);
                 continue;
             }
 
@@ -242,10 +242,29 @@ class Container
     }
 
     /** @throws \BadMethodCallException if $name is not a valid string variable */
-    private function loadVariable(string $name): string
+    private function loadVariable(string $name, int $depth): string
     {
         if (!isset($this->container[$name])) {
             throw new \BadMethodCallException('Container variable $' . $name . ' is not defined');
+        }
+
+        if ($this->container[$name] instanceof \Closure) {
+            if ($depth < 1) {
+                throw new \BadMethodCallException('Container variable $' . $name . ' is recursive');
+            }
+
+            // build list of factory parameters based on parameter types
+            $closure = new \ReflectionFunction($this->container[$name]);
+            $params = $this->loadFunctionParams($closure, $depth - 1, true);
+
+            // invoke factory with list of parameters
+            $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
+
+            if (!\is_string($value)) {
+                throw new \BadMethodCallException('Container variable $' . $name . ' expected type string from factory, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+            }
+
+            $this->container[$name] = $value;
         }
 
         $value = $this->container[$name];

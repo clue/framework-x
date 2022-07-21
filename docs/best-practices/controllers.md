@@ -285,9 +285,9 @@ $container = new FrameworkX\Container([
 ```
 
 Factory functions used in the container configuration map may also reference
-string variables defined in the container configuration. This can be
-particularly useful when combining autowiring with some manual configuration
-like this:
+string variables defined in the container configuration. You may also use
+factory functions that return string variables. This can be particularly useful
+when combining autowiring with some manual configuration like this:
 
 ```php title="public/index.php"
 <?php
@@ -295,11 +295,12 @@ like this:
 require __DIR__ . '/../vendor/autoload.php';
 
 $container = new FrameworkX\Container([
-    Acme\Todo\UserController::class => function (string $name) {
-        // example UserController class requires single string argument
-        return new Acme\Todo\UserController($name);
+    Acme\Todo\UserController::class => function (string $name, string $hostname) {
+        // example UserController class requires two string arguments
+        return new Acme\Todo\UserController($name, $hostname);
     },
-    'name' => 'Acme'
+    'name' => 'Acme',
+    'hostname' => fn(): string => gethostname()
 ]);
 
 // …
