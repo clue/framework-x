@@ -553,3 +553,18 @@ and also any requests that can not be routed.
 You can also combine global middleware handlers (think logging) with additional
 middleware handlers for individual routes (think authentication).
 Global middleware handlers will always be called before route middleware handlers.
+
+## Built-in middleware
+
+### ErrorHandler
+
+> ⚠️ **Feature preview**
+>
+> This is a feature preview, i.e. it might not have made it into the current beta.
+> Give feedback to help us prioritize.
+> We also welcome [contributors](../getting-started/community.md) to help out!
+
+X ships with a built-in `ErrorHandler` middleware that is responsible for handling
+errors and exceptions returned from following middleware and controllers.
+This default error handling can be configured through the [`App`](app.md).
+See [error handling](app.md#error-handling) for more details.

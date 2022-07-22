@@ -8,7 +8,7 @@ use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
 
 /**
- * @internal
+ * @final
  */
 class ErrorHandler
 {
@@ -27,6 +27,7 @@ class ErrorHandler
      *     method never throws or resolves a rejected promise. If the next
      *     handler fails to return a valid response, it will be turned into a
      *     valid error response before returning.
+     * @throws void
      */
     public function __invoke(ServerRequestInterface $request, callable $next)
     {
@@ -105,6 +106,7 @@ class ErrorHandler
         } while (true);
     } // @codeCoverageIgnore
 
+    /** @internal */
     public function requestNotFound(): ResponseInterface
     {
         return $this->htmlResponse(
@@ -114,6 +116,7 @@ class ErrorHandler
         );
     }
 
+    /** @internal */
     public function requestMethodNotAllowed(array $allowedMethods): ResponseInterface
     {
         $methods = \implode('/', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods));
@@ -125,6 +128,7 @@ class ErrorHandler
         )->withHeader('Allow', \implode(', ', $allowedMethods));
     }
 
+    /** @internal */
     public function requestProxyUnsupported(): ResponseInterface
     {
         return $this->htmlResponse(
@@ -134,7 +138,7 @@ class ErrorHandler
         );
     }
 
-    public function errorInvalidException(\Throwable $e): ResponseInterface
+    private function errorInvalidException(\Throwable $e): ResponseInterface
     {
         $where = ' in ' . $this->where($e->getFile(), $e->getLine());
         $message = '<code>' . $this->html->escape($e->getMessage()) . '</code>';
@@ -147,7 +151,7 @@ class ErrorHandler
         );
     }
 
-    public function errorInvalidResponse($value): ResponseInterface
+    private function errorInvalidResponse($value): ResponseInterface
     {
         return $this->htmlResponse(
             Response::STATUS_INTERNAL_SERVER_ERROR,
@@ -157,7 +161,7 @@ class ErrorHandler
         );
     }
 
-    public function errorInvalidCoroutine($value, string $file, int $line): ResponseInterface
+    private function errorInvalidCoroutine($value, string $file, int $line): ResponseInterface
     {
         $where = ' near or before '. $this->where($file, $line) . '.';
 
@@ -184,7 +188,7 @@ class ErrorHandler
         );
     }
 
-    public function describeType($value): string
+    private function describeType($value): string
     {
         if ($value === null) {
             return 'null';

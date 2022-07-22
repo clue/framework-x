@@ -38,36 +38,42 @@ class App
      */
     public function __construct(...$middleware)
     {
-        $errorHandler = new ErrorHandler();
+        // new MiddlewareHandler([$fiberHandler, $accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
+        $handlers = [];
 
         $container = new Container();
         if ($middleware) {
-            foreach ($middleware as $i => $handler) {
+            foreach ($middleware as $handler) {
                 if ($handler instanceof Container) {
                     $container = $handler;
-                    unset($middleware[$i]);
+                } elseif ($handler === ErrorHandler::class) {
+                    throw new \TypeError('ErrorHandler may currently only be passed as instance');
                 } elseif (!\is_callable($handler)) {
-                    $middleware[$i] = $container->callable($handler);
+                    $handlers[] = $container->callable($handler);
+                } else {
+                    $handlers[] = $handler;
                 }
             }
         }
 
-        // new MiddlewareHandler([$fiberHandler, $accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
-        \array_unshift($middleware, $errorHandler);
+        // add default ErrorHandler as first handler unless it is already added explicitly
+        if (!($handlers[0] ?? null) instanceof ErrorHandler) {
+            \array_unshift($handlers, new ErrorHandler());
+        }
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
         if (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') {
-            \array_unshift($middleware, new AccessLogHandler());
+            \array_unshift($handlers, new AccessLogHandler());
         }
 
         // automatically start new fiber for each request on PHP 8.1+
         if (\PHP_VERSION_ID >= 80100) {
-            \array_unshift($middleware, new FiberHandler()); // @codeCoverageIgnore
+            \array_unshift($handlers, new FiberHandler()); // @codeCoverageIgnore
         }
 
         $this->router = new RouteHandler($container);
-        $middleware[] = $this->router;
-        $this->handler = new MiddlewareHandler($middleware);
+        $handlers[] = $this->router;
+        $this->handler = new MiddlewareHandler($handlers);
         $this->sapi = new SapiHandler();
     }
 
