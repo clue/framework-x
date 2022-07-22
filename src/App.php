@@ -44,22 +44,38 @@ class App
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
         $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server');
 
-        $container = new Container();
+        $container = $needsErrorHandler = new Container();
         if ($middleware) {
             $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
+                // load ErrorHandler instance from last Container
+                if ($handler === ErrorHandler::class) {
+                    $handler = $container->getErrorHandler();
+                }
+
+                // ensure AccessLogHandler is always followed by ErrorHandler
                 if ($needsErrorHandlerNext && !$handler instanceof ErrorHandler) {
                     break;
                 }
                 $needsErrorHandlerNext = false;
 
                 if ($handler instanceof Container) {
+                    // remember last Container to load any following class names
                     $container = $handler;
-                } elseif ($handler === ErrorHandler::class || $handler === AccessLogHandler::class) {
+
+                    // add default ErrorHandler from last Container before adding any other handlers, may be followed by other Container instances (unlikely)
+                    if (!$handlers) {
+                        $needsErrorHandler = $container;
+                    }
+                } elseif ($handler === AccessLogHandler::class) {
                     throw new \TypeError($handler . ' may currently only be passed as a middleware instance');
                 } elseif (!\is_callable($handler)) {
                     $handlers[] = $container->callable($handler);
                 } else {
+                    // don't need a default ErrorHandler if we're adding one as first handler or AccessLogHandler as first followed by one
+                    if ($needsErrorHandler && ($handler instanceof ErrorHandler || $handler instanceof AccessLogHandler) && !$handlers) {
+                        $needsErrorHandler = null;
+                    }
                     $handlers[] = $handler;
                     if ($handler instanceof AccessLogHandler) {
                         $needsAccessLog = false;
@@ -73,8 +89,8 @@ class App
         }
 
         // add default ErrorHandler as first handler unless it is already added explicitly
-        if (!($handlers[0] ?? null) instanceof ErrorHandler && !($handlers[0] ?? null) instanceof AccessLogHandler) {
-            \array_unshift($handlers, new ErrorHandler());
+        if ($needsErrorHandler instanceof Container) {
+            \array_unshift($handlers, $needsErrorHandler->getErrorHandler());
         }
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log

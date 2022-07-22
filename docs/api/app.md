@@ -194,24 +194,59 @@ the [`ErrorHandler`](middleware.md#errorhandler) to the list of middleware used.
 You may also explicitly pass an [`ErrorHandler`](middleware.md#errorhandler)
 middleware to the `App` like this:
 
+=== "Using middleware instances"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $app = new FrameworkX\App(
+        new FrameworkX\ErrorHandler()
+    );
+
+    // Register routes here, see routing…
+
+    $app->run();
+    ```
+
+=== "Using middleware names"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $app = new FrameworkX\App(
+        FrameworkX\ErrorHandler::class
+    );
+
+    // Register routes here, see routing…
+
+    $app->run();
+    ```
+
+If you do not explicitly pass an [`ErrorHandler`](middleware.md#errorhandler) or
+if you pass another middleware before an [`ErrorHandler`](middleware.md#errorhandler)
+to the `App`, a default error handler will be added as a first handler automatically.
+You may use the [DI container configuration](../best-practices/controllers.md#container-configuration)
+to configure the default error handler like this:
+
 ```php title="public/index.php"
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$app = new FrameworkX\App(
-    new FrameworkX\ErrorHandler()
-);
+$container = new FrameworkX\Container([
+    FrameworkX\ErrorHandler::class => fn () => new FrameworkX\ErrorHandler()
+]);
+
+$app = new FrameworkX\App($container);
 
 // Register routes here, see routing…
 
 $app->run();
 ```
-
-> ⚠️ **Feature preview**
->
-> Note that the [`ErrorHandler`](middleware.md#errorhandler) may currently only
-> be passed as a middleware instance and not as a middleware name to the `App`.
 
 By default, this error message contains only few details to the client to avoid
 leaking too much internal information.

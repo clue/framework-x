@@ -92,6 +92,19 @@ class Container
         };
     }
 
+    /** @internal */
+    public function getErrorHandler(): ErrorHandler
+    {
+        if ($this->container instanceof ContainerInterface) {
+            if ($this->container->has(ErrorHandler::class)) {
+                return $this->container->get(ErrorHandler::class);
+            } else {
+                return new ErrorHandler();
+            }
+        }
+        return $this->load(ErrorHandler::class);
+    }
+
     /**
      * @param class-string $name
      * @return object
