@@ -556,6 +556,19 @@ Global middleware handlers will always be called before route middleware handler
 
 ## Built-in middleware
 
+### AccessLogHandler
+
+> ⚠️ **Feature preview**
+>
+> This is a feature preview, i.e. it might not have made it into the current beta.
+> Give feedback to help us prioritize.
+> We also welcome [contributors](../getting-started/community.md) to help out!
+
+X ships with a built-in `AccessLogHandler` middleware that is responsible for
+logging any requests and responses from following middleware and controllers.
+This default access log handling can be configured through the [`App`](app.md).
+See [access logging](app.md#access-logging) for more details.
+
 ### ErrorHandler
 
 > ⚠️ **Feature preview**

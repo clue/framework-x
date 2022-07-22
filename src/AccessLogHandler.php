@@ -9,7 +9,7 @@ use React\Promise\PromiseInterface;
 use React\Stream\ReadableStreamInterface;
 
 /**
- * @internal
+ * @final
  */
 class AccessLogHandler
 {

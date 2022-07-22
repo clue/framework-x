@@ -218,3 +218,55 @@ leaking too much internal information.
 If you want to implement custom error handling, you're recommended to either
 catch any exceptions your own or use a custom [middleware handler](middleware.md)
 to catch any exceptions in your application.
+
+## Access log
+
+If you're using X with its [built-in web server](../best-practices/deployment.md#built-in-web-server),
+it will log all requests and responses to console output (`STDOUT`) by default.
+
+```bash
+$ php public/index.php
+2023-07-21 17:30:03.617 Listening on http://0.0.0.0:8080
+2023-07-21 17:30:03.725 127.0.0.1 "GET / HTTP/1.1" 200 13 0.000
+2023-07-21 17:30:03.742 127.0.0.1 "GET /unknown HTTP/1.1" 404 956 0.000
+```
+
+> ℹ️ **Framework X runs anywhere**
+>
+> This example uses the efficient built-in web server written in pure PHP.
+> We also support running behind traditional web server setups like Apache,
+> nginx, and more. If you're using X behind a traditional web server, X will not
+> write an access log itself, but your web server of choice can be configured to
+> write an access log instead.
+> See [production deployment](../best-practices/deployment.md) for more details.
+
+Internally, the `App` will automatically add a default access log handler by
+adding the [`AccessLogHandler`](middleware.md#accessloghandler) to the list of
+middleware used. You may also explicitly pass an [`AccessLogHandler`](middleware.md#accessloghandler)
+middleware to the `App` like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$app = new FrameworkX\App(
+    new FrameworkX\AccessLogHandler(),
+    new FrameworkX\ErrorHandler()
+);
+
+// Register routes here, see routing…
+
+$app->run();
+```
+
+> ⚠️ **Feature preview**
+>
+> Note that the [`AccessLogHandler`](middleware.md#accessloghandler) may
+> currently only be passed as a global middleware instance and not as a global
+> middleware name to the `App` and may not be used for individual routes.
+
+If you pass an [`AccessLogHandler`](middleware.md#accessloghandler) to the `App`,
+it must be followed by an [`ErrorHandler`](middleware.md#errorhandler) like in
+the previous example. See also [error handling](#error-handling) for more
+details.

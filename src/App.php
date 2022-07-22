@@ -41,28 +41,44 @@ class App
         // new MiddlewareHandler([$fiberHandler, $accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
         $handlers = [];
 
+        // only log for built-in webserver and PHP development webserver by default, others have their own access log
+        $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server');
+
         $container = new Container();
         if ($middleware) {
+            $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
+                if ($needsErrorHandlerNext && !$handler instanceof ErrorHandler) {
+                    break;
+                }
+                $needsErrorHandlerNext = false;
+
                 if ($handler instanceof Container) {
                     $container = $handler;
-                } elseif ($handler === ErrorHandler::class) {
-                    throw new \TypeError('ErrorHandler may currently only be passed as instance');
+                } elseif ($handler === ErrorHandler::class || $handler === AccessLogHandler::class) {
+                    throw new \TypeError($handler . ' may currently only be passed as a middleware instance');
                 } elseif (!\is_callable($handler)) {
                     $handlers[] = $container->callable($handler);
                 } else {
                     $handlers[] = $handler;
+                    if ($handler instanceof AccessLogHandler) {
+                        $needsAccessLog = false;
+                        $needsErrorHandlerNext = true;
+                    }
                 }
+            }
+            if ($needsErrorHandlerNext) {
+                throw new \TypeError('AccessLogHandler must be followed by ErrorHandler');
             }
         }
 
         // add default ErrorHandler as first handler unless it is already added explicitly
-        if (!($handlers[0] ?? null) instanceof ErrorHandler) {
+        if (!($handlers[0] ?? null) instanceof ErrorHandler && !($handlers[0] ?? null) instanceof AccessLogHandler) {
             \array_unshift($handlers, new ErrorHandler());
         }
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
-        if (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') {
+        if ($needsAccessLog) {
             \array_unshift($handlers, new AccessLogHandler());
         }
 
