@@ -280,28 +280,68 @@ adding the [`AccessLogHandler`](middleware.md#accessloghandler) to the list of
 middleware used. You may also explicitly pass an [`AccessLogHandler`](middleware.md#accessloghandler)
 middleware to the `App` like this:
 
-```php title="public/index.php"
-<?php
+=== "Using middleware instances"
 
-require __DIR__ . '/../vendor/autoload.php';
+    ```php title="public/index.php"
+    <?php
 
-$app = new FrameworkX\App(
-    new FrameworkX\AccessLogHandler(),
-    new FrameworkX\ErrorHandler()
-);
+    require __DIR__ . '/../vendor/autoload.php';
 
-// Register routes here, see routing…
+    $app = new FrameworkX\App(
+        new FrameworkX\AccessLogHandler(),
+        new FrameworkX\ErrorHandler()
+    );
 
-$app->run();
-```
+    // Register routes here, see routing…
+
+    $app->run();
+    ```
+
+=== "Using middleware names"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $app = new FrameworkX\App(
+        FrameworkX\AccessLogHandler::class,
+        FrameworkX\ErrorHandler::class
+    );
+
+    // Register routes here, see routing…
+
+    $app->run();
+    ```
 
 > ⚠️ **Feature preview**
 >
 > Note that the [`AccessLogHandler`](middleware.md#accessloghandler) may
-> currently only be passed as a global middleware instance and not as a global
-> middleware name to the `App` and may not be used for individual routes.
+> currently only be passed as a global middleware to the `App` and may not be
+> used for individual routes.
 
 If you pass an [`AccessLogHandler`](middleware.md#accessloghandler) to the `App`,
 it must be followed by an [`ErrorHandler`](middleware.md#errorhandler) like in
 the previous example. See also [error handling](#error-handling) for more
 details.
+
+If you do not explicitly pass an [`AccessLogHandler`](middleware.md#accessloghandler)
+to the `App`, a default access log handler will be added as a first handler automatically.
+You may use the [DI container configuration](../best-practices/controllers.md#container-configuration)
+to configure the default access log handler like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$container = new FrameworkX\Container([
+    FrameworkX\AccessLogHandler::class => fn () => new FrameworkX\AccessLogHandler()
+]);
+
+$app = new FrameworkX\App($container);
+
+// Register routes here, see routing…
+
+$app->run();
+```

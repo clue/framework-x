@@ -41,15 +41,18 @@ class App
         // new MiddlewareHandler([$fiberHandler, $accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
         $handlers = [];
 
-        // only log for built-in webserver and PHP development webserver by default, others have their own access log
-        $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server');
-
         $container = $needsErrorHandler = new Container();
+
+        // only log for built-in webserver and PHP development webserver by default, others have their own access log
+        $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') ? $container : null;
+
         if ($middleware) {
             $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
-                // load ErrorHandler instance from last Container
-                if ($handler === ErrorHandler::class) {
+                // load AccessLogHandler and ErrorHandler instance from last Container
+                if ($handler === AccessLogHandler::class) {
+                    $handler = $container->getAccessLogHandler();
+                } elseif ($handler === ErrorHandler::class) {
                     $handler = $container->getErrorHandler();
                 }
 
@@ -65,10 +68,8 @@ class App
 
                     // add default ErrorHandler from last Container before adding any other handlers, may be followed by other Container instances (unlikely)
                     if (!$handlers) {
-                        $needsErrorHandler = $container;
+                        $needsErrorHandler = $needsAccessLog = $container;
                     }
-                } elseif ($handler === AccessLogHandler::class) {
-                    throw new \TypeError($handler . ' may currently only be passed as a middleware instance');
                 } elseif (!\is_callable($handler)) {
                     $handlers[] = $container->callable($handler);
                 } else {
@@ -78,7 +79,7 @@ class App
                     }
                     $handlers[] = $handler;
                     if ($handler instanceof AccessLogHandler) {
-                        $needsAccessLog = false;
+                        $needsAccessLog = null;
                         $needsErrorHandlerNext = true;
                     }
                 }
@@ -94,8 +95,8 @@ class App
         }
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
-        if ($needsAccessLog) {
-            \array_unshift($handlers, new AccessLogHandler());
+        if ($needsAccessLog instanceof Container) {
+            \array_unshift($handlers, $needsAccessLog->getAccessLogHandler());
         }
 
         // automatically start new fiber for each request on PHP 8.1+
