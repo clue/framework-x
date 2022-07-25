@@ -92,6 +92,32 @@ class Container
         };
     }
 
+    /** @internal */
+    public function getAccessLogHandler(): AccessLogHandler
+    {
+        if ($this->container instanceof ContainerInterface) {
+            if ($this->container->has(AccessLogHandler::class)) {
+                return $this->container->get(AccessLogHandler::class);
+            } else {
+                return new AccessLogHandler();
+            }
+        }
+        return $this->load(AccessLogHandler::class);
+    }
+
+    /** @internal */
+    public function getErrorHandler(): ErrorHandler
+    {
+        if ($this->container instanceof ContainerInterface) {
+            if ($this->container->has(ErrorHandler::class)) {
+                return $this->container->get(ErrorHandler::class);
+            } else {
+                return new ErrorHandler();
+            }
+        }
+        return $this->load(ErrorHandler::class);
+    }
+
     /**
      * @param class-string $name
      * @return object

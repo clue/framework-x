@@ -2,7 +2,9 @@
 
 namespace FrameworkX\Tests;
 
+use FrameworkX\AccessLogHandler;
 use FrameworkX\Container;
+use FrameworkX\ErrorHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -380,6 +382,106 @@ class ContainerTest extends TestCase
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Request handler class FooBar failed to load: Unable to load class');
         $callable($request);
+    }
+
+    public function testGetAccessLogHandlerReturnsDefaultAccessLogHandlerInstance()
+    {
+        $container = new Container([]);
+
+        $accessLogHandler = $container->getAccessLogHandler();
+
+        $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
+    }
+
+    public function testGetAccessLogHandlerReturnsAccessLogHandlerInstanceFromMap()
+    {
+        $accessLogHandler = new AccessLogHandler();
+
+        $container = new Container([
+            AccessLogHandler::class => $accessLogHandler
+        ]);
+
+        $ret = $container->getAccessLogHandler();
+
+        $this->assertSame($accessLogHandler, $ret);
+    }
+
+    public function testGetAccessLogHandlerReturnsAccessLogHandlerInstanceFromPsrContainer()
+    {
+        $accessLogHandler = new AccessLogHandler();
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(AccessLogHandler::class)->willReturn(true);
+        $psr->expects($this->once())->method('get')->with(AccessLogHandler::class)->willReturn($accessLogHandler);
+
+        $container = new Container($psr);
+
+        $ret = $container->getAccessLogHandler();
+
+        $this->assertSame($accessLogHandler, $ret);
+    }
+
+    public function testGetAccessLogHandlerReturnsDefaultAccessLogHandlerInstanceIfPsrContainerHasNoEntry()
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(AccessLogHandler::class)->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        $container = new Container($psr);
+
+        $accessLogHandler = $container->getAccessLogHandler();
+
+        $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
+    }
+
+    public function testGetErrorHandlerReturnsDefaultErrorHandlerInstance()
+    {
+        $container = new Container([]);
+
+        $errorHandler = $container->getErrorHandler();
+
+        $this->assertInstanceOf(ErrorHandler::class, $errorHandler);
+    }
+
+    public function testGetErrorHandlerReturnsErrorHandlerInstanceFromMap()
+    {
+        $errorHandler = new ErrorHandler();
+
+        $container = new Container([
+            ErrorHandler::class => $errorHandler
+        ]);
+
+        $ret = $container->getErrorHandler();
+
+        $this->assertSame($errorHandler, $ret);
+    }
+
+    public function testGetErrorHandlerReturnsErrorHandlerInstanceFromPsrContainer()
+    {
+        $errorHandler = new ErrorHandler();
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(ErrorHandler::class)->willReturn(true);
+        $psr->expects($this->once())->method('get')->with(ErrorHandler::class)->willReturn($errorHandler);
+
+        $container = new Container($psr);
+
+        $ret = $container->getErrorHandler();
+
+        $this->assertSame($errorHandler, $ret);
+    }
+
+    public function testGetErrorHandlerReturnsDefaultErrorHandlerInstanceIfPsrContainerHasNoEntry()
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(ErrorHandler::class)->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        $container = new Container($psr);
+
+        $errorHandler = $container->getErrorHandler();
+
+        $this->assertInstanceOf(ErrorHandler::class, $errorHandler);
     }
 
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler()
