@@ -1,8 +1,8 @@
 <?php
 
-namespace FrameworkX\Tests;
+namespace FrameworkX\Tests\Io;
 
-use FrameworkX\SapiHandler;
+use FrameworkX\Io\SapiHandler;
 use PHPUnit\Framework\TestCase;
 use React\Http\Message\Response;
 use React\Stream\ThroughStream;

@@ -1,6 +1,6 @@
 <?php
 
-namespace FrameworkX;
+namespace FrameworkX\Io;
 
 use Psr\Http\Message\ServerRequestInterface;
 

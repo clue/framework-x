@@ -2,6 +2,7 @@
 
 namespace FrameworkX;
 
+use FrameworkX\Io\HtmlHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;

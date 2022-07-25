@@ -1,8 +1,8 @@
 <?php
 
-namespace Framework\Tests;
+namespace Framework\Tests\Io;
 
-use FrameworkX\RedirectHandler;
+use FrameworkX\Io\RedirectHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
