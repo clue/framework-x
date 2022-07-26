@@ -215,6 +215,19 @@ class AccessLogHandlerTest extends TestCase
         $stream->write('hello');
     }
 
+    public function testInvokeWithRemoteAddrAttributePrintsRequestLogWithIpFromAttribute()
+    {
+        $handler = new AccessLogHandler();
+
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $request = $request->withAttribute('remote_addr', '10.0.0.1');
+        $response = new Response(200, [], "Hello\n");
+
+        // 2021-01-29 12:22:01.717 10.0.0.1 "GET /users HTTP/1.1" 200 6 0.000\n
+        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 10\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 6 0\.0\d\d" . PHP_EOL . "$/");
+        $handler($request, function () use ($response) { return $response; });
+    }
+
     public function testInvokeWithoutRemoteAddressPrintsRequestLogWithDashAsPlaceholder()
     {
         $handler = new AccessLogHandler();

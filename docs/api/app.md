@@ -345,3 +345,76 @@ $app = new FrameworkX\App($container);
 
 $app->run();
 ```
+
+X supports running behind reverse proxies just fine. However, by default it will
+see the IP address of the last proxy server as the client IP address (this will
+often be `127.0.0.1`). You can get the original client IP address if you configure
+your proxy server to forward the original client IP address in the `X-Forwarded-For`
+(XFF) or `Forwarded` HTTP request header. If you want to use these trusted headers,
+you may use a custom middleware to read the IP from this header before passing
+it to the [`AccessLogHandler`](middleware.md#accessloghandler) like this:
+
+=== "Using middleware instances"
+
+    ```php title="public/index.php"
+    <?php
+
+    use Acme\Todo\TrustedProxyMiddleware;
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $app = new FrameworkX\App(
+        new TrustedProxyMiddleware(),
+        new FrameworkX\AccessLogHandler(),
+        new FrameworkX\ErrorHandler()
+    );
+
+    // Register routes here, see routing…
+
+    $app->run();
+    ```
+
+=== "Using middleware names"
+
+    ```php title="public/index.php"
+    <?php
+
+    use Acme\Todo\TrustedProxyMiddleware;
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $app = new FrameworkX\App(
+        TrustedProxyMiddleware::class,
+        FrameworkX\AccessLogHandler::class,
+        FrameworkX\ErrorHandler::class
+    );
+
+    // Register routes here, see routing…
+
+    $app->run();
+    ```
+
+```php title="src/TrustedProxyMiddleware.php"
+<?php
+
+namespace Acme\Todo;
+
+use Psr\Http\Message\ServerRequestInterface;
+
+class TrustedProxyMiddleware
+{
+    public function __invoke(ServerRequestInterface $request, callable $next)
+    {
+        // use 127.0.0.1 as trusted proxy to read from X-Forwarded-For (XFF)
+        $remote_addr = $request->getAttribute('remote_addr') ?? $request->getServerParams()['REMOTE_ADDR'] ?? null;
+        if ($remote_addr === '127.0.0.1' && $request->hasHeader('X-Forwarded-For')) {
+            $remote_addr = preg_replace('/,.*/', '', $request->getHeaderLine('X-Forwarded-For'));
+            $request = $request->withAttribute('remote_addr', $remote_addr);
+        }
+
+        return $next($request);
+    }
+}
+```
+
+See also [middleware handling](middleware.md) for more details.
