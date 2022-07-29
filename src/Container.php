@@ -209,16 +209,8 @@ class Container
      */
     private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables) /*: mixed (PHP 8.0+) */
     {
-        // ensure parameter is typed
         $type = $parameter->getType();
-        if ($type === null) {
-            if ($parameter->isDefaultValueAvailable()) {
-                return $parameter->getDefaultValue();
-            }
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' has no type');
-        }
-
-        $hasDefault = $parameter->isDefaultValueAvailable() || $parameter->allowsNull();
+        $hasDefault = $parameter->isDefaultValueAvailable() || ((!$type instanceof \ReflectionNamedType || $type->getName() !== 'mixed') && $parameter->allowsNull());
 
         // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
         if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
@@ -228,26 +220,34 @@ class Container
             throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type);
         } // @codeCoverageIgnoreEnd
 
-        assert($type instanceof \ReflectionNamedType);
-
         // load container variables if parameter name is known
+        assert($type === null || $type instanceof \ReflectionNamedType);
         if ($allowVariables && isset($this->container[$parameter->getName()])) {
-            return $this->loadVariable($parameter->getName(), $type->getName(), $depth);
+            return $this->loadVariable($parameter->getName(), $type === null ? 'mixed' : $type->getName(), $depth);
         }
 
-        // use null for nullable arguments if not already loaded above
-        if ($hasDefault && !isset($this->container[$type->getName()])) {
+        // abort if parameter is untyped and not explicitly defined by container variable
+        if ($type === null) {
+            assert($parameter->allowsNull());
+            if ($parameter->isDefaultValueAvailable()) {
+                return $parameter->getDefaultValue();
+            }
+            throw new \BadMethodCallException(self::parameterError($parameter) . ' has no type');
+        }
+
+        // use default/nullable argument if not loadable as container variable or by type
+        assert($type instanceof \ReflectionNamedType);
+        if ($hasDefault && ($type->isBuiltin() || !isset($this->container[$type->getName()]))) {
             return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
         }
 
-        // abort if required container variable is not defined
-        if ($allowVariables && \in_array($type->getName(), ['string', 'int', 'float', 'bool'])) {
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' is not defined');
-        }
-
-        // abort for other primitive types (array etc.)
+        // abort if required container variable is not defined or for any other primitive types (array etc.)
         if ($type->isBuiltin()) {
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
+            if ($allowVariables) {
+                throw new \BadMethodCallException(self::parameterError($parameter) . ' is not defined');
+            } else {
+                throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
+            }
         }
 
         // abort for unreasonably deep nesting or recursive types
@@ -286,6 +286,11 @@ class Container
 
         $value = $this->container[$name];
         assert(\is_object($value) || \is_scalar($value));
+
+        // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
+        if ($type === 'mixed') {
+            return $value;
+        }
 
         if (
             (\is_object($value) && !$value instanceof $type) ||
