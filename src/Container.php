@@ -204,50 +204,60 @@ class Container
                 break;
             }
 
-            // ensure parameter is typed
-            $type = $parameter->getType();
-            if ($type === null) {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' has no type');
-            }
-
-            // if allowed, use null value without injecting any instances
-            assert($type instanceof \ReflectionType);
-            if ($type->allowsNull()) {
-                $params[] = null;
-                continue;
-            }
-
-            // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
-            if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type); // @codeCoverageIgnore
-            }
-
-            assert($type instanceof \ReflectionNamedType);
-
-            // load variables from container for primitive/scalar types
-            if ($allowVariables && \in_array($type->getName(), ['string', 'int', 'float', 'bool'])) {
-                $params[] = $this->loadVariable($parameter->getName(), $type->getName(), $depth);
-                continue;
-            }
-
-            // abort for other primitive types (array etc.)
-            if ($type->isBuiltin()) {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
-            }
-
-            // abort for unreasonably deep nesting or recursive types
-            if ($depth < 1) {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
-            }
-
-            if ($allowVariables && isset($this->container[$parameter->getName()])) {
-                $params[] = $this->loadVariable($parameter->getName(), $type->getName(), $depth);
-            } else {
-                $params[] = $this->loadObject($type->getName(), $depth - 1);
-            }
+            $params[] = $this->loadParameter($parameter, $depth, $allowVariables);
         }
 
         return $params;
+    }
+
+    /**
+     * @return mixed
+     * @throws \BadMethodCallException if $parameter can not be loaded
+     */
+    private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables) /*: mixed (PHP 8.0+) */
+    {
+        // ensure parameter is typed
+        $type = $parameter->getType();
+        if ($type === null) {
+            throw new \BadMethodCallException(self::parameterError($parameter) . ' has no type');
+        }
+
+        // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
+        if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
+            if ($type->allowsNull()) {
+                return null;
+            }
+            throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type);
+        } // @codeCoverageIgnoreEnd
+
+        assert($type instanceof \ReflectionNamedType);
+
+        // load container variables if parameter name is known
+        if ($allowVariables && isset($this->container[$parameter->getName()])) {
+            return $this->loadVariable($parameter->getName(), $type->getName(), $depth);
+        }
+
+        // use null for nullable arguments if not already loaded above
+        if ($type->allowsNull() && !isset($this->container[$type->getName()])) {
+            return null;
+        }
+
+        // abort if required container variable is not defined
+        if ($allowVariables && \in_array($type->getName(), ['string', 'int', 'float', 'bool'])) {
+            throw new \BadMethodCallException(self::parameterError($parameter) . ' is not defined');
+        }
+
+        // abort for other primitive types (array etc.)
+        if ($type->isBuiltin()) {
+            throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
+        }
+
+        // abort for unreasonably deep nesting or recursive types
+        if ($depth < 1) {
+            throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
+        }
+
+        return $this->loadObject($type->getName(), $depth - 1);
     }
 
     /**
@@ -256,10 +266,7 @@ class Container
      */
     private function loadVariable(string $name, string $type, int $depth) /*: object|string|int|float|bool (PHP 8.0+) */
     {
-        if (!isset($this->container[$name])) {
-            throw new \BadMethodCallException('Container variable $' . $name . ' is not defined');
-        }
-
+        assert(isset($this->container[$name]));
         if ($this->container[$name] instanceof \Closure) {
             if ($depth < 1) {
                 throw new \BadMethodCallException('Container variable $' . $name . ' is recursive');

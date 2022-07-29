@@ -189,7 +189,8 @@ covers most common use cases:
   [composer autoloading](#composer-autoloading) above.
 * Each class may or may not have a constructor.
 * If the constructor has an optional argument, it will be omitted.
-* If the constructor has a nullable argument, it will be given a `null` value.
+* If the constructor has a nullable argument, it will be given a `null` value
+  unless an explicit [container configuration](#container-configuration) is used.
 * If the constructor references another class, it will load this class next.
 
 This covers most common use cases where the request handler class uses a
@@ -290,22 +291,43 @@ scalar value for container variables or factory functions that return any such
 value. This can be particularly useful when combining autowiring with some
 manual configuration like this:
 
-```php title="public/index.php"
-<?php
+=== "Scalar values"
 
-require __DIR__ . '/../vendor/autoload.php';
+    ```php title="public/index.php"
+    <?php
 
-$container = new FrameworkX\Container([
-    Acme\Todo\UserController::class => function (bool $debug, string $hostname) {
-        // example UserController class uses two container variables
-        return new Acme\Todo\UserController($debug, $hostname);
-    },
-    'debug' => false,
-    'hostname' => fn(): string => gethostname()
-]);
+    require __DIR__ . '/../vendor/autoload.php';
 
-// …
-```
+    $container = new FrameworkX\Container([
+        Acme\Todo\UserController::class => function (bool $debug, string $hostname) {
+            // example UserController class uses two container variables
+            return new Acme\Todo\UserController($debug, $hostname);
+        },
+        'debug' => false,
+        'hostname' => fn(): string => gethostname()
+    ]);
+
+    // …
+    ```
+
+=== "Nullable values"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        Acme\Todo\UserController::class => function (?string $name) {
+            // example UserController class uses $name, defaults to null if not set
+            return new Acme\Todo\UserController($name ?? 'ACME');
+        },
+        'name' => 'Demo'
+    ]);
+
+
+    // …
+    ```
 
 > ℹ️ **Avoiding name collisions**
 >
