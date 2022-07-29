@@ -23,7 +23,10 @@ class Container
         }
 
         foreach (($loader instanceof ContainerInterface ? [] : $loader) as $name => $value) {
-            if (!\is_scalar($value) && !$value instanceof \Closure && !$value instanceof $name) {
+            if (
+                (!\is_object($value) && !\is_scalar($value)) ||
+                (!$value instanceof $name && !$value instanceof \Closure && !\is_string($value) && \strpos($name, '\\') !== false)
+            ) {
                 throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
             }
         }
@@ -154,8 +157,8 @@ class Container
                 }
 
                 $this->container[$name] = $value;
-            } elseif (\is_scalar($this->container[$name])) {
-                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . \gettype($this->container[$name]));
+            } elseif (!$this->container[$name] instanceof $name) {
+                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (\is_object($this->container[$name]) ? \get_class($this->container[$name]) : \gettype($this->container[$name])));
             }
 
             assert($this->container[$name] instanceof $name);
@@ -237,17 +240,21 @@ class Container
                 throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
             }
 
-            $params[] = $this->loadObject($type->getName(), $depth - 1);
+            if ($allowVariables && isset($this->container[$parameter->getName()])) {
+                $params[] = $this->loadVariable($parameter->getName(), $type->getName(), $depth);
+            } else {
+                $params[] = $this->loadObject($type->getName(), $depth - 1);
+            }
         }
 
         return $params;
     }
 
     /**
-     * @return string|int|float|bool
-     * @throws \BadMethodCallException if $name is not a valid scalar variable
+     * @return object|string|int|float|bool
+     * @throws \BadMethodCallException if $name is not a valid container variable
      */
-    private function loadVariable(string $name, string $type, int $depth) /*: string|int|float|bool (PHP 8.0+) */
+    private function loadVariable(string $name, string $type, int $depth) /*: object|string|int|float|bool (PHP 8.0+) */
     {
         if (!isset($this->container[$name])) {
             throw new \BadMethodCallException('Container variable $' . $name . ' is not defined');
@@ -265,20 +272,22 @@ class Container
             // invoke factory with list of parameters
             $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
 
-            if (!\is_scalar($value)) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' expected scalar type from factory, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+            if (!\is_object($value) && !\is_scalar($value)) {
+                throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar from factory, but got ' . \gettype($value));
             }
 
             $this->container[$name] = $value;
         }
 
         $value = $this->container[$name];
-        if (!\is_scalar($value)) {
-            throw new \BadMethodCallException('Container variable $' . $name . ' expected scalar type, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
-        }
+        assert(\is_object($value) || \is_scalar($value));
 
-        if (($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))) {
-            throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . \gettype($value));
+        if (
+            (\is_object($value) && !$value instanceof $type) ||
+            (!\is_object($value) && !\in_array($type, ['string', 'int', 'float', 'bool'])) ||
+            ($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))
+        ) {
+            throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
         }
 
         return $value;
