@@ -285,8 +285,8 @@ $container = new FrameworkX\Container([
 ```
 
 Factory functions used in the container configuration map may also reference
-string variables defined in the container configuration. You may also use
-factory functions that return string variables. This can be particularly useful
+scalar variables defined in the container configuration. You may also use
+factory functions that return scalar variables. This can be particularly useful
 when combining autowiring with some manual configuration like this:
 
 ```php title="public/index.php"
@@ -295,11 +295,11 @@ when combining autowiring with some manual configuration like this:
 require __DIR__ . '/../vendor/autoload.php';
 
 $container = new FrameworkX\Container([
-    Acme\Todo\UserController::class => function (string $name, string $hostname) {
-        // example UserController class requires two string arguments
-        return new Acme\Todo\UserController($name, $hostname);
+    Acme\Todo\UserController::class => function (bool $debug, string $hostname) {
+        // example UserController class requires two scalar arguments
+        return new Acme\Todo\UserController($debug, $hostname);
     },
-    'name' => 'Acme',
+    'debug' => false,
     'hostname' => fn(): string => gethostname()
 ]);
 
@@ -308,7 +308,7 @@ $container = new FrameworkX\Container([
 
 > ℹ️ **Avoiding name conflicts**
 >
-> Note that class names and string variables share the same container
+> Note that class names and scalar variables share the same container
 > configuration map and as such might be subject to name collisions as a single
 > entry may only have a single value. For this reason, container variables will
 > only be used for container functions by default. We highly recommend using
