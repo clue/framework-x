@@ -197,13 +197,6 @@ class Container
     {
         $params = [];
         foreach ($function->getParameters() as $parameter) {
-            assert($parameter instanceof \ReflectionParameter);
-
-            // stop building parameters when encountering first optional parameter
-            if ($parameter->isOptional()) {
-                break;
-            }
-
             $params[] = $this->loadParameter($parameter, $depth, $allowVariables);
         }
 
@@ -219,13 +212,18 @@ class Container
         // ensure parameter is typed
         $type = $parameter->getType();
         if ($type === null) {
+            if ($parameter->isDefaultValueAvailable()) {
+                return $parameter->getDefaultValue();
+            }
             throw new \BadMethodCallException(self::parameterError($parameter) . ' has no type');
         }
 
+        $hasDefault = $parameter->isDefaultValueAvailable() || $parameter->allowsNull();
+
         // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
         if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
-            if ($type->allowsNull()) {
-                return null;
+            if ($hasDefault) {
+                return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
             }
             throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type);
         } // @codeCoverageIgnoreEnd
@@ -238,8 +236,8 @@ class Container
         }
 
         // use null for nullable arguments if not already loaded above
-        if ($type->allowsNull() && !isset($this->container[$type->getName()])) {
-            return null;
+        if ($hasDefault && !isset($this->container[$type->getName()])) {
+            return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
         }
 
         // abort if required container variable is not defined

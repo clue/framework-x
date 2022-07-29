@@ -156,6 +156,124 @@ class ContainerTest extends TestCase
         $this->assertEquals('null', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableForClassWithNullDefaultViaAutowiringWillDefaultToNullValue()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(null) {
+            private $data = false;
+
+            public function __construct(\stdClass $data = null)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('null', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassWithNullDefaultViaContainerConfiguration()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(null) {
+            private $data = false;
+
+            public function __construct(\stdClass $data = null)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => (object) []
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{}', (string) $response->getBody());
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testCallableReturnsCallableForUnionWithIntDefaultValueViaAutowiringWillDefaultToIntValue()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(null) {
+            private $data = false;
+
+            #[PHP8] public function __construct(string|int|null $data = 42) { $this->data = $data; }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('42', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForUndefaultWithStringDefaultViaAutowiringWillDefaultToStringValue()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(null) {
+            private $data = false;
+
+            public function __construct($data = 'empty')
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('"empty"', (string) $response->getBody());
+    }
+
     public function testCallableReturnsCallableForClassNameViaAutowiringWithFactoryFunctionForDependency()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -467,6 +585,40 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('{"user":{},"data":null}', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresContainerVariablesWithDefaultValues()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (string $name = 'Alice', int $age = 0) {
+                return new Response(200, [], json_encode(['name' => $name, 'age' => $age]));
+            },
+            'age' => 42
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice","age":42}', (string) $response->getBody());
     }
 
     public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresScalarVariables()

@@ -188,7 +188,8 @@ covers most common use cases:
 * Class names need to be loadable through the autoloader. See
   [composer autoloading](#composer-autoloading) above.
 * Each class may or may not have a constructor.
-* If the constructor has an optional argument, it will be omitted.
+* If the constructor has an optional argument, it will be omitted unless an
+  explicit [container configuration](#container-configuration) is used.
 * If the constructor has a nullable argument, it will be given a `null` value
   unless an explicit [container configuration](#container-configuration) is used.
 * If the constructor references another class, it will load this class next.
@@ -306,6 +307,25 @@ manual configuration like this:
         'debug' => false,
         'hostname' => fn(): string => gethostname()
     ]);
+
+    // …
+    ```
+
+=== "Default values"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        Acme\Todo\UserController::class => function (bool $debug = false) {
+            // example UserController class uses $debug, apply default if not set
+            return new Acme\Todo\UserController($debug);
+        },
+        'debug' => true
+    ]);
+
 
     // …
     ```
