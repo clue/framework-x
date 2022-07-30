@@ -245,7 +245,7 @@ class ContainerTest extends TestCase
         $this->assertEquals('42', (string) $response->getBody());
     }
 
-    public function testCallableReturnsCallableForUndefaultWithStringDefaultViaAutowiringWillDefaultToStringValue()
+    public function testCallableReturnsCallableForUntypedWithStringDefaultViaAutowiringWillDefaultToStringValue()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -256,6 +256,35 @@ class ContainerTest extends TestCase
             {
                 $this->data = $data;
             }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('"empty"', (string) $response->getBody());
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testCallableReturnsCallableForMixedWithStringDefaultViaAutowiringWillDefaultToStringValue()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(null) {
+            private $data = false;
+
+            #[PHP8] public function __construct(mixed $data = 'empty') { $this->data = $data; }
 
             public function __invoke(ServerRequestInterface $request)
             {
@@ -501,6 +530,152 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (\stdClass $data) {
+                return new Response(200, [], json_encode($data));
+            },
+            'data' => function () {
+                return (object) ['name' => 'Alice'];
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresUntypedContainerVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function ($data) {
+                return new Response(200, [], json_encode($data));
+            },
+            'data' => (object) ['name' => 'Alice']
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresUntypedContainerVariableWithFactory()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function ($data) {
+                return new Response(200, [], json_encode($data));
+            },
+            'data' => function () {
+                return (object) ['name' => 'Alice'];
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresMixedContainerVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (mixed $data) {
+                return new Response(200, [], json_encode($data));
+            },
+            'data' => (object) ['name' => 'Alice']
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresMixedContainerVariableWithFactory()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (mixed $data) {
                 return new Response(200, [], json_encode($data));
             },
             'data' => function () {
@@ -1284,13 +1459,31 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $container = new Container([
-            \stdClass::class => function ($data) { return $data; }
+            \stdClass::class => function ($undefined) { return $undefined; }
         ]);
 
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($data) of {closure}() has no type');
+        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure}() has no type');
+        $callable($request);
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresUndefinedMixedArgument()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([
+            \stdClass::class => function (mixed $undefined) { return $undefined; }
+        ]);
+
+        $callable = $container->callable(\stdClass::class);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure}() is not defined');
         $callable($request);
     }
 
