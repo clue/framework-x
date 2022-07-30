@@ -288,9 +288,9 @@ $container = new FrameworkX\Container([
 
 Factory functions used in the container configuration map may also reference
 variables defined in the container configuration. You may use any object or
-scalar value for container variables or factory functions that return any such
-value. This can be particularly useful when combining autowiring with some
-manual configuration like this:
+scalar or `null` value for container variables or factory functions that return
+any such value. This can be particularly useful when combining autowiring with
+some manual configuration like this:
 
 === "Scalar values"
 

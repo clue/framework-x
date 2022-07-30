@@ -10,10 +10,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Container
 {
-    /** @var array<string,object|callable():(object|scalar)|scalar>|ContainerInterface */
+    /** @var array<string,object|callable():(object|scalar|null)|scalar|null>|ContainerInterface */
     private $container;
 
-    /** @var array<string,callable():(object|scalar) | object | scalar>|ContainerInterface $loader */
+    /** @var array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
@@ -24,7 +24,7 @@ class Container
 
         foreach (($loader instanceof ContainerInterface ? [] : $loader) as $name => $value) {
             if (
-                (!\is_object($value) && !\is_scalar($value)) ||
+                (!\is_object($value) && !\is_scalar($value) && $value !== null) ||
                 (!$value instanceof $name && !$value instanceof \Closure && !\is_string($value) && \strpos($name, '\\') !== false)
             ) {
                 throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
@@ -125,7 +125,7 @@ class Container
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
-        if (isset($this->container[$name])) {
+        if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
                 if ($depth < 1) {
                     throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
@@ -222,8 +222,8 @@ class Container
 
         // load container variables if parameter name is known
         assert($type === null || $type instanceof \ReflectionNamedType);
-        if ($allowVariables && isset($this->container[$parameter->getName()])) {
-            return $this->loadVariable($parameter->getName(), $type === null ? 'mixed' : $type->getName(), $depth);
+        if ($allowVariables && \array_key_exists($parameter->getName(), $this->container)) {
+            return $this->loadVariable($parameter->getName(), $type === null ? 'mixed' : $type->getName(), $parameter->allowsNull(), $depth);
         }
 
         // abort if parameter is untyped and not explicitly defined by container variable
@@ -237,7 +237,7 @@ class Container
 
         // use default/nullable argument if not loadable as container variable or by type
         assert($type instanceof \ReflectionNamedType);
-        if ($hasDefault && ($type->isBuiltin() || !isset($this->container[$type->getName()]))) {
+        if ($hasDefault && ($type->isBuiltin() || !\array_key_exists($type->getName(), $this->container))) {
             return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
         }
 
@@ -259,12 +259,12 @@ class Container
     }
 
     /**
-     * @return object|string|int|float|bool
+     * @return object|string|int|float|bool|null
      * @throws \BadMethodCallException if $name is not a valid container variable
      */
-    private function loadVariable(string $name, string $type, int $depth) /*: object|string|int|float|bool (PHP 8.0+) */
+    private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
-        assert(isset($this->container[$name]));
+        assert(\array_key_exists($name, $this->container));
         if ($this->container[$name] instanceof \Closure) {
             if ($depth < 1) {
                 throw new \BadMethodCallException('Container variable $' . $name . ' is recursive');
@@ -277,15 +277,20 @@ class Container
             // invoke factory with list of parameters
             $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
 
-            if (!\is_object($value) && !\is_scalar($value)) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar from factory, but got ' . \gettype($value));
+            if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
+                throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar|null from factory, but got ' . \gettype($value));
             }
 
             $this->container[$name] = $value;
         }
 
         $value = $this->container[$name];
-        assert(\is_object($value) || \is_scalar($value));
+        assert(\is_object($value) || \is_scalar($value) || $value === null);
+
+        // allow null values if parameter is marked nullable or untyped or mixed
+        if ($nullable && $value === null) {
+            return null;
+        }
 
         // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
         if ($type === 'mixed') {
