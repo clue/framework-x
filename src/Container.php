@@ -222,7 +222,7 @@ class Container
 
         // load container variables if parameter name is known
         assert($type === null || $type instanceof \ReflectionNamedType);
-        if ($allowVariables && \array_key_exists($parameter->getName(), $this->container)) {
+        if ($allowVariables && (\array_key_exists($parameter->getName(), $this->container) || (isset($_SERVER[$parameter->getName()]) && \preg_match('/^[A-Z][A-Z0-9_]+$/', $parameter->getName())))) {
             return $this->loadVariable($parameter->getName(), $type === null ? 'mixed' : $type->getName(), $parameter->allowsNull(), $depth);
         }
 
@@ -264,8 +264,9 @@ class Container
      */
     private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
-        assert(\array_key_exists($name, $this->container));
-        if ($this->container[$name] instanceof \Closure) {
+        assert(\array_key_exists($name, $this->container) || isset($_SERVER[$name]));
+
+        if (($this->container[$name] ?? null) instanceof \Closure) {
             if ($depth < 1) {
                 throw new \BadMethodCallException('Container variable $' . $name . ' is recursive');
             }
@@ -282,9 +283,13 @@ class Container
             }
 
             $this->container[$name] = $value;
+        } elseif (\array_key_exists($name, $this->container)) {
+            $value = $this->container[$name];
+        } else {
+            assert(isset($_SERVER[$name]) && \is_string($_SERVER[$name]));
+            $value = $_SERVER[$name];
         }
 
-        $value = $this->container[$name];
         assert(\is_object($value) || \is_scalar($value) || $value === null);
 
         // allow null values if parameter is marked nullable or untyped or mixed

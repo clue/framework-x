@@ -1001,6 +1001,225 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"ADMIN"}', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresStringEnvironmentVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (string $FOO) {
+                return new Response(200, [], json_encode($FOO));
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $_SERVER['FOO'] = 'bar';
+        $response = $callable($request);
+        unset($_SERVER['FOO']);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('"bar"', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresStringMappedFromFactoryThatRequiresStringEnvironmentVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (string $address) {
+                return new Response(200, [], json_encode($address));
+            },
+            'address' => function (string $FOO) {
+                return 'http://' . $FOO;
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $_SERVER['FOO'] = 'bar';
+        $response = $callable($request);
+        unset($_SERVER['FOO']);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('"http:\/\/bar"', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresNullableStringEnvironmentVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (?string $FOO) {
+                return new Response(200, [], json_encode($FOO));
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $_SERVER['FOO'] = 'bar';
+        $response = $callable($request);
+        unset($_SERVER['FOO']);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('"bar"', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresNullableStringEnvironmentVariableAssignsNull()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (?string $FOO) {
+                return new Response(200, [], json_encode($FOO));
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('null', (string) $response->getBody());
+    }
+
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresUntypedEnvironmentVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function ($FOO) {
+                return new Response(200, [], json_encode($FOO));
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $_SERVER['FOO'] = 'bar';
+        $response = $callable($request);
+        unset($_SERVER['FOO']);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('"bar"', (string) $response->getBody());
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresMixedEnvironmentVariable()
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new Response()) {
+            private $response;
+
+            public function __construct(ResponseInterface $response)
+            {
+                $this->response = $response;
+            }
+
+            public function __invoke()
+            {
+                return $this->response;
+            }
+        };
+
+        $container = new Container([
+            ResponseInterface::class => function (mixed $FOO) {
+                return new Response(200, [], json_encode($FOO));
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $_SERVER['FOO'] = 'bar';
+        $response = $callable($request);
+        unset($_SERVER['FOO']);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('"bar"', (string) $response->getBody());
+    }
+
     public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesUnknownVariable()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
