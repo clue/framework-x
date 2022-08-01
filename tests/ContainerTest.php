@@ -1951,6 +1951,104 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
+    public function testGetEnvReturnsNullWhenEnvironmentDoesNotExist()
+    {
+        $container = new Container([]);
+
+        $this->assertNull($container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromMap()
+    {
+        $container = new Container([
+            'X_FOO' => 'bar'
+        ]);
+
+        $this->assertEquals('bar', $container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromMapFactory()
+    {
+        $container = new Container([
+            'X_FOO' => function (string $bar) { return $bar; },
+            'bar' => 'bar'
+        ]);
+
+        $this->assertEquals('bar', $container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromGlobalServerIfNotSetInMap()
+    {
+        $container = new Container([]);
+
+        $_SERVER['X_FOO'] = 'bar';
+        $ret = $container->getEnv('X_FOO');
+        unset($_SERVER['X_FOO']);
+
+        $this->assertEquals('bar', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromPsrContainer()
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(true);
+        $psr->expects($this->once())->method('get')->with('X_FOO')->willReturn('bar');
+
+        $container = new Container($psr);
+
+        $this->assertEquals('bar', $container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsNullIfPsrContainerHasNoEntry()
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        $container = new Container($psr);
+
+        $this->assertNull($container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromGlobalServerIfPsrContainerHasNoEntry()
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        $container = new Container($psr);
+
+        $_SERVER['X_FOO'] = 'bar';
+        $ret = $container->getEnv('X_FOO');
+        unset($_SERVER['X_FOO']);
+
+        $this->assertEquals('bar', $ret);
+    }
+
+    public function testGetEnvThrowsIfMapContainsInvalidType()
+    {
+        $container = new Container([
+            'X_FOO' => false
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Environment variable $X_FOO expected type string|null, but got boolean');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsIfMapPsrContainerReturnsInvalidType()
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(true);
+        $psr->expects($this->once())->method('get')->with('X_FOO')->willReturn(42);
+
+        $container = new Container($psr);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Environment variable $X_FOO expected type string|null, but got integer');
+        $container->getEnv('X_FOO');
+    }
+
     public function testGetAccessLogHandlerReturnsDefaultAccessLogHandlerInstance()
     {
         $container = new Container([]);

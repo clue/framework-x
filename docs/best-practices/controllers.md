@@ -402,6 +402,26 @@ all uppercase in any factory function like this:
     // …
     ```
 
+=== "Built-in environment variables"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        // Framework X also uses environment variables internally.
+        // You may explicitly configure this built-in functionality like this:
+        // 'X_LISTEN' => '0.0.0.0:8081'
+        // 'X_LISTEN' => fn(?string $PORT = '8080') => '0.0.0.0:' . $PORT
+        'X_LISTEN' => '127.0.0.1:8080'
+    ]);
+
+    $app = new FrameworkX\App($container);
+
+    // …
+    ```
+
 > ℹ️ **Passing environment variables**
 >
 > All environment variables defined on the process level will be made available

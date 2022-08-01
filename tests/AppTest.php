@@ -38,29 +38,6 @@ use function React\Promise\resolve;
 
 class AppTest extends TestCase
 {
-    /**
-     * @var array
-     */
-    private $serverArgs;
-
-    protected function setUp(): void
-    {
-        // Store a snapshot of $_SERVER
-        $this->serverArgs = $_SERVER;
-    }
-
-    protected function tearDown(): void
-    {
-        // Restore $_SERVER as it was before
-        foreach ($_SERVER as $key => $value) {
-            if (!\array_key_exists($key, $this->serverArgs)) {
-                unset($_SERVER[$key]);
-                continue;
-            }
-            $_SERVER[$key] = $value;
-        }
-    }
-
     public function testConstructWithMiddlewareAssignsGivenMiddleware()
     {
         $middleware = function () { };
@@ -626,14 +603,17 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunWillReportListeningAddressFromEnvironmentAndRunLoopWithSocketServer()
+    public function testRunWillReportListeningAddressFromContainerEnvironmentAndRunLoopWithSocketServer()
     {
         $socket = @stream_socket_server('127.0.0.1:0');
         $addr = stream_socket_get_name($socket, false);
         fclose($socket);
 
-        $_SERVER['X_LISTEN'] = $addr;
-        $app = new App();
+        $container = new Container([
+            'X_LISTEN' => $addr
+        ]);
+
+        $app = new App($container);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -650,10 +630,13 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunWillReportListeningAddressFromEnvironmentWithRandomPortAndRunLoopWithSocketServer()
+    public function testRunWillReportListeningAddressFromContainerEnvironmentWithRandomPortAndRunLoopWithSocketServer()
     {
-        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
-        $app = new App();
+        $container = new Container([
+            'X_LISTEN' => '127.0.0.1:0'
+        ]);
+
+        $app = new App($container);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -672,8 +655,11 @@ class AppTest extends TestCase
 
     public function testRunWillRestartLoopUntilSocketIsClosed()
     {
-        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
-        $app = new App();
+        $container = new Container([
+            'X_LISTEN' => '127.0.0.1:0'
+        ]);
+
+        $app = new App($container);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -700,8 +686,11 @@ class AppTest extends TestCase
      */
     public function testRunWillStopWhenReceivingSigint()
     {
-        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
-        $app = new App();
+        $container = new Container([
+            'X_LISTEN' => '127.0.0.1:0'
+        ]);
+
+        $app = new App($container);
 
         Loop::futureTick(function () {
             posix_kill(getmypid(), defined('SIGINT') ? SIGINT : 2);
@@ -717,8 +706,11 @@ class AppTest extends TestCase
      */
     public function testRunWillStopWhenReceivingSigterm()
     {
-        $_SERVER['X_LISTEN'] = '127.0.0.1:0';
-        $app = new App();
+        $container = new Container([
+            'X_LISTEN' => '127.0.0.1:0'
+        ]);
+
+        $app = new App($container);
 
         Loop::futureTick(function () {
             posix_kill(getmypid(), defined('SIGTERM') ? SIGTERM : 15);
@@ -730,8 +722,12 @@ class AppTest extends TestCase
 
     public function testRunAppWithEmptyAddressThrows()
     {
-        $_SERVER['X_LISTEN'] = '';
-        $app = new App();
+        $container = new Container([
+            'X_LISTEN' => ''
+        ]);
+
+        $app = new App($container);
+
 
         $this->expectException(\InvalidArgumentException::class);
         $app->run();
@@ -746,8 +742,11 @@ class AppTest extends TestCase
             $this->markTestSkipped('System does not prevent listening on same address twice');
         }
 
-        $_SERVER['X_LISTEN'] = $addr;
-        $app = new App();
+        $container = new Container([
+            'X_LISTEN' => $addr
+        ]);
+
+        $app = new App($container);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');

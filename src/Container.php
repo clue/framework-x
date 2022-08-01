@@ -92,6 +92,26 @@ class Container
     }
 
     /** @internal */
+    public function getEnv(string $name): ?string
+    {
+        assert(\preg_match('/^[A-Z][A-Z0-9_]+$/', $name) === 1);
+
+        if (\is_array($this->container) && \array_key_exists($name, $this->container)) {
+            $value = $this->loadVariable($name, 'mixed', true, 64);
+        } elseif ($this->container instanceof ContainerInterface && $this->container->has($name)) {
+            $value = $this->container->get($name);
+        } else {
+            $value = $_SERVER[$name] ?? null;
+        }
+
+        if (!\is_string($value) && $value !== null) {
+            throw new \TypeError('Environment variable $' . $name . ' expected type string|null, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+        }
+
+        return $value;
+    }
+
+    /** @internal */
     public function getAccessLogHandler(): AccessLogHandler
     {
         if ($this->container instanceof ContainerInterface) {
