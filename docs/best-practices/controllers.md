@@ -358,6 +358,80 @@ some manual configuration like this:
 > namespaced class names like in the previous example. You may also want to make
 > sure that container variables use unique names prefixed with your vendor name.
 
+All environment variables will be made available as container variables
+automatically. You can access their values simply by referencing variables in
+all uppercase in any factory function like this:
+
+=== "Required environment variables"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        React\MySQL\ConnectionInterface::class => function (string $MYSQL_URI) {
+            // connect to database defined in required $MYSQL_URI environment variable
+            return (new React\MySQL\Factory())->createLazyConnection($MYSQL_URI);
+        }
+    ]);
+
+
+    $app = new FrameworkX\App($container);
+
+    // …
+    ```
+
+=== "Optional environment variables"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        React\MySQL\ConnectionInterface::class => function (string $DB_HOST = 'localhost', string $DB_USER = 'root', string $DB_PASS = '', string $DB_NAME = 'acme') {
+            // connect to database defined in optional $DB_* environment variables
+            $uri = 'mysql://' . $DB_USER . ':' . rawurlencode($DB_PASS) . '@' . $DB_HOST . '/' . $DB_NAME . '?idle=0.001';
+            return (new React\MySQL\Factory())->createLazyConnection($uri);
+        }
+    ]);
+
+    $app = new FrameworkX\App($container);
+
+    // …
+    ```
+
+=== "Built-in environment variables"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        // Framework X also uses environment variables internally.
+        // You may explicitly configure this built-in functionality like this:
+        // 'X_LISTEN' => '0.0.0.0:8081'
+        // 'X_LISTEN' => fn(?string $PORT = '8080') => '0.0.0.0:' . $PORT
+        'X_LISTEN' => '127.0.0.1:8080'
+    ]);
+
+    $app = new FrameworkX\App($container);
+
+    // …
+    ```
+
+> ℹ️ **Passing environment variables**
+>
+> All environment variables defined on the process level will be made available
+> automatically. For temporary testing purposes, you may explicitly `export` or
+> prefix environment variables to the command line. As a more permanent
+> solution, you may want to save your environment variables in your
+> [systemd configuration](deployment.md#systemd), [Docker settings](deployment.md#docker-containers),
+> or load your variables from a dotenv file (`.env`) using a library such as
+> [vlucas/phpdotenv](https://github.com/vlucas/phpdotenv).
+
 The container configuration may also be used to map a class name to a different
 class name that implements the same interface, either by mapping between two
 class names or using a factory function that returns a class name. This is

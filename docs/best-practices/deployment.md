@@ -277,6 +277,15 @@ or `[::]` IPv6 address like this:
 $ X_LISTEN=0.0.0.0:8080 php public/index.php
 ```
 
+> ℹ️ **Saving environment variables**
+>
+> For temporary testing purposes, you may explicitly `export` your environment
+> variables on the command like above. As a more permanent solution, you may
+> want to save your environment variables in your [systemd configuration](#systemd),
+> [Docker settings](#docker-containers), load your variables from a dotenv file
+> (`.env`) using a library such as [vlucas/phpdotenv](https://github.com/vlucas/phpdotenv),
+> or use an explicit [Container configuration](controllers.md#container-configuration).
+
 ### Memory limit
 
 X is carefully designed to minimize memory usage. Depending on your application

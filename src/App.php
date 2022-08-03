@@ -27,6 +27,9 @@ class App
     /** @var SapiHandler */
     private $sapi;
 
+    /** @var Container */
+    private $container;
+
     /**
      * Instantiate new X application
      *
@@ -46,19 +49,19 @@ class App
         // new MiddlewareHandler([$fiberHandler, $accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
         $handlers = [];
 
-        $container = $needsErrorHandler = new Container();
+        $this->container = $needsErrorHandler = new Container();
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
-        $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') ? $container : null;
+        $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') ? $this->container : null;
 
         if ($middleware) {
             $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
                 // load AccessLogHandler and ErrorHandler instance from last Container
                 if ($handler === AccessLogHandler::class) {
-                    $handler = $container->getAccessLogHandler();
+                    $handler = $this->container->getAccessLogHandler();
                 } elseif ($handler === ErrorHandler::class) {
-                    $handler = $container->getErrorHandler();
+                    $handler = $this->container->getErrorHandler();
                 }
 
                 // ensure AccessLogHandler is always followed by ErrorHandler
@@ -69,14 +72,14 @@ class App
 
                 if ($handler instanceof Container) {
                     // remember last Container to load any following class names
-                    $container = $handler;
+                    $this->container = $handler;
 
                     // add default ErrorHandler from last Container before adding any other handlers, may be followed by other Container instances (unlikely)
                     if (!$handlers) {
-                        $needsErrorHandler = $needsAccessLog = $container;
+                        $needsErrorHandler = $needsAccessLog = $this->container;
                     }
                 } elseif (!\is_callable($handler)) {
-                    $handlers[] = $container->callable($handler);
+                    $handlers[] = $this->container->callable($handler);
                 } else {
                     // don't need a default ErrorHandler if we're adding one as first handler or AccessLogHandler as first followed by one
                     if ($needsErrorHandler && ($handler instanceof ErrorHandler || $handler instanceof AccessLogHandler) && !$handlers) {
@@ -109,7 +112,7 @@ class App
             \array_unshift($handlers, new FiberHandler()); // @codeCoverageIgnore
         }
 
-        $this->router = new RouteHandler($container);
+        $this->router = new RouteHandler($this->container);
         $handlers[] = $this->router;
         $this->handler = new MiddlewareHandler($handlers);
         $this->sapi = new SapiHandler();
@@ -232,7 +235,7 @@ class App
             return $this->handleRequest($request);
         });
 
-        $listen = $_SERVER['X_LISTEN'] ?? '127.0.0.1:8080';
+        $listen = $this->container->getEnv('X_LISTEN') ?? '127.0.0.1:8080';
 
         $socket = new SocketServer($listen);
         $http->listen($socket);
