@@ -105,7 +105,7 @@ out=$(curl -v $base -X OPTIONS --request-target "*" 2>&1);  skipif "Server: ngin
 out=$(curl -v $base/method/get 2>&1);           match "HTTP/.* 200" && match -iP "Content-Length: 4[\r\n]" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]" && match -iP "X-Is-Head: false[\r\n]" && match -P "GET$"
 out=$(curl -v $base/method/get -I 2>&1);        match "HTTP/.* 200" && match -iP "Content-Length: 4[\r\n]" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]" && match -iP "X-Is-Head: true[\r\n]"
 out=$(curl -v $base/method/head 2>&1);          match "HTTP/.* 200" && match -iP "Content-Length: 5[\r\n]" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]" && match -iP "X-Is-Head: false[\r\n]" && match -P "HEAD$"
-out=$(curl -v $base/method/head -I 2>&1);       skipif "Server: ReactPHP" && match "HTTP/.* 200" && match -iP "Content-Length: 5[\r\n]" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]" && match -iP "X-Is-Head: true[\r\n]" # skip built-in webserver (always includes Content-Length : 0)
+out=$(curl -v $base/method/head -I 2>&1);       match "HTTP/.* 200" && match -iP "Content-Length: 5[\r\n]" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]" && match -iP "X-Is-Head: true[\r\n]"
 
 out=$(curl -v $base/etag/ 2>&1);                            match "HTTP/.* 200" && match -iP "Content-Length: 0[\r\n]" && match -iP "Etag: \"_\""
 out=$(curl -v $base/etag/ -H 'If-None-Match: "_"' 2>&1);    match "HTTP/.* 304" && notmatch -i "Content-Length" && match -iP "Etag: \"_\""
