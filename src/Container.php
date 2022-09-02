@@ -206,7 +206,7 @@ class Container
 
         // build list of constructor parameters based on parameter types
         $ctor = $class->getConstructor();
-        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false);
+        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, true);
 
         // instantiate with list of parameters
         return $this->container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
