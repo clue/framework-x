@@ -273,6 +273,10 @@ class ErrorHandlerTest extends TestCase
 
     public function testInvokeWithHandlerReturningPromiseRejectingWithNullReturnsPromiseResolvingWithError500Response()
     {
+        if (method_exists(PromiseInterface::class, 'catch')) {
+            $this->markTestSkipped('Only supported for legacy Promise v2, Promise v3 always rejects with Throwable');
+        }
+
         $handler = new ErrorHandler();
 
         $request = new ServerRequest('GET', 'http://example.com/');

@@ -1534,6 +1534,10 @@ class AppTest extends TestCase
 
     public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
     {
+        if (method_exists(PromiseInterface::class, 'catch')) {
+            $this->markTestSkipped('Only supported for legacy Promise v2, Promise v3 always rejects with Throwable');
+        }
+
         $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
