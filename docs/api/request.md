@@ -29,7 +29,11 @@ Here's everything you need to know to get started.
 
 You can access request attributes like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->get('/user/{id}', function (Psr\Http\Message\ServerRequestInterface $request) {
     $id = $request->getAttribute('id');
 
@@ -58,7 +62,11 @@ See also [middleware](middleware.md) for more details.
 
 You can access JSON data from the HTTP request body like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->post('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
     $data = json_decode((string) $request->getBody());
     $name = $data->name ?? 'anonymous';
@@ -84,7 +92,11 @@ This example returns a simple text response, you may also want to return a
 
 You can access HTML form data from the HTTP request body like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->post('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
     $data = $request->getParsedBody();
     $name = $data['name'] ?? 'Anonymous';
@@ -108,7 +120,11 @@ PHP's `$_POST` superglobal.
 
 You can access any file uploads from HTML forms like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->post('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
     $files = $request->getUploadedFiles();
     $name = isset($files['image']) ? $files['image']->getClientFilename() : 'x';
@@ -129,6 +145,10 @@ to PHP's `$_FILES` superglobal.
 Each file in this array implements the `Psr\Http\Message\UploadedFileInterface`:
 
 ```php
+<?php
+
+// …
+
 $files = $request->getUploadedFiles();
 $image = $files['image'];
 assert($image instanceof Psr\Http\Message\UploadedFileInterface);
@@ -157,7 +177,11 @@ assert(is_string($type) || $name === null);
 
 You can access all HTTP request headers like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
     $agent = $request->getHeaderLine('User-Agent');
 
@@ -179,7 +203,11 @@ you may also want to return [response headers](response.md#headers) for common A
 
 You can access server-side parameters like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
     $params = $request->getServerParams();
     $ip = $params['REMOTE_ADDR'] ?? 'unknown';

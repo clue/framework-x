@@ -13,8 +13,10 @@ You can add any number of middleware handlers to each route.
 To get started, let's take a look at a basic middleware handler
 by adding an additional callable before the final controller like this:
 
-```php
+```php title="public/index.php"
 <?php
+
+// …
 
 $app->get(
     '/user',

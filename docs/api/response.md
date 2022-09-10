@@ -25,7 +25,7 @@ Here's everything you need to know to get started.
 
 You can send JSON data as an HTTP response body like this:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …
@@ -74,7 +74,7 @@ $ curl http://localhost:8080/user
 > you can also manually create a [`React\Http\Message\Response`](https://reactphp.org/http/#response)
 > object like this:
 >
-> ```php
+> ```php title="public/index.php"
 > <?php
 >
 > // …
@@ -99,7 +99,7 @@ $ curl http://localhost:8080/user
 
 You can send HTML data as an HTTP response body like this:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …
@@ -137,7 +137,7 @@ $ curl http://localhost:8080/user
 > [`React\Http\Message\Response`](https://reactphp.org/http/#response) object
 > like this:
 >
-> ```php
+> ```php title="public/index.php"
 > <?php
 >
 > // …
@@ -160,7 +160,7 @@ $ curl http://localhost:8080/user
 The [`json()`](#json) and [`html()`](#html) methods used above automatically use
 a `200 OK` status code by default. You can assign status codes like this:
 
-```php hl_lines="10"
+```php hl_lines="10" title="public/index.php"
 <?php
 
 // …
@@ -215,7 +215,7 @@ The [`json()`](#json) and [`html()`](#html) methods used above automatically use
 an appropriate `Content-Type` response header by default. You can assign HTTP
 response headers like this:
 
-```php hl_lines="8"
+```php hl_lines="8" title="public/index.php"
 <?php
 
 // …
@@ -246,7 +246,7 @@ Hello wörld!
 > If you want more control over this behavior, you can also manually create a
 > [`React\Http\Message\Response`](https://reactphp.org/http/#response) object like this:
 >
-> ```php
+> ```php title="public/index.php"
 > <?php
 >
 > // …
@@ -268,7 +268,7 @@ Hello wörld!
 To redirect incoming HTTP requests to a new location you can define your HTTP
 response like this:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …
@@ -304,7 +304,11 @@ in the `Location` header.
 You can also use the [redirect helper method](app.md#redirects)
 for simpler use cases:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->redirect('/promo/reactphp', 'https://reactphp.org/');
 ```
 
@@ -328,7 +332,7 @@ response header can be used to control caching of responses by browsers and
 shared caches such as proxies and CDNs. In its most basic form, you can use this
 response header to control the lifetime of a cached response like this:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …
@@ -365,7 +369,7 @@ request header for subsequent requests. If both values match, you can send a
 [`304 Not Modified`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/304)
 response and omit the response body like this:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …
@@ -424,7 +428,7 @@ request header for subsequent requests. If both values match, you can send a
 [`304 Not Modified`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/304)
 response and omit the response body like this:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …
@@ -509,7 +513,7 @@ we want to redirect this output to be part of an HTTP response instead. You can
 start a temporary output buffer using [`ob_start()`](https://www.php.net/manual/en/function.ob-start.php)
 to catch any output and return it as a response body like this:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …
@@ -557,7 +561,7 @@ an HTTP response message. If the controller function throws an `Exception` (or
 `Throwable`) or returns any invalid type, the HTTP request will automatically be
 rejected with a `500 Internal Server Error` HTTP error response:
 
-```php
+```php title="public/index.php"
 <?php
 
 // …

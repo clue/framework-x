@@ -21,7 +21,11 @@ The `App` class offers a number of API methods that allow you to route incoming
 HTTP requests to controller functions. In its most simple form, you can add
 multiple routes using inline closures like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->get('/user', function () {
     return React\Http\Message\Response::plaintext("Hello everybody!\n");
 });
@@ -46,7 +50,11 @@ Allowed` error response unless a route for this method is also registered.
 You can route any number of incoming HTTP requests to controller functions by
 using the matching API methods like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->get('/user/{id}', $controller);
 $app->head('/user/{id}', $controller);
 $app->post('/user/{id}', $controller);
@@ -59,14 +67,22 @@ $app->options('/user/{id}', $controller);
 If you want to map multiple HTTP request methods to a single controller, you can
 use this shortcut instead of listing each method explicitly like above:
 
-```
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->map(['GET', 'POST'], '/user/{id}', $controller);
 ```
 
 If you want to map each and every HTTP request method to a single controller,
 you can use this additional shortcut:
 
-```
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->any('/user/{id}', $controller);
 ```
 
@@ -80,7 +96,11 @@ HTTP response body in this case.
 The `App` also offers a convenient helper method to redirect a matching route to
 a new URL like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->redirect('/promo/reactphp', 'https://reactphp.org/');
 ```
 
@@ -90,7 +110,11 @@ status code in the `3xx` range to use. If this is a permanent redirect, you may
 want to use the `301 Moved Permanently` status code to instruct search engine
 crawlers to update their index like this:
 
-```php
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->redirect('/blog.html', '/blog', React\Http\Message\Response::STATUS_MOVED_PERMANENTLY);
 ```
 
@@ -102,7 +126,11 @@ for more details.
 The above examples use inline closures as controller functions to make these
 examples more concise: 
 
-```
+```php title="public/index.php"
+<?php
+
+// …
+
 $app->get('/', function () {
     return React\Http\Message\Response::plaintext(
         "Hello wörld!\n"
@@ -205,9 +233,7 @@ middleware to the `App` like this:
         new FrameworkX\ErrorHandler()
     );
 
-    // Register routes here, see routing…
-
-    $app->run();
+    // …
     ```
 
 === "Using middleware names"
@@ -221,9 +247,7 @@ middleware to the `App` like this:
         FrameworkX\ErrorHandler::class
     );
 
-    // Register routes here, see routing…
-
-    $app->run();
+    // …
     ```
 
 If you do not explicitly pass an [`ErrorHandler`](middleware.md#errorhandler) or
@@ -243,9 +267,7 @@ $container = new FrameworkX\Container([
 
 $app = new FrameworkX\App($container);
 
-// Register routes here, see routing…
-
-$app->run();
+// …
 ```
 
 By default, this error message contains only few details to the client to avoid
@@ -292,9 +314,7 @@ middleware to the `App` like this:
         new FrameworkX\ErrorHandler()
     );
 
-    // Register routes here, see routing…
-
-    $app->run();
+    // …
     ```
 
 === "Using middleware names"
@@ -309,9 +329,7 @@ middleware to the `App` like this:
         FrameworkX\ErrorHandler::class
     );
 
-    // Register routes here, see routing…
-
-    $app->run();
+    // …
     ```
 
 > ⚠️ **Feature preview**
@@ -341,9 +359,7 @@ $container = new FrameworkX\Container([
 
 $app = new FrameworkX\App($container);
 
-// Register routes here, see routing…
-
-$app->run();
+// …
 ```
 
 X supports running behind reverse proxies just fine. However, by default it will
@@ -369,9 +385,9 @@ it to the [`AccessLogHandler`](middleware.md#accessloghandler) like this:
         new FrameworkX\ErrorHandler()
     );
 
-    // Register routes here, see routing…
+    $app = new FrameworkX\App($container);
 
-    $app->run();
+    // …
     ```
 
 === "Using middleware names"
@@ -389,9 +405,9 @@ it to the [`AccessLogHandler`](middleware.md#accessloghandler) like this:
         FrameworkX\ErrorHandler::class
     );
 
-    // Register routes here, see routing…
+    $app = new FrameworkX\App($container);
 
-    $app->run();
+    // …
     ```
 
 ```php title="src/TrustedProxyMiddleware.php"
