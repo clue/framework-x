@@ -93,7 +93,7 @@ can simply rely on the `await()` function:
 
 use function React\Async\await;
 
-// ...
+// …
 
 $browser = new React\Http\Browser();
 $promise = $browser->get('https://example.com/');

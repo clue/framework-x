@@ -218,10 +218,7 @@ the dependency injection container like this:
 
     $app = new FrameworkX\App($container);
 
-    $app->get('/', Acme\Todo\HelloController::class);
-    $app->get('/users/{name}', Acme\Todo\UserController::class);
-
-    $app->run();
+    // …
     ```
 
 === "Closure" 
@@ -239,10 +236,7 @@ the dependency injection container like this:
 
     $app = new FrameworkX\App($container);
 
-    $app->get('/', Acme\Todo\HelloController::class);
-    $app->get('/users/{name}', Acme\Todo\UserController::class);
-
-    $app->run();
+    // …
     ```
 
 This can be useful in these cases:
@@ -283,6 +277,8 @@ $container = new FrameworkX\Container([
     }
 ]);
 
+$app = new FrameworkX\App($container);
+
 // …
 ```
 
@@ -308,6 +304,8 @@ some manual configuration like this:
         'hostname' => fn(): string => gethostname()
     ]);
 
+    $app = new FrameworkX\App($container);
+
     // …
     ```
 
@@ -327,6 +325,8 @@ some manual configuration like this:
     ]);
 
 
+    $app = new FrameworkX\App($container);
+
     // …
     ```
 
@@ -345,6 +345,8 @@ some manual configuration like this:
         'name' => 'Demo'
     ]);
 
+
+    $app = new FrameworkX\App($container);
 
     // …
     ```
@@ -450,6 +452,8 @@ $container = new FrameworkX\Container([
     }
 ]);
 
+$app = new FrameworkX\App($container);
+
 // …
 ```
 
@@ -481,16 +485,13 @@ acts as an adapter for the application like this:
 require __DIR__ . '/../vendor/autoload.php';
 
 // $builder = new DI\ContainerBuilder();
-// $builder->...
+// $builder->…
 // $container = $builder->build();
 $container = new DI\Container();
 
 $app = new FrameworkX\App(new FrameworkX\Container($container));
 
-$app->get('/', Acme\Todo\HelloController::class);
-$app->get('/users/{name}', Acme\Todo\UserController::class);
-
-$app->run();
+// …
 ```
 
 We expect most applications to work just fine with the built-in DI container.
