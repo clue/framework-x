@@ -48,10 +48,13 @@ class ErrorHandler
                     return $this->errorInvalidResponse($response);
                 }
             }, function ($e) {
+                // Promise rejected, always a `\Throwable` as of Promise v3
+                assert($e instanceof \Throwable || !\method_exists(PromiseInterface::class, 'catch'));
+
                 if ($e instanceof \Throwable) {
                     return $this->errorInvalidException($e);
                 } else {
-                    return $this->errorInvalidResponse(\React\Promise\reject($e));
+                    return $this->errorInvalidResponse(\React\Promise\reject($e)); // @codeCoverageIgnore
                 }
             });
         } elseif ($response instanceof \Generator) {
