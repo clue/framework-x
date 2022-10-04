@@ -75,7 +75,7 @@ out=$(curl -v $base/users/a+b 2>&1);                    match "HTTP/.* 200" && m
 out=$(curl -v $base/users/Wham! 2>&1);                  match "HTTP/.* 200" && match "Hello Wham!!"
 out=$(curl -v $base/users/Wham%21 2>&1);                match "HTTP/.* 200" && match "Hello Wham!!"
 out=$(curl -v $base/users/AC%2FDC 2>&1);                skipif "HTTP/.* 404"    && match "HTTP/.* 200" && match "Hello AC/DC!" # skip Apache (404 unless `AllowEncodedSlashes NoDecode`)
-out=$(curl -v $base/users/bi%00n 2>&1);                 skipif "HTTP/.* 40[04]" && match "HTTP/.* 200" && match "Hello bi�n!" # skip nginx (400) and Apache (404) 
+out=$(curl -v $base/users/bi%00n 2>&1);                 skipif "HTTP/.* 40[04]" && match "HTTP/.* 200" && match "Hello bi�n!" # skip nginx (400) and Apache (404)
 
 out=$(curl -v $base/users 2>&1);     match "HTTP/.* 404"
 out=$(curl -v $base/users/ 2>&1);    match "HTTP/.* 404"
@@ -125,5 +125,10 @@ out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: ngin
 
 out=$(curl -v --proxy $baseWithPort $base/debug 2>&1);      skipif "Server: nginx" && match "HTTP/.* 400" # skip nginx (continues like direct request)
 out=$(curl -v --proxy $baseWithPort -p $base/debug 2>&1);   skipif "CONNECT aborted" && match "HTTP/.* 400" # skip PHP development server (rejects as "Malformed HTTP request")
+
+out=$(curl -v $base/location/201 2>&1);   match "HTTP/.* 201" && match "Location: /foobar"
+out=$(curl -v $base/location/202 2>&1);   match "HTTP/.* 202" && match "Location: /foobar"
+out=$(curl -v $base/location/301 2>&1);   match "HTTP/.* 301" && match "Location: /foobar"
+out=$(curl -v $base/location/302 2>&1);   match "HTTP/.* 302" && match "Location: /foobar"
 
 echo "OK ($n)"
