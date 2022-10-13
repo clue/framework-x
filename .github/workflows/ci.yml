@@ -11,9 +11,10 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-20.04
-          - windows-2019
+          - ubuntu-22.04
+          - windows-2022
         php:
+          - 8.2
           - 8.1
           - 8.0
           - 7.4
@@ -21,7 +22,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -34,10 +35,11 @@ jobs:
 
   Built-in-webserver:
     name: Built-in webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         php:
+          - 8.2
           - 8.1
           - 8.0
           - 7.4
@@ -45,7 +47,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -56,14 +58,14 @@ jobs:
 
   Docker:
     name: Docker (${{ matrix.dockerfile }})
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         dockerfile:
           - "Dockerfile-basics"
           - "Dockerfile-production"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.1
@@ -78,10 +80,11 @@ jobs:
 
   nginx-webserver:
     name: nginx + PHP-FPM (PHP ${{ matrix.php }})
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         php:
+          - 8.2-rc
           - 8.1
           - 8.0
           - 7.4
@@ -89,7 +92,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -101,10 +104,11 @@ jobs:
 
   Apache-webserver:
     name: Apache webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         php:
+          - 8.2-rc
           - 8.1
           - 8.0
           - 7.4
@@ -112,7 +116,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -123,10 +127,11 @@ jobs:
 
   PHP-webserver:
     name: PHP webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         php:
+          - 8.2
           - 8.1
           - 8.0
           - 7.4
@@ -134,7 +139,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
