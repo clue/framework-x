@@ -86,8 +86,6 @@ class SapiHandler
         $status = $response->getStatusCode();
         $body = $response->getBody();
 
-        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $status . ' ' . $response->getReasonPhrase());
-
         if ($status === Response::STATUS_NO_CONTENT) {
             // `204 No Content` MUST NOT include "Content-Length" response header
             $response = $response->withoutHeader('Content-Length');
@@ -111,6 +109,8 @@ class SapiHandler
             }
         }
         ini_set('default_charset', $old);
+
+        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $status . ' ' . $response->getReasonPhrase());
 
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' || $status === Response::STATUS_NO_CONTENT || $status === Response::STATUS_NOT_MODIFIED) {
             $body->close();

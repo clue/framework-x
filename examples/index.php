@@ -200,4 +200,10 @@ $app->options('', function () {
     return new React\Http\Message\Response(200);
 });
 
+$app->get('/location/{status:\d+}', function (Psr\Http\Message\ServerRequestInterface $request) {
+    $statusCode = (int) $request->getAttribute('status');
+
+    return new React\Http\Message\Response($statusCode, ['Location' => '/foobar']);
+});
+
 $app->run();
