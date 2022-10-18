@@ -415,10 +415,14 @@ achieved by using an nginx configuration with the following contents:
 ```
 server {
     root /home/alice/projects/acme/public;
-    index index.php index.html;
+    index index.html index.htm;
 
     location / {
         try_files $uri $uri/ @x;
+    }
+
+    location ~* \.php$ {
+        try_files /dev/null @x;
     }
 
     location @x {
