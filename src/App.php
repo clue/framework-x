@@ -12,6 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
 use React\Http\HttpServer;
 use React\Http\Message\Response;
+use React\Http\Middleware\StreamingRequestMiddleware;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Socket\SocketServer;
@@ -231,9 +232,12 @@ class App
 
     private function runLoop()
     {
-        $http = new HttpServer(function (ServerRequestInterface $request) {
-            return $this->handleRequest($request);
-        });
+        $http = new HttpServer(...array_merge(
+            ($this->handler->hastStreamingRequest() ? [new StreamingRequestMiddleware()] : []),
+            [function (ServerRequestInterface $request) {
+                return $this->handleRequest($request);
+            }]
+        ));
 
         $listen = $this->container->getEnv('X_LISTEN') ?? '127.0.0.1:8080';
 
