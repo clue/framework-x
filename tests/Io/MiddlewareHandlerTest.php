@@ -11,7 +11,7 @@ use React\Http\Message\ServerRequest;
 
 class MiddlewareHandlerTest extends TestCase
 {
-    public function testOneMiddleware()
+    public function testOneMiddleware(): void
     {
         $handler = new MiddlewareHandler([
             function (ServerRequestInterface $request, callable $next) {
@@ -39,10 +39,11 @@ class MiddlewareHandlerTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testOneMiddlewareClass()
+    public function testOneMiddlewareClass(): void
     {
         $middleware = new class{
-            public function __invoke(ServerRequestInterface $request, callable $next) {
+            public function __invoke(ServerRequestInterface $request, callable $next): Response
+            {
                 return $next($request);
             }
         };
@@ -71,7 +72,7 @@ class MiddlewareHandlerTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testTwoMiddleware()
+    public function testTwoMiddleware(): void
     {
         $handler = new MiddlewareHandler([
             function (ServerRequestInterface $request, callable $next) {
@@ -102,7 +103,7 @@ class MiddlewareHandlerTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testThreeMiddleware()
+    public function testThreeMiddleware(): void
     {
         $handler = new MiddlewareHandler([
             function (ServerRequestInterface $request, callable $next) {

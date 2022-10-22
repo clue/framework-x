@@ -220,7 +220,7 @@ class App
         $this->any($route, new RedirectHandler($target, $code));
     }
 
-    public function run()
+    public function run(): void
     {
         if (\PHP_SAPI === 'cli') {
             $this->runLoop();
@@ -229,7 +229,7 @@ class App
         }
     }
 
-    private function runLoop()
+    private function runLoop(): void
     {
         $http = new HttpServer(function (ServerRequestInterface $request) {
             return $this->handleRequest($request);
@@ -290,7 +290,7 @@ class App
         Loop::removeSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 ?? 'printf');
     }
 
-    private function runOnce()
+    private function runOnce(): void
     {
         $request = $this->sapi->requestFromGlobals();
 

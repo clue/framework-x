@@ -9,7 +9,7 @@ use React\Stream\ThroughStream;
 
 class SapiHandlerTest extends TestCase
 {
-    public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost()
+    public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost(): void
     {
         $sapi = new SapiHandler();
         $request = $sapi->requestFromGlobals();
@@ -23,7 +23,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testRequestFromGlobalsWithHeadRequest()
+    public function testRequestFromGlobalsWithHeadRequest(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['REQUEST_URI'] = '//';
@@ -42,7 +42,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testRequestFromGlobalsWithGetRequestOverCustomPort()
+    public function testRequestFromGlobalsWithGetRequestOverCustomPort(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/path';
@@ -61,7 +61,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testRequestFromGlobalsWithGetRequestOverHttps()
+    public function testRequestFromGlobalsWithGetRequestOverHttps(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/';
@@ -81,7 +81,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testRequestFromGlobalsWithOptionsAsterisk()
+    public function testRequestFromGlobalsWithOptionsAsterisk(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'OPTIONS';
         $_SERVER['REQUEST_URI'] = '*';
@@ -101,7 +101,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testRequestFromGlobalsWithGetProxy()
+    public function testRequestFromGlobalsWithGetProxy(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = 'http://example.com/';
@@ -121,7 +121,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testRequestFromGlobalsWithConnectProxy()
+    public function testRequestFromGlobalsWithConnectProxy(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'CONNECT';
         $_SERVER['REQUEST_URI'] = 'example.com:443';
@@ -138,7 +138,7 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals('example.com:443', $request->getHeaderLine('Host'));
     }
 
-    public function testSendResponseSendsEmptyResponseWithNoHeadersAndEmptyBodyAndAssignsNoContentTypeAndEmptyContentLength()
+    public function testSendResponseSendsEmptyResponseWithNoHeadersAndEmptyBodyAndAssignsNoContentTypeAndEmptyContentLength(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -153,7 +153,7 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
     }
 
-    public function testSendResponseSendsJsonResponseWithGivenHeadersAndBodyAndAssignsMatchingContentLength()
+    public function testSendResponseSendsJsonResponseWithGivenHeadersAndBodyAndAssignsMatchingContentLength(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -173,7 +173,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testSendResponseSendsJsonResponseWithGivenHeadersAndMatchingContentLengthButEmptyBodyForHeadRequest()
+    public function testSendResponseSendsJsonResponseWithGivenHeadersAndMatchingContentLengthButEmptyBodyForHeadRequest(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -191,7 +191,7 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals(array_merge($previous, ['Content-Type: application/json', 'Content-Length: 2']), xdebug_get_headers());
     }
 
-    public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsNoContentLengthForNoContentResponse()
+    public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsNoContentLengthForNoContentResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -208,7 +208,7 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals(array_merge($previous, ['Content-Type: application/json']), xdebug_get_headers());
     }
 
-    public function testSendResponseSendsEmptyBodyWithGivenHeadersButWithoutExplicitContentLengthForNoContentResponse()
+    public function testSendResponseSendsEmptyBodyWithGivenHeadersButWithoutExplicitContentLengthForNoContentResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -225,7 +225,7 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals(array_merge($previous, ['Content-Type: application/json']), xdebug_get_headers());
     }
 
-    public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsContentLengthForNotModifiedResponse()
+    public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsContentLengthForNotModifiedResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -242,7 +242,7 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals(array_merge($previous, ['Content-Type: application/json', 'Content-Length: 4']), xdebug_get_headers());
     }
 
-    public function testSendResponseSendsEmptyBodyWithGivenHeadersAndExplicitContentLengthForNotModifiedResponse()
+    public function testSendResponseSendsEmptyBodyWithGivenHeadersAndExplicitContentLengthForNotModifiedResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -259,7 +259,7 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals(array_merge($previous, ['Content-Type: application/json', 'Content-Length: 2']), xdebug_get_headers());
     }
 
-    public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamData()
+    public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamData(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -282,7 +282,7 @@ class SapiHandlerTest extends TestCase
     /**
      * @backupGlobals enabled
      */
-    public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForHeadRequest()
+    public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForHeadRequest(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -302,7 +302,7 @@ class SapiHandlerTest extends TestCase
         $this->assertFalse($body->isReadable());
     }
 
-    public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNotModifiedResponse()
+    public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNotModifiedResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -321,7 +321,7 @@ class SapiHandlerTest extends TestCase
         $this->assertFalse($body->isReadable());
     }
 
-    public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNoContentResponse()
+    public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNoContentResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -340,7 +340,7 @@ class SapiHandlerTest extends TestCase
         $this->assertFalse($body->isReadable());
     }
 
-    public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamDataAndNoBufferHeaderForNginxServer()
+    public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamDataAndNoBufferHeaderForNginxServer(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
@@ -361,7 +361,7 @@ class SapiHandlerTest extends TestCase
         $body->end('test');
     }
 
-    public function testLogPrintsMessageWithCurrentDateAndTime()
+    public function testLogPrintsMessageWithCurrentDateAndTime(): void
     {
         // 2021-01-29 12:22:01.717 Hello\n
         $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} Hello" . PHP_EOL . "$/");

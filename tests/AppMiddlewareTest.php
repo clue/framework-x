@@ -16,7 +16,7 @@ use function React\Promise\resolve;
 
 class AppMiddlewareTest extends TestCase
 {
-    public function testGetMethodWithMiddlewareAddsGetRouteOnRouter()
+    public function testGetMethodWithMiddlewareAddsGetRouteOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -33,7 +33,7 @@ class AppMiddlewareTest extends TestCase
         $app->get('/', $middleware, $controller);
     }
 
-    public function testHeadMethodWithMiddlewareAddsHeadRouteOnRouter()
+    public function testHeadMethodWithMiddlewareAddsHeadRouteOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -50,7 +50,7 @@ class AppMiddlewareTest extends TestCase
         $app->head('/', $middleware, $controller);
     }
 
-    public function testPostMethodWithMiddlewareAddsPostRouteOnRouter()
+    public function testPostMethodWithMiddlewareAddsPostRouteOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -67,7 +67,7 @@ class AppMiddlewareTest extends TestCase
         $app->post('/', $middleware, $controller);
     }
 
-    public function testPutMethodWithMiddlewareAddsPutRouteOnRouter()
+    public function testPutMethodWithMiddlewareAddsPutRouteOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -84,7 +84,7 @@ class AppMiddlewareTest extends TestCase
         $app->put('/', $middleware, $controller);
     }
 
-    public function testPatchMethodWithMiddlewareAddsPatchRouteOnRouter()
+    public function testPatchMethodWithMiddlewareAddsPatchRouteOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -101,7 +101,7 @@ class AppMiddlewareTest extends TestCase
         $app->patch('/', $middleware, $controller);
     }
 
-    public function testDeleteMethodWithMiddlewareAddsDeleteRouteOnRouter()
+    public function testDeleteMethodWithMiddlewareAddsDeleteRouteOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -118,7 +118,7 @@ class AppMiddlewareTest extends TestCase
         $app->delete('/', $middleware, $controller);
     }
 
-    public function testOptionsMethodWithMiddlewareAddsOptionsRouteOnRouter()
+    public function testOptionsMethodWithMiddlewareAddsOptionsRouteOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -135,7 +135,7 @@ class AppMiddlewareTest extends TestCase
         $app->options('/', $middleware, $controller);
     }
 
-    public function testAnyMethodWithMiddlewareAddsAllHttpMethodsOnRouter()
+    public function testAnyMethodWithMiddlewareAddsAllHttpMethodsOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -152,7 +152,7 @@ class AppMiddlewareTest extends TestCase
         $app->any('/', $middleware, $controller);
     }
 
-    public function testMapMethodWithMiddlewareAddsGivenMethodsOnRouter()
+    public function testMapMethodWithMiddlewareAddsGivenMethodsOnRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -169,7 +169,7 @@ class AppMiddlewareTest extends TestCase
         $app->map(['GET', 'POST'], '/', $middleware, $controller);
     }
 
-    public function testMiddlewareCallsNextReturnsResponseFromRouter()
+    public function testMiddlewareCallsNextReturnsResponseFromRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -203,7 +203,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testMiddlewareCallsNextWithModifiedRequestReturnsResponseFromRouter()
+    public function testMiddlewareCallsNextWithModifiedRequestReturnsResponseFromRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -237,7 +237,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals('Alice', (string) $response->getBody());
     }
 
-    public function testMiddlewareCallsNextReturnsResponseModifiedInMiddlewareFromRouter()
+    public function testMiddlewareCallsNextReturnsResponseModifiedInMiddlewareFromRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -272,7 +272,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals('Alice', (string) $response->getBody());
     }
 
-    public function testMiddlewareCallsNextReturnsDeferredResponseModifiedInMiddlewareFromRouter()
+    public function testMiddlewareCallsNextReturnsDeferredResponseModifiedInMiddlewareFromRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -317,7 +317,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals('Alice', (string) $response->getBody());
     }
 
-    public function testMiddlewareCallsNextReturnsCoroutineResponseModifiedInMiddlewareFromRouter()
+    public function testMiddlewareCallsNextReturnsCoroutineResponseModifiedInMiddlewareFromRouter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -364,7 +364,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals('Alice', (string) $response->getBody());
     }
 
-    public function testMiddlewareCallsNextWhichThrowsExceptionReturnsInternalServerErrorResponse()
+    public function testMiddlewareCallsNextWhichThrowsExceptionReturnsInternalServerErrorResponse(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -395,7 +395,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppMiddlewareTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testMiddlewareWhichThrowsExceptionReturnsInternalServerErrorResponse()
+    public function testMiddlewareWhichThrowsExceptionReturnsInternalServerErrorResponse(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -424,7 +424,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppMiddlewareTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareCallsNextReturnsResponseFromController()
+    public function testGlobalMiddlewareCallsNextReturnsResponseFromController(): void
     {
         $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             return $next($request);
@@ -454,10 +454,10 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareInstanceCallsNextReturnsResponseFromController()
+    public function testGlobalMiddlewareInstanceCallsNextReturnsResponseFromController(): void
     {
         $middleware = new class {
-            public function __invoke(ServerRequestInterface $request, callable $next)
+            public function __invoke(ServerRequestInterface $request, callable $next): Response
             {
                 return $next($request);
             }
@@ -489,10 +489,10 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareClassNameCallsNextReturnsResponseFromController()
+    public function testGlobalMiddlewareClassNameCallsNextReturnsResponseFromController(): void
     {
         $middleware = new class {
-            public function __invoke(ServerRequestInterface $request, callable $next)
+            public function __invoke(ServerRequestInterface $request, callable $next): Response
             {
                 return $next($request);
             }
@@ -524,11 +524,12 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareClassNameAndSameForRouterCallsSameMiddlewareInstanceTwiceAndNextReturnsResponseFromController()
+    public function testGlobalMiddlewareClassNameAndSameForRouterCallsSameMiddlewareInstanceTwiceAndNextReturnsResponseFromController(): void
     {
         $middleware = new class {
+            /** @var int */
             private $called = 0;
-            public function __invoke(ServerRequestInterface $request, callable $next)
+            public function __invoke(ServerRequestInterface $request, callable $next): Response
             {
                 return $next($request->withAttribute('called', ++$this->called));
             }
@@ -560,9 +561,9 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("2\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareCallsNextWithModifiedRequestWillBeUsedForRouting()
+    public function testGlobalMiddlewareCallsNextWithModifiedRequestWillBeUsedForRouting(): void
     {
-        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
+        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next): Response {
             return $next($request->withUri($request->getUri()->withPath('/users')));
         });
 
@@ -590,7 +591,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareCallsNextReturnsModifiedResponseWhenModifyingResponseFromRouter()
+    public function testGlobalMiddlewareCallsNextReturnsModifiedResponseWhenModifyingResponseFromRouter(): void
     {
         $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             $response = $next($request);
@@ -621,7 +622,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
+    public function testGlobalMiddlewareReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter(): void
     {
         $app = $this->createAppWithoutLogger(function () {
             return new Response(
@@ -654,7 +655,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertFalse($called);
     }
 
-    public function testGlobalMiddlewareReturnsPromiseWhichResolvesWithResponseWithoutCallingNextDoesNotCallRouter()
+    public function testGlobalMiddlewareReturnsPromiseWhichResolvesWithResponseWithoutCallingNextDoesNotCallRouter(): void
     {
         $app = $this->createAppWithoutLogger(function () {
             return resolve(new Response(
@@ -695,7 +696,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertFalse($called);
     }
 
-    public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingPromiseWhichResolvesToResponseFromRouter()
+    public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingPromiseWhichResolvesToResponseFromRouter(): void
     {
         $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             return $next($request)->then(function (ResponseInterface $response) {
@@ -733,7 +734,7 @@ class AppMiddlewareTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingCoroutineWhichYieldsResponseFromRouter()
+    public function testGlobalMiddlewareCallsNextReturnsPromiseWhichResolvesWithModifiedResponseWhenModifyingCoroutineWhichYieldsResponseFromRouter(): void
     {
         $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
             $generator = $next($request);

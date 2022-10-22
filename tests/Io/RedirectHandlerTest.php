@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 
 class RedirectHandlerTest extends TestCase
 {
-    public function testInvokeReturnsResponseWithRedirectToGivenLocation()
+    public function testInvokeReturnsResponseWithRedirectToGivenLocation(): void
     {
         $handler = new RedirectHandler('http://example.com/');
 
@@ -29,7 +29,7 @@ class RedirectHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"http://example.com/\"><code>http://example.com/</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testInvokeReturnsResponseWithPermanentRedirectToGivenLocationAndCode()
+    public function testInvokeReturnsResponseWithPermanentRedirectToGivenLocationAndCode(): void
     {
         $handler = new RedirectHandler('/', 301);
 
@@ -46,7 +46,7 @@ class RedirectHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/\"><code>/</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testInvokeReturnsResponseWithCustomRedirectStatusCodeAndGivenLocation()
+    public function testInvokeReturnsResponseWithCustomRedirectStatusCodeAndGivenLocation(): void
     {
         $handler = new RedirectHandler('/', 399);
 
@@ -63,7 +63,7 @@ class RedirectHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/\"><code>/</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testInvokeReturnsResponseWithRedirectToGivenLocationWithSpecialCharsEncoded()
+    public function testInvokeReturnsResponseWithRedirectToGivenLocationWithSpecialCharsEncoded(): void
     {
         $handler = new RedirectHandler('/hello%20w%7Frld?a=1&b=2');
 
@@ -80,19 +80,19 @@ class RedirectHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/hello%20w%7Frld?a=1&amp;b=2\"><code>/hello%20w%7Frld?a=1&amp;b=2</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testConstructWithSuccessCodeThrows()
+    public function testConstructWithSuccessCodeThrows(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         new RedirectHandler('/', 200);
     }
 
-    public function testConstructWithNotModifiedCodeThrows()
+    public function testConstructWithNotModifiedCodeThrows(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         new RedirectHandler('/', 304);
     }
 
-    public function testConstructWithBadRequestCodeThrows()
+    public function testConstructWithBadRequestCodeThrows(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         new RedirectHandler('/', 400);

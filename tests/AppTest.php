@@ -38,7 +38,7 @@ use function React\Promise\resolve;
 
 class AppTest extends TestCase
 {
-    public function testConstructWithMiddlewareAssignsGivenMiddleware()
+    public function testConstructWithMiddlewareAssignsGivenMiddleware(): void
     {
         $middleware = function () { };
         $app = new App($middleware);
@@ -64,7 +64,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
     }
 
-    public function testConstructWithContainerAssignsDefaultHandlersAndContainerForRouteHandlerOnly()
+    public function testConstructWithContainerAssignsDefaultHandlersAndContainerForRouteHandlerOnly(): void
     {
         $accessLogHandler = new AccessLogHandler();
         $errorHandler = new ErrorHandler();
@@ -100,7 +100,7 @@ class AppTest extends TestCase
         $this->assertSame($container, $ref->getValue($routeHandler));
     }
 
-    public function testConstructWithContainerAndMiddlewareClassNameAssignsCallableFromContainerAsMiddleware()
+    public function testConstructWithContainerAndMiddlewareClassNameAssignsCallableFromContainerAsMiddleware(): void
     {
         $middleware = function (ServerRequestInterface $request, callable $next) { };
 
@@ -135,7 +135,7 @@ class AppTest extends TestCase
         $this->assertSame($container, $ref->getValue($routeHandler));
     }
 
-    public function testConstructWithErrorHandlerOnlyAssignsErrorHandlerAfterDefaultAccessLogHandler()
+    public function testConstructWithErrorHandlerOnlyAssignsErrorHandlerAfterDefaultAccessLogHandler(): void
     {
         $errorHandler = new ErrorHandler();
 
@@ -161,7 +161,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithErrorHandlerClassOnlyAssignsErrorHandlerAfterDefaultAccessLogHandler()
+    public function testConstructWithErrorHandlerClassOnlyAssignsErrorHandlerAfterDefaultAccessLogHandler(): void
     {
         $app = new App(ErrorHandler::class);
 
@@ -185,7 +185,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithContainerAndErrorHandlerAssignsErrorHandlerAfterDefaultAccessLogHandler()
+    public function testConstructWithContainerAndErrorHandlerAssignsErrorHandlerAfterDefaultAccessLogHandler(): void
     {
         $errorHandler = new ErrorHandler();
 
@@ -211,7 +211,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithContainerAndErrorHandlerClassAssignsErrorHandlerFromContainerAfterDefaultAccessLogHandler()
+    public function testConstructWithContainerAndErrorHandlerClassAssignsErrorHandlerFromContainerAfterDefaultAccessLogHandler(): void
     {
         $errorHandler = new ErrorHandler();
 
@@ -240,7 +240,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithMultipleContainersAndErrorHandlerClassAssignsErrorHandlerFromLastContainerBeforeErrorHandlerAfterDefaultAccessLogHandler()
+    public function testConstructWithMultipleContainersAndErrorHandlerClassAssignsErrorHandlerFromLastContainerBeforeErrorHandlerAfterDefaultAccessLogHandler(): void
     {
         $errorHandler = new ErrorHandler();
 
@@ -272,7 +272,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithMultipleContainersAndMiddlewareAssignsErrorHandlerFromLastContainerBeforeMiddlewareAfterDefaultAccessLogHandler()
+    public function testConstructWithMultipleContainersAndMiddlewareAssignsErrorHandlerFromLastContainerBeforeMiddlewareAfterDefaultAccessLogHandler(): void
     {
         $middleware = function (ServerRequestInterface $request, callable $next) { };
         $errorHandler = new ErrorHandler();
@@ -306,7 +306,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
     }
 
-    public function testConstructWithMiddlewareAndErrorHandlerAssignsGivenErrorHandlerAfterMiddlewareAndDefaultAccessLogHandlerAndErrorHandlerFirst()
+    public function testConstructWithMiddlewareAndErrorHandlerAssignsGivenErrorHandlerAfterMiddlewareAndDefaultAccessLogHandlerAndErrorHandlerFirst(): void
     {
         $middleware = function (ServerRequestInterface $request, callable $next) { };
         $errorHandler = new ErrorHandler();
@@ -336,7 +336,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[4]);
     }
 
-    public function testConstructWithMultipleContainersAndMiddlewareAndErrorHandlerClassAssignsDefaultErrorHandlerFromLastContainerBeforeMiddlewareAndErrorHandlerFromLastContainerAfterDefaultAccessLogHandler()
+    public function testConstructWithMultipleContainersAndMiddlewareAndErrorHandlerClassAssignsDefaultErrorHandlerFromLastContainerBeforeMiddlewareAndErrorHandlerFromLastContainerAfterDefaultAccessLogHandler(): void
     {
         $middleware = function (ServerRequestInterface $request, callable $next) { };
 
@@ -375,7 +375,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[4]);
     }
 
-    public function testConstructWithAccessLogHandlerAndErrorHandlerAssignsHandlersAsGiven()
+    public function testConstructWithAccessLogHandlerAndErrorHandlerAssignsHandlersAsGiven(): void
     {
         $accessLogHandler = new AccessLogHandler();
         $errorHandler = new ErrorHandler();
@@ -402,7 +402,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithAccessLogHandlerClassAndErrorHandlerClassAssignsDefaultHandlers()
+    public function testConstructWithAccessLogHandlerClassAndErrorHandlerClassAssignsDefaultHandlers(): void
     {
         $app = new App(AccessLogHandler::class, ErrorHandler::class);
 
@@ -426,7 +426,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithContainerAndAccessLogHandlerClassAndErrorHandlerClassAssignsHandlersFromContainer()
+    public function testConstructWithContainerAndAccessLogHandlerClassAndErrorHandlerClassAssignsHandlersFromContainer(): void
     {
         $accessLogHandler = new AccessLogHandler();
         $errorHandler = new ErrorHandler();
@@ -457,7 +457,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
-    public function testConstructWithMiddlewareBeforeAccessLogHandlerAndErrorHandlerAssignsDefaultErrorHandlerAsFirstHandlerFollowedByGivenHandlers()
+    public function testConstructWithMiddlewareBeforeAccessLogHandlerAndErrorHandlerAssignsDefaultErrorHandlerAsFirstHandlerFollowedByGivenHandlers(): void
     {
         $middleware = static function (ServerRequestInterface $request, callable $next) { };
         $accessLog = new AccessLogHandler();
@@ -488,7 +488,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[4]);
     }
 
-    public function testConstructWithMultipleContainersAndAccessLogHandlerClassAndErrorHandlerClassAssignsHandlersFromLastContainer()
+    public function testConstructWithMultipleContainersAndAccessLogHandlerClassAndErrorHandlerClassAssignsHandlersFromLastContainer(): void
     {
         $accessLogHandler = new AccessLogHandler();
         $errorHandler = new ErrorHandler();
@@ -523,7 +523,7 @@ class AppTest extends TestCase
     }
 
 
-    public function testConstructWithMultipleContainersAndMiddlewareAssignsDefaultHandlersFromLastContainerBeforeMiddleware()
+    public function testConstructWithMultipleContainersAndMiddlewareAssignsDefaultHandlersFromLastContainerBeforeMiddleware(): void
     {
         $middleware = function (ServerRequestInterface $request, callable $next) { };
 
@@ -561,7 +561,7 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
     }
 
-    public function testConstructWithAccessLogHandlerOnlyThrows()
+    public function testConstructWithAccessLogHandlerOnlyThrows(): void
     {
         $accessLogHandler = new AccessLogHandler();
 
@@ -569,7 +569,7 @@ class AppTest extends TestCase
         new App($accessLogHandler);
     }
 
-    public function testConstructWithAccessLogHandlerFollowedByMiddlewareThrows()
+    public function testConstructWithAccessLogHandlerFollowedByMiddlewareThrows(): void
     {
         $accessLogHandler = new AccessLogHandler();
         $middleware = function (ServerRequestInterface $request, callable $next) { };
@@ -578,7 +578,7 @@ class AppTest extends TestCase
         new App($accessLogHandler, $middleware);
     }
 
-    public function testRunWillReportListeningAddressAndRunLoopWithSocketServer()
+    public function testRunWillReportListeningAddressAndRunLoopWithSocketServer(): void
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
         if ($socket === false) {
@@ -603,7 +603,7 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunWillReportListeningAddressFromContainerEnvironmentAndRunLoopWithSocketServer()
+    public function testRunWillReportListeningAddressFromContainerEnvironmentAndRunLoopWithSocketServer(): void
     {
         $socket = @stream_socket_server('127.0.0.1:0');
         $addr = stream_socket_get_name($socket, false);
@@ -630,7 +630,7 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunWillReportListeningAddressFromContainerEnvironmentWithRandomPortAndRunLoopWithSocketServer()
+    public function testRunWillReportListeningAddressFromContainerEnvironmentWithRandomPortAndRunLoopWithSocketServer(): void
     {
         $container = new Container([
             'X_LISTEN' => '127.0.0.1:0'
@@ -653,7 +653,7 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunWillRestartLoopUntilSocketIsClosed()
+    public function testRunWillRestartLoopUntilSocketIsClosed(): void
     {
         $container = new Container([
             'X_LISTEN' => '127.0.0.1:0'
@@ -684,7 +684,7 @@ class AppTest extends TestCase
      * @requires function pcntl_signal
      * @requires function posix_kill
      */
-    public function testRunWillStopWhenReceivingSigint()
+    public function testRunWillStopWhenReceivingSigint(): void
     {
         $container = new Container([
             'X_LISTEN' => '127.0.0.1:0'
@@ -704,7 +704,7 @@ class AppTest extends TestCase
      * @requires function pcntl_signal
      * @requires function posix_kill
      */
-    public function testRunWillStopWhenReceivingSigterm()
+    public function testRunWillStopWhenReceivingSigterm(): void
     {
         $container = new Container([
             'X_LISTEN' => '127.0.0.1:0'
@@ -720,7 +720,7 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunAppWithEmptyAddressThrows()
+    public function testRunAppWithEmptyAddressThrows(): void
     {
         $container = new Container([
             'X_LISTEN' => ''
@@ -733,7 +733,7 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunAppWithBusyPortThrows()
+    public function testRunAppWithBusyPortThrows(): void
     {
         $socket = @stream_socket_server('127.0.0.1:0');
         $addr = stream_socket_get_name($socket, false);
@@ -753,7 +753,7 @@ class AppTest extends TestCase
         $app->run();
     }
 
-    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromHandler()
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -779,7 +779,7 @@ class AppTest extends TestCase
         $ref->invoke($app);
     }
 
-    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromDeferredHandler()
+    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromDeferredHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -805,7 +805,7 @@ class AppTest extends TestCase
         $ref->invoke($app);
     }
 
-    public function testGetMethodAddsGetRouteOnRouter()
+    public function testGetMethodAddsGetRouteOnRouter(): void
     {
         $app = new App();
 
@@ -819,7 +819,7 @@ class AppTest extends TestCase
         $app->get('/', function () { });
     }
 
-    public function testHeadMethodAddsHeadRouteOnRouter()
+    public function testHeadMethodAddsHeadRouteOnRouter(): void
     {
         $app = new App();
 
@@ -833,7 +833,7 @@ class AppTest extends TestCase
         $app->head('/', function () { });
     }
 
-    public function testPostMethodAddsPostRouteOnRouter()
+    public function testPostMethodAddsPostRouteOnRouter(): void
     {
         $app = new App();
 
@@ -847,7 +847,7 @@ class AppTest extends TestCase
         $app->post('/', function () { });
     }
 
-    public function testPutMethodAddsPutRouteOnRouter()
+    public function testPutMethodAddsPutRouteOnRouter(): void
     {
         $app = new App();
 
@@ -861,7 +861,7 @@ class AppTest extends TestCase
         $app->put('/', function () { });
     }
 
-    public function testPatchMethodAddsPatchRouteOnRouter()
+    public function testPatchMethodAddsPatchRouteOnRouter(): void
     {
         $app = new App();
 
@@ -875,7 +875,7 @@ class AppTest extends TestCase
         $app->patch('/', function () { });
     }
 
-    public function testDeleteMethodAddsDeleteRouteOnRouter()
+    public function testDeleteMethodAddsDeleteRouteOnRouter(): void
     {
         $app = new App();
 
@@ -889,7 +889,7 @@ class AppTest extends TestCase
         $app->delete('/', function () { });
     }
 
-    public function testOptionsMethodAddsOptionsRouteOnRouter()
+    public function testOptionsMethodAddsOptionsRouteOnRouter(): void
     {
         $app = new App();
 
@@ -903,7 +903,7 @@ class AppTest extends TestCase
         $app->options('/', function () { });
     }
 
-    public function testAnyMethodAddsRouteOnRouter()
+    public function testAnyMethodAddsRouteOnRouter(): void
     {
         $app = new App();
 
@@ -917,7 +917,7 @@ class AppTest extends TestCase
         $app->any('/', function () { });
     }
 
-    public function testMapMethodAddsRouteOnRouter()
+    public function testMapMethodAddsRouteOnRouter(): void
     {
         $app = new App();
 
@@ -931,7 +931,7 @@ class AppTest extends TestCase
         $app->map(['GET', 'POST'], '/', function () { });
     }
 
-    public function testGetWithAccessLogHandlerAsMiddlewareThrows()
+    public function testGetWithAccessLogHandlerAsMiddlewareThrows(): void
     {
         $app = new App();
 
@@ -939,7 +939,7 @@ class AppTest extends TestCase
         $app->get('/', new AccessLogHandler(), function () { });
     }
 
-    public function testGetWithAccessLogHandlerClassAsMiddlewareThrows()
+    public function testGetWithAccessLogHandlerClassAsMiddlewareThrows(): void
     {
         $app = new App();
 
@@ -947,7 +947,7 @@ class AppTest extends TestCase
         $app->get('/', AccessLogHandler::class, function () { });
     }
 
-    public function testRedirectMethodAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation()
+    public function testRedirectMethodAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation(): void
     {
         $app = new App();
 
@@ -979,7 +979,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testRedirectMethodWithCustomRedirectCodeAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode()
+    public function testRedirectMethodWithCustomRedirectCodeAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode(): void
     {
         $app = new App();
 
@@ -1011,7 +1011,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
+    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1033,7 +1033,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage()
+    public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1054,7 +1054,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithSingleMethodNotAllowedMessage()
+    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithSingleMethodNotAllowedMessage(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1078,7 +1078,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code> request.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMultipleMethodNotAllowedMessage()
+    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMultipleMethodNotAllowedMessage(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1104,7 +1104,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code>/<code>HEAD</code>/<code>POST</code> request.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler()
+    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1132,7 +1132,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyRouteHandler()
+    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyRouteHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1161,7 +1161,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1197,7 +1197,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsPendingPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsPendingPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1225,7 +1225,7 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseWithoutYielding()
+    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseWithoutYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1257,7 +1257,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1295,7 +1295,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1338,7 +1338,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsCoroutineThatYieldsPendingPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsCoroutineThatYieldsPendingPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1366,7 +1366,7 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse()
+    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1394,7 +1394,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseResolvingWithResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseResolvingWithResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse(): void
     {
         if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
             $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
@@ -1440,7 +1440,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes()
+    public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1470,7 +1470,7 @@ class AppTest extends TestCase
         $this->assertEquals("Hello alice\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1497,7 +1497,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1532,7 +1532,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull(): void
     {
         if (method_exists(PromiseInterface::class, 'catch')) {
             $this->markTestSkipped('Only supported for legacy Promise v2, Promise v3 always rejects with Throwable');
@@ -1570,7 +1570,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>React\Promise\RejectedPromise</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1605,7 +1605,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionWithoutYielding()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionWithoutYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1635,7 +1635,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1671,7 +1671,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1698,7 +1698,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException(): void
     {
         if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
             $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
@@ -1745,7 +1745,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1780,7 +1780,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNullImmediately()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNullImmediately(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1807,7 +1807,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to yield <code>React\Promise\PromiseInterface</code> but got <code>null</code> near or before <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1833,7 +1833,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassDoesNotExist()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassDoesNotExist(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1857,7 +1857,7 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class UnknownClass not found</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function provideInvalidClasses()
+    public function provideInvalidClasses(): \Generator
     {
         yield [
             InvalidConstructorPrivate::class,
@@ -1924,7 +1924,7 @@ class AppTest extends TestCase
      * @param class-string $class
      * @param string $error
      */
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassIsInvalid(string $class, string $error)
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassIsInvalid(string $class, string $error): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1948,13 +1948,13 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class " . $class . " failed to load: $error</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter(): void
     {
         $app = $this->createAppWithoutLogger();
 
         $line = __LINE__ + 2;
         $controller = new class {
-            public function __invoke(int $value) { }
+            public function __invoke(int $value): void { }
         };
 
         $app->get('/users', get_class($controller));
@@ -1977,7 +1977,7 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>TypeError</code> with message <code>%s</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassHasNoInvokeMethod()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassHasNoInvokeMethod(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -2003,7 +2003,7 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class %s has no public __invoke() method</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue()
+    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -2037,7 +2037,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValueAfterYielding()
+    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValueAfterYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
