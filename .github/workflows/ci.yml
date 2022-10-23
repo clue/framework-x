@@ -27,6 +27,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: xdebug
+          ini-file: development
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text --stderr
         if: ${{ matrix.php >= 7.3 }}
