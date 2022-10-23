@@ -18,6 +18,7 @@ class SapiHandler
 
     public function __construct()
     {
+        // @phpstan-ignore-next-line because `fopen()` is known to always return a `resource` for built-in wrappers
         $this->logStream = PHP_SAPI === 'cli' ? \fopen('php://output', 'a') : (\defined('STDERR') ? \STDERR : \fopen('php://stderr', 'a'));
     }
 
@@ -50,6 +51,7 @@ class SapiHandler
         }
 
         $body = file_get_contents('php://input');
+        assert(\is_string($body));
 
         $request = new ServerRequest(
             $_SERVER['REQUEST_METHOD'] ?? 'GET',
@@ -102,6 +104,7 @@ class SapiHandler
 
         // send all headers without applying default "; charset=utf-8" set by PHP (default_charset)
         $old = ini_get('default_charset');
+        assert(\is_string($old));
         ini_set('default_charset', '');
         foreach ($response->getHeaders() as $name => $values) {
             foreach ($values as $value) {

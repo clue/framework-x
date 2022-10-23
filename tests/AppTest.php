@@ -584,6 +584,7 @@ class AppTest extends TestCase
         if ($socket === false) {
             $this->markTestSkipped('Listen address :8080 already in use');
         }
+        assert(is_resource($socket));
         fclose($socket);
 
         $app = new App();
@@ -592,6 +593,7 @@ class AppTest extends TestCase
         Loop::futureTick(function () {
             $resources = get_resources();
             $socket = end($resources);
+            assert(is_resource($socket));
 
             Loop::removeReadStream($socket);
             fclose($socket);
@@ -605,7 +607,8 @@ class AppTest extends TestCase
 
     public function testRunWillReportListeningAddressFromContainerEnvironmentAndRunLoopWithSocketServer(): void
     {
-        $socket = @stream_socket_server('127.0.0.1:0');
+        $socket = stream_socket_server('127.0.0.1:0');
+        assert(is_resource($socket));
         $addr = stream_socket_get_name($socket, false);
         fclose($socket);
 
@@ -619,6 +622,7 @@ class AppTest extends TestCase
         Loop::futureTick(function () {
             $resources = get_resources();
             $socket = end($resources);
+            assert(is_resource($socket));
 
             Loop::removeReadStream($socket);
             fclose($socket);
@@ -642,6 +646,7 @@ class AppTest extends TestCase
         Loop::futureTick(function () {
             $resources = get_resources();
             $socket = end($resources);
+            assert(is_resource($socket));
 
             Loop::removeReadStream($socket);
             fclose($socket);
@@ -665,6 +670,7 @@ class AppTest extends TestCase
         Loop::futureTick(function () {
             $resources = get_resources();
             $socket = end($resources);
+            assert(is_resource($socket));
 
             Loop::futureTick(function () use ($socket) {
                 Loop::removeReadStream($socket);
@@ -693,7 +699,9 @@ class AppTest extends TestCase
         $app = new App($container);
 
         Loop::futureTick(function () {
-            posix_kill(getmypid(), defined('SIGINT') ? SIGINT : 2);
+            $pid = getmypid();
+            assert(is_int($pid));
+            posix_kill($pid, defined('SIGINT') ? SIGINT : 2);
         });
 
         $this->expectOutputRegex('/' . preg_quote('Received SIGINT, stopping loop' . PHP_EOL, '/') . '$/');
@@ -713,7 +721,9 @@ class AppTest extends TestCase
         $app = new App($container);
 
         Loop::futureTick(function () {
-            posix_kill(getmypid(), defined('SIGTERM') ? SIGTERM : 15);
+            $pid = getmypid();
+            assert(is_int($pid));
+            posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
         });
 
         $this->expectOutputRegex('/' . preg_quote('Received SIGTERM, stopping loop' . PHP_EOL, '/') . '$/');
@@ -735,8 +745,10 @@ class AppTest extends TestCase
 
     public function testRunAppWithBusyPortThrows(): void
     {
-        $socket = @stream_socket_server('127.0.0.1:0');
+        $socket = stream_socket_server('127.0.0.1:0');
+        assert(is_resource($socket));
         $addr = stream_socket_get_name($socket, false);
+        assert(is_string($addr));
 
         if (@stream_socket_server($addr) !== false) {
             $this->markTestSkipped('System does not prevent listening on same address twice');

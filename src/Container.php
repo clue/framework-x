@@ -147,6 +147,8 @@ class Container
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
+        assert(\is_array($this->container));
+
         if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
                 if ($depth < 1) {
@@ -213,6 +215,7 @@ class Container
         $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false);
 
         // instantiate with list of parameters
+        // @phpstan-ignore-next-line because `$class->newInstance()` is known to return `T`
         return $this->container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
     }
 
@@ -236,6 +239,8 @@ class Container
      */
     private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables) /*: mixed (PHP 8.0+) */
     {
+        assert(\is_array($this->container));
+
         $type = $parameter->getType();
         $hasDefault = $parameter->isDefaultValueAvailable() || ((!$type instanceof \ReflectionNamedType || $type->getName() !== 'mixed') && $parameter->allowsNull());
 
@@ -293,7 +298,7 @@ class Container
      */
     private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
-        assert(\array_key_exists($name, $this->container) || isset($_SERVER[$name]));
+        assert(\is_array($this->container) && (\array_key_exists($name, $this->container) || isset($_SERVER[$name])));
 
         if (($this->container[$name] ?? null) instanceof \Closure) {
             if ($depth < 1) {
@@ -301,11 +306,13 @@ class Container
             }
 
             // build list of factory parameters based on parameter types
-            $closure = new \ReflectionFunction($this->container[$name]);
+            $factory = $this->container[$name];
+            assert($factory instanceof \Closure);
+            $closure = new \ReflectionFunction($factory);
             $params = $this->loadFunctionParams($closure, $depth - 1, true);
 
             // invoke factory with list of parameters
-            $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
+            $value = $params === [] ? $factory() : $factory(...$params);
 
             if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
                 throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar|null from factory, but got ' . \gettype($value));

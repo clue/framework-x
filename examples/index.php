@@ -63,6 +63,7 @@ $app->get('/debug', function (ServerRequestInterface $request) {
     ob_start();
     var_dump($request);
     $info = ob_get_clean();
+    assert(is_string($info));
 
     if (PHP_SAPI !== 'cli' && (!function_exists('xdebug_is_enabled') || !xdebug_is_enabled())) {
         $info = htmlspecialchars($info, 0, 'utf-8');

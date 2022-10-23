@@ -82,6 +82,7 @@ class FilesystemHandler
             }
 
             $files = \scandir($path);
+            // @phpstan-ignore-next-line TODO handle error if directory can not be accessed
             foreach ($files as $file) {
                 if ($file === '.' || $file === '..') {
                     continue;
@@ -119,7 +120,7 @@ class FilesystemHandler
             return new Response(
                 Response::STATUS_OK,
                 $headers,
-                \file_get_contents($path)
+                \file_get_contents($path) // @phpstan-ignore-line TODO handle error if file can not be accessed
             );
         } else {
             return $this->errorHandler->requestNotFound();

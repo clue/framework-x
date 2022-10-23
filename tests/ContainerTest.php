@@ -51,7 +51,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -83,7 +83,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -113,7 +113,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -146,7 +146,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -176,7 +176,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -206,7 +206,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -239,7 +239,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -270,7 +270,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -301,7 +301,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -331,7 +331,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -365,7 +365,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -405,7 +405,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -441,7 +441,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -480,7 +480,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (\stdClass $dto) {
-                return new Response(200, [], json_encode($dto));
+                return new Response(200, [], (string) json_encode($dto));
             },
             \stdClass::class => function () { return (object)['name' => 'Alice']; }
         ]);
@@ -515,7 +515,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (\stdClass $data) {
-                return new Response(200, [], json_encode($data));
+                return new Response(200, [], (string) json_encode($data));
             },
             'data' => (object) ['name' => 'Alice']
         ]);
@@ -550,7 +550,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (\stdClass $data) {
-                return new Response(200, [], json_encode($data));
+                return new Response(200, [], (string) json_encode($data));
             },
             'data' => function () {
                 return (object) ['name' => 'Alice'];
@@ -610,7 +610,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function ($data) {
-                return new Response(200, [], json_encode($data));
+                return new Response(200, [], (string) json_encode($data));
             },
             'data' => $value
         ]);
@@ -649,7 +649,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function ($data) {
-                return new Response(200, [], json_encode($data));
+                return new Response(200, [], (string) json_encode($data));
             },
             'data' => function () use ($value) {
                 return $value;
@@ -691,7 +691,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (mixed $data) {
-                return new Response(200, [], json_encode($data));
+                return new Response(200, [], (string) json_encode($data));
             },
             'data' => $value
         ]);
@@ -731,7 +731,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (mixed $data) {
-                return new Response(200, [], json_encode($data));
+                return new Response(200, [], (string) json_encode($data));
             },
             'data' => function () use ($value) {
                 return $value;
@@ -768,7 +768,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function ($data = 42) {
-                return new Response(200, [], json_encode($data));
+                return new Response(200, [], (string) json_encode($data));
             },
             'data' => null
         ]);
@@ -805,7 +805,7 @@ class ContainerTest extends TestCase
         };
 
         $fn = null;
-        $fn = #[PHP8] fn(mixed $data = 42) => new Response(200, [], json_encode($data)); // @phpstan-ignore-line
+        $fn = #[PHP8] fn(mixed $data = 42) => new Response(200, [], (string) json_encode($data)); // @phpstan-ignore-line
         $container = new Container([
             ResponseInterface::class => $fn,
             'data' => null
@@ -841,7 +841,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (?\stdClass $user, ?\stdClass $data) {
-                return new Response(200, [], json_encode(['user' => $user, 'data' => $data]));
+                return new Response(200, [], (string) json_encode(['user' => $user, 'data' => $data]));
             },
             'user' => (object) []
         ]);
@@ -876,7 +876,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (?\stdClass $user, ?\stdClass $data) {
-                return new Response(200, [], json_encode(['user' => $user, 'data' => $data]));
+                return new Response(200, [], (string) json_encode(['user' => $user, 'data' => $data]));
             },
             'user' => function (): ?\stdClass { // @phpstan-ignore-line
                 return (object) [];
@@ -913,7 +913,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (string $name = 'Alice', int $age = 0) {
-                return new Response(200, [], json_encode(['name' => $name, 'age' => $age]));
+                return new Response(200, [], (string) json_encode(['name' => $name, 'age' => $age]));
             },
             'age' => 42
         ]);
@@ -942,7 +942,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -980,7 +980,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1017,7 +1017,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1060,7 +1060,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (string $FOO) {
-                return new Response(200, [], json_encode($FOO));
+                return new Response(200, [], (string) json_encode($FOO));
             }
         ]);
 
@@ -1097,7 +1097,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (string $address) {
-                return new Response(200, [], json_encode($address));
+                return new Response(200, [], (string) json_encode($address));
             },
             'address' => function (string $FOO) {
                 return 'http://' . $FOO;
@@ -1137,7 +1137,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (?string $FOO) {
-                return new Response(200, [], json_encode($FOO));
+                return new Response(200, [], (string) json_encode($FOO));
             }
         ]);
 
@@ -1174,7 +1174,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (?string $FOO) {
-                return new Response(200, [], json_encode($FOO));
+                return new Response(200, [], (string) json_encode($FOO));
             }
         ]);
 
@@ -1208,7 +1208,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function ($FOO) {
-                return new Response(200, [], json_encode($FOO));
+                return new Response(200, [], (string) json_encode($FOO));
             }
         ]);
 
@@ -1248,7 +1248,7 @@ class ContainerTest extends TestCase
 
         $container = new Container([
             ResponseInterface::class => function (mixed $FOO) {
-                return new Response(200, [], json_encode($FOO));
+                return new Response(200, [], (string) json_encode($FOO));
             }
         ]);
 
@@ -1279,7 +1279,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1311,7 +1311,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1343,7 +1343,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1377,7 +1377,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1412,7 +1412,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1445,7 +1445,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1478,7 +1478,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1511,7 +1511,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1544,7 +1544,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1577,7 +1577,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1607,7 +1607,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1637,7 +1637,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1667,7 +1667,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1697,7 +1697,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1727,7 +1727,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1757,7 +1757,7 @@ class ContainerTest extends TestCase
 
             public function __invoke(ServerRequestInterface $request): Response
             {
-                return new Response(200, [], json_encode($this->data));
+                return new Response(200, [], (string) json_encode($this->data));
             }
         };
 
@@ -1787,7 +1787,7 @@ class ContainerTest extends TestCase
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Map for file contains unexpected resource');
 
-        new Container([
+        new Container([ // @phpstan-ignore-line
             'file' => tmpfile()
         ]);
     }
