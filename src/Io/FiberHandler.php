@@ -21,7 +21,7 @@ use React\Promise\PromiseInterface;
 class FiberHandler
 {
     /**
-     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>|\Generator
+     * @return ResponseInterface|PromiseInterface<ResponseInterface>|\Generator
      *     Returns a `ResponseInterface` from the next request handler in the
      *     chain. If the next request handler returns immediately, this method
      *     will return immediately. If the next request handler suspends the
@@ -42,6 +42,9 @@ class FiberHandler
             $response = $next($request);
             assert($response instanceof ResponseInterface || $response instanceof PromiseInterface || $response instanceof \Generator);
 
+            // if the next request handler returns immediately, the fiber can terminate immediately without using a Deferred
+            // if the next request handler suspends the fiber, we only reach this point after resuming the fiber, so the code below will have assigned a Deferred
+            /** @var ?Deferred $deferred */
             if ($deferred !== null) {
                 $deferred->resolve($response);
             }
@@ -49,8 +52,10 @@ class FiberHandler
             return $response;
         });
 
+        /** @throws void because the next handler will always be an `ErrorHandler` */
         $fiber->start();
         if ($fiber->isTerminated()) {
+            /** @throws void because fiber is known to have terminated successfully */
             return $fiber->getReturn();
         }
 

@@ -143,7 +143,7 @@ class AccessLogHandlerTest extends TestCase
         $response = new Response(200, [], "Hello\n");
 
         $generator = $handler($request, function () use ($response) {
-            if (false) {
+            if (false) { // @phpstan-ignore-line
                 yield;
             }
             return $response;

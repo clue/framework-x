@@ -7,5 +7,6 @@ class InvalidConstructorIntersection
 {
     public function __construct(\Traversable&\ArrayAccess $value)
     {
+        assert($value instanceof \Traversable && $value instanceof \ArrayAccess); // @phpstan-ignore-line
     }
 }

@@ -137,7 +137,7 @@ class ContainerTest extends TestCase
         $controller = new class(null) {
             private $data = false;
 
-            #[PHP8] public function __construct(string|int|null $data) { $this->data = $data; }
+            #[PHP8] public function __construct(string|int|null $data) { $this->data = $data; } // @phpstan-ignore-line
 
             public function __invoke(ServerRequestInterface $request)
             {
@@ -226,7 +226,7 @@ class ContainerTest extends TestCase
         $controller = new class(null) {
             private $data = false;
 
-            #[PHP8] public function __construct(string|int|null $data = 42) { $this->data = $data; }
+            #[PHP8] public function __construct(string|int|null $data = 42) { $this->data = $data; } // @phpstan-ignore-line
 
             public function __invoke(ServerRequestInterface $request)
             {
@@ -284,7 +284,7 @@ class ContainerTest extends TestCase
         $controller = new class(null) {
             private $data = false;
 
-            #[PHP8] public function __construct(mixed $data = 'empty') { $this->data = $data; }
+            #[PHP8] public function __construct(mixed $data = 'empty') { $this->data = $data; } // @phpstan-ignore-line
 
             public function __invoke(ServerRequestInterface $request)
             {
@@ -773,7 +773,8 @@ class ContainerTest extends TestCase
             }
         };
 
-        $fn = #[PHP8] fn(mixed $data = 42) => new Response(200, [], json_encode($data));
+        $fn = null;
+        $fn = #[PHP8] fn(mixed $data = 42) => new Response(200, [], json_encode($data)); // @phpstan-ignore-line
         $container = new Container([
             ResponseInterface::class => $fn,
             'data' => null
@@ -844,7 +845,7 @@ class ContainerTest extends TestCase
             ResponseInterface::class => function (?\stdClass $user, ?\stdClass $data) {
                 return new Response(200, [], json_encode(['user' => $user, 'data' => $data]));
             },
-            'user' => function (): ?\stdClass {
+            'user' => function (): ?\stdClass { // @phpstan-ignore-line
                 return (object) [];
             }
         ]);
@@ -1717,7 +1718,7 @@ class ContainerTest extends TestCase
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Map for all contains unexpected array');
 
-        new Container([
+        new Container([ // @phpstan-ignore-line
             'all' => []
         ]);
     }
@@ -1944,7 +1945,7 @@ class ContainerTest extends TestCase
 
         $container = new Container($psr);
 
-        $callable = $container->callable('FooBar');
+        $callable = $container->callable('FooBar'); // @phpstan-ignore-line
 
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Request handler class FooBar failed to load: Unable to load class');
@@ -2175,6 +2176,6 @@ class ContainerTest extends TestCase
     {
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, stdClass given');
-        new Container((object) []);
+        new Container((object) []); // @phpstan-ignore-line
     }
 }

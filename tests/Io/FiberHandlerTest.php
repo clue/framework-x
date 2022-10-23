@@ -61,7 +61,7 @@ class FiberHandlerTest extends TestCase
         $response = new Response();
 
         $generator = $handler($request, function () use ($response) {
-            if (false) {
+            if (false) { // @phpstan-ignore-line
                 yield;
             }
             return $response;

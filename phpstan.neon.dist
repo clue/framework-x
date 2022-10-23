@@ -1,0 +1,12 @@
+parameters:
+    level: 5
+
+    paths:
+        - examples/
+        - src/
+        - tests/
+
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # ignore generic usage like `PromiseInterface<ResponseInterface>` until fixed upstream
+        - '/^PHPDoc tag @return contains generic type React\\Promise\\PromiseInterface<Psr\\Http\\Message\\ResponseInterface> but interface React\\Promise\\PromiseInterface is not generic\.$/'

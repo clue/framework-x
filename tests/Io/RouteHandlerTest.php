@@ -200,6 +200,7 @@ class RouteHandlerTest extends TestCase
         $controller = new class {
             public static $response;
             public function __construct(int $value = null) {
+                assert($value === null);
             }
             public function __invoke() {
                 return self::$response;
@@ -223,6 +224,7 @@ class RouteHandlerTest extends TestCase
         $controller = new class(null) {
             public static $response;
             public function __construct(?int $value) {
+                assert($value === null);
             }
             public function __invoke() {
                 return self::$response;

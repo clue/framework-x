@@ -6,5 +6,6 @@ class InvalidConstructorSelf
 {
     public function __construct(InvalidConstructorSelf $value)
     {
+        assert($value instanceof self);
     }
 }

@@ -28,11 +28,28 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: xdebug
           ini-file: development
-      - run: composer install
+      - run: composer remove --dev --no-install phpstan/phpstan && composer install
       - run: vendor/bin/phpunit --coverage-text --stderr
         if: ${{ matrix.php >= 7.3 }}
       - run: vendor/bin/phpunit --coverage-text --stderr -c phpunit.xml.legacy
         if: ${{ matrix.php < 7.3 }}
+
+  PHPStan:
+    name: PHPStan (PHP ${{ matrix.php }})
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        php:
+          - 8.2
+          - 8.1
+    steps:
+      - uses: actions/checkout@v3
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - run: composer install
+      - run: vendor/bin/phpstan
 
   Built-in-webserver:
     name: Built-in webserver (PHP ${{ matrix.php }})

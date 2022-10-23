@@ -118,7 +118,7 @@ $app->head('/method/head', function (ServerRequestInterface $request) {
    return new React\Http\Message\Response(
         React\Http\Message\Response::STATUS_OK,
         [
-            'Content-Length' => 5,
+            'Content-Length' => '5',
             'Content-Type' => 'text/plain; charset=utf-8',
             'X-Is-Head' => 'true'
         ]
@@ -161,7 +161,7 @@ $app->get('/etag/{etag:[a-z]+}', function (ServerRequestInterface $request) {
             React\Http\Message\Response::STATUS_NOT_MODIFIED,
             [
                 'ETag' => $etag,
-                'Content-Length' => strlen($etag) - 1
+                'Content-Length' => (string) (strlen($etag) - 1)
             ]
         );
     }
@@ -193,7 +193,7 @@ $app->get('/error/null', function () {
 $app->get('/error/yield', function () {
     yield null;
 });
-$app->get('/error/class', 'Acme\Http\UnknownDeleteUserController');
+$app->get('/error/class', 'Acme\Http\UnknownDeleteUserController'); // @phpstan-ignore-line
 
 // OPTIONS *
 $app->options('', function () {

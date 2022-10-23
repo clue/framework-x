@@ -22,7 +22,7 @@ class ErrorHandler
     }
 
     /**
-     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>|\Generator
+     * @return ResponseInterface|PromiseInterface<ResponseInterface>|\Generator
      *     Returns a response, a Promise which eventually fulfills with a
      *     response or a Generator which eventually returns a response. This
      *     method never throws or resolves a rejected promise. If the next

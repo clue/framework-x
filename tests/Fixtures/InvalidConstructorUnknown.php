@@ -4,7 +4,7 @@ namespace FrameworkX\Tests\Fixtures;
 
 class InvalidConstructorUnknown
 {
-    public function __construct(\UnknownClass $value)
+    public function __construct(\UnknownClass $value) // @phpstan-ignore-line
     {
     }
 }

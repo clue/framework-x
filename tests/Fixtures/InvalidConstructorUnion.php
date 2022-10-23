@@ -7,5 +7,6 @@ class InvalidConstructorUnion
 {
     public function __construct(int|float $value)
     {
+        assert(is_int($value) || is_float($value)); // @phpstan-ignore-line
     }
 }
