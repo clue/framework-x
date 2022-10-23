@@ -28,7 +28,7 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: xdebug
           ini-file: development
-      - run: composer remove --dev --no-install phpstan/phpstan && composer install
+      - run: composer install
       - run: vendor/bin/phpunit --coverage-text --stderr
         if: ${{ matrix.php >= 7.3 }}
       - run: vendor/bin/phpunit --coverage-text --stderr -c phpunit.xml.legacy
@@ -42,6 +42,11 @@ jobs:
         php:
           - 8.2
           - 8.1
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
     steps:
       - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2

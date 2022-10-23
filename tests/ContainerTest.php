@@ -134,6 +134,7 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        // @phpstan-ignore-next-line for PHP < 8
         $controller = new class(null) {
             private $data = false;
 
@@ -223,6 +224,7 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        // @phpstan-ignore-next-line for PHP < 8
         $controller = new class(null) {
             private $data = false;
 
@@ -281,6 +283,7 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        // @phpstan-ignore-next-line for PHP < 8
         $controller = new class(null) {
             private $data = false;
 

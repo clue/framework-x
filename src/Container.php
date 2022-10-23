@@ -234,6 +234,7 @@ class Container
         $hasDefault = $parameter->isDefaultValueAvailable() || ((!$type instanceof \ReflectionNamedType || $type->getName() !== 'mixed') && $parameter->allowsNull());
 
         // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
+        // @phpstan-ignore-next-line for PHP < 8
         if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
             if ($hasDefault) {
                 return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
