@@ -2077,7 +2077,7 @@ class ContainerTest extends TestCase
     public function testGetEnvReturnsStringFromGlobalServerIfPsrContainerHasNoEntry(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->atLeastOnce())->method('has')->with('X_FOO')->willReturn(false);
         $psr->expects($this->never())->method('get');
 
         assert($psr instanceof ContainerInterface);

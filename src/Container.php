@@ -98,12 +98,12 @@ class Container
     {
         assert(\preg_match('/^[A-Z][A-Z0-9_]+$/', $name) === 1);
 
-        if (\is_array($this->container) && \array_key_exists($name, $this->container)) {
-            $value = $this->loadVariable($name, 'mixed', true, 64);
-        } elseif ($this->container instanceof ContainerInterface && $this->container->has($name)) {
+        if ($this->container instanceof ContainerInterface && $this->container->has($name)) {
             $value = $this->container->get($name);
+        } elseif ($this->hasVariable($name)) {
+            $value = $this->loadVariable($name, 'mixed', true, 64);
         } else {
-            $value = $_SERVER[$name] ?? null;
+            return null;
         }
 
         if (!\is_string($value) && $value !== null) {
@@ -257,7 +257,7 @@ class Container
 
         // load container variables if parameter name is known
         assert($type === null || $type instanceof \ReflectionNamedType);
-        if ($allowVariables && (\array_key_exists($parameter->getName(), $this->container) || (isset($_SERVER[$parameter->getName()]) && \preg_match('/^[A-Z][A-Z0-9_]+$/', $parameter->getName())))) {
+        if ($allowVariables && $this->hasVariable($parameter->getName())) {
             return $this->loadVariable($parameter->getName(), $type === null ? 'mixed' : $type->getName(), $parameter->allowsNull(), $depth);
         }
 
@@ -294,15 +294,21 @@ class Container
         return $this->loadObject($type->getName(), $depth - 1);
     }
 
+    private function hasVariable(string $name): bool
+    {
+        return (\is_array($this->container) && \array_key_exists($name, $this->container)) || (\is_string($_SERVER[$name] ?? null) && \preg_match('/^[A-Z][A-Z0-9_]+$/', $name));
+    }
+
     /**
      * @return object|string|int|float|bool|null
      * @throws \BadMethodCallException if $name is not a valid container variable
      */
     private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
-        assert(\is_array($this->container) && (\array_key_exists($name, $this->container) || isset($_SERVER[$name])));
+        assert($this->hasVariable($name));
+        assert(\is_array($this->container) || !$this->container->has($name));
 
-        if (($this->container[$name] ?? null) instanceof \Closure) {
+        if (\is_array($this->container) && ($this->container[$name] ?? null) instanceof \Closure) {
             if ($depth < 1) {
                 throw new \BadMethodCallException('Container variable $' . $name . ' is recursive');
             }
@@ -321,10 +327,10 @@ class Container
             }
 
             $this->container[$name] = $value;
-        } elseif (\array_key_exists($name, $this->container)) {
+        } elseif (\is_array($this->container) && \array_key_exists($name, $this->container)) {
             $value = $this->container[$name];
         } else {
-            assert(isset($_SERVER[$name]) && \is_string($_SERVER[$name]));
+            assert(\is_string($_SERVER[$name] ?? null));
             $value = $_SERVER[$name];
         }
 
