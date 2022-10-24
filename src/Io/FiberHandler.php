@@ -56,6 +56,7 @@ class FiberHandler
         $fiber->start();
         if ($fiber->isTerminated()) {
             /** @throws void because fiber is known to have terminated successfully */
+            /** @var ResponseInterface|PromiseInterface|\Generator */
             return $fiber->getReturn();
         }
 

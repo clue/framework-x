@@ -46,11 +46,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -78,11 +79,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -112,11 +114,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -144,11 +147,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -168,11 +172,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -194,11 +199,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -223,11 +229,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -255,11 +262,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -288,11 +296,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -316,11 +325,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -356,11 +366,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -385,11 +396,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -409,11 +421,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -440,11 +453,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -468,11 +482,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -505,11 +520,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -543,11 +559,12 @@ class AppTest extends TestCase
         $ref = new ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
 
-        $this->assertInstanceOf(MiddlewareHandler::class, $handler);
         $ref = new ReflectionProperty($handler, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);
@@ -1458,6 +1475,7 @@ class AppTest extends TestCase
 
         $app->get('/users/{name}', function (ServerRequestInterface $request) {
             $name = $request->getAttribute('name');
+            assert(is_string($name));
 
             return new Response(
                 200,
@@ -2091,10 +2109,12 @@ class AppTest extends TestCase
         $ref = new \ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $middleware = $ref->getValue($app);
+        assert($middleware instanceof MiddlewareHandler);
 
         $ref = new \ReflectionProperty($middleware, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($middleware);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);

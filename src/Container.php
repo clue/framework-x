@@ -118,6 +118,7 @@ class Container
     {
         if ($this->container instanceof ContainerInterface) {
             if ($this->container->has(AccessLogHandler::class)) {
+                // @phpstan-ignore-next-line method return type will ensure correct type or throw `TypeError`
                 return $this->container->get(AccessLogHandler::class);
             } else {
                 return new AccessLogHandler();
@@ -131,6 +132,7 @@ class Container
     {
         if ($this->container instanceof ContainerInterface) {
             if ($this->container->has(ErrorHandler::class)) {
+                // @phpstan-ignore-next-line method return type will ensure correct type or throw `TypeError`
                 return $this->container->get(ErrorHandler::class);
             } else {
                 return new ErrorHandler();
@@ -140,7 +142,7 @@ class Container
     }
 
     /**
-     * @template T
+     * @template T of object
      * @param class-string<T> $name
      * @return T
      * @throws \BadMethodCallException if object of type $name can not be loaded
@@ -158,7 +160,7 @@ class Container
                 // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                 $value = $this->loadObject($this->container[$name], $depth - 1);
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
+                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . \get_class($value));
                 }
 
                 $this->container[$name] = $value;

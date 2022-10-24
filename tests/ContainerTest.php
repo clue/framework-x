@@ -566,7 +566,7 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
     }
 
-    /** @return list<list<mixed>> */
+    /** @return list<list<\stdClass|string|null>> */
     public function provideMixedValue(): array
     {
         return [
@@ -587,7 +587,7 @@ class ContainerTest extends TestCase
 
     /**
      * @dataProvider provideMixedValue
-     * @param mixed $value
+     * @param \stdClass|string|null $value
      */
     public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresUntypedContainerVariable($value, string $json): void
     {
@@ -626,7 +626,7 @@ class ContainerTest extends TestCase
 
     /**
      * @dataProvider provideMixedValue
-     * @param mixed $value
+     * @param \stdClass|string|null $value
      */
     public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresUntypedContainerVariableWithFactory($value, string $json): void
     {
@@ -668,7 +668,7 @@ class ContainerTest extends TestCase
     /**
      * @requires PHP 8
      * @dataProvider provideMixedValue
-     * @param mixed $value
+     * @param \stdClass|string|null $value
      */
     public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresMixedContainerVariable($value, string $json): void
     {

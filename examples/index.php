@@ -21,8 +21,11 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
         return htmlspecialchars_decode(htmlspecialchars($str, ENT_SUBSTITUTE | ENT_DISALLOWED, 'utf-8'));
     };
 
+    $name = $request->getAttribute('name');
+    assert(is_string($name));
+
     return React\Http\Message\Response::plaintext(
-        "Hello " . $escape($request->getAttribute('name')) . "!\n"
+        "Hello " . $escape($name) . "!\n"
     );
 });
 
@@ -202,9 +205,10 @@ $app->options('', function () {
 });
 
 $app->get('/location/{status:\d+}', function (Psr\Http\Message\ServerRequestInterface $request) {
-    $statusCode = (int) $request->getAttribute('status');
+    $statusCode = $request->getAttribute('status');
+    assert(is_string($statusCode) && is_numeric($statusCode));
 
-    return new React\Http\Message\Response($statusCode, ['Location' => '/foobar']);
+    return new React\Http\Message\Response((int) $statusCode, ['Location' => '/foobar']);
 });
 
 $app->run();

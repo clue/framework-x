@@ -451,6 +451,7 @@ class ErrorHandlerTest extends TestCase
         $ref = new \ReflectionMethod($handler, 'errorInvalidException');
         $ref->setAccessible(true);
         $response = $ref->invoke($handler, $e);
+        assert($response instanceof ResponseInterface);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
@@ -508,6 +509,7 @@ class ErrorHandlerTest extends TestCase
         $ref = new \ReflectionMethod($handler, 'errorInvalidResponse');
         $ref->setAccessible(true);
         $response = $ref->invoke($handler, $value);
+        assert($response instanceof ResponseInterface);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
@@ -529,6 +531,7 @@ class ErrorHandlerTest extends TestCase
         $ref = new \ReflectionMethod($handler, 'errorInvalidCoroutine');
         $ref->setAccessible(true);
         $response = $ref->invoke($handler, $value, $file, $line);
+        assert($response instanceof ResponseInterface);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());

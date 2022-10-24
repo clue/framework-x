@@ -5,6 +5,7 @@ namespace FrameworkX\Tests;
 use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
 use FrameworkX\Io\FiberHandler;
+use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -217,7 +218,7 @@ class AppMiddlewareTest extends TestCase
                 [
                     'Content-Type' => 'text/html'
                 ],
-                $request->getAttribute('name')
+                $request->getAttribute('name') // @phpstan-ignore-line known to return string
             );
         };
 
@@ -786,10 +787,12 @@ class AppMiddlewareTest extends TestCase
         $ref = new \ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);
         $middleware = $ref->getValue($app);
+        assert($middleware instanceof MiddlewareHandler);
 
         $ref = new \ReflectionProperty($middleware, 'handlers');
         $ref->setAccessible(true);
         $handlers = $ref->getValue($middleware);
+        assert(is_array($handlers));
 
         if (PHP_VERSION_ID >= 80100) {
             $first = array_shift($handlers);

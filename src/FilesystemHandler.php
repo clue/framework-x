@@ -64,6 +64,7 @@ class FilesystemHandler
     public function __invoke(ServerRequestInterface $request): ResponseInterface
     {
         $local = $request->getAttribute('path', '');
+        assert(\is_string($local));
         $path = \rtrim($this->root . '/' . $local, '/');
 
         // local path should not contain "./", "../", "//" or null bytes or start with slash
