@@ -94,7 +94,7 @@ class AccessLogHandler
 
     private function escape(string $s): string
     {
-        return preg_replace_callback('/[\x00-\x1F\x7F-\xFF"\\\\]+/', function (array $m) {
+        return (string) preg_replace_callback('/[\x00-\x1F\x7F-\xFF"\\\\]+/', function (array $m) {
             return str_replace('%', '\x', rawurlencode($m[0]));
         }, $s);
     }

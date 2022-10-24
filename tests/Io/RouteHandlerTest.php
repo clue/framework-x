@@ -158,7 +158,7 @@ class RouteHandlerTest extends TestCase
         $controller = new class {
             /** @var ?Response */
             public static $response;
-            public function __invoke(): Response {
+            public function __invoke(): ?Response {
                 return self::$response;
             }
         };
@@ -180,7 +180,7 @@ class RouteHandlerTest extends TestCase
         $controller = new class {
             /** @var ?Response */
             public static $response;
-            public function __invoke(): Response
+            public function __invoke(): ?Response
             {
                 return self::$response;
             }
@@ -207,7 +207,7 @@ class RouteHandlerTest extends TestCase
             {
                 assert($value === null);
             }
-            public function __invoke(): Response
+            public function __invoke(): ?Response
             {
                 return self::$response;
             }
@@ -234,7 +234,7 @@ class RouteHandlerTest extends TestCase
             {
                 assert($value === null);
             }
-            public function __invoke(): Response
+            public function __invoke(): ?Response
             {
                 return self::$response;
             }
@@ -260,7 +260,7 @@ class RouteHandlerTest extends TestCase
             {
                 self::$response = $response;
             }
-            public function __invoke(): Response
+            public function __invoke(): ?Response
             {
                 return self::$response;
             }

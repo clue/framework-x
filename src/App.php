@@ -240,7 +240,7 @@ class App
         $socket = new SocketServer($listen);
         $http->listen($socket);
 
-        $this->sapi->log('Listening on ' . \str_replace('tcp:', 'http:', $socket->getAddress()));
+        $this->sapi->log('Listening on ' . \str_replace('tcp:', 'http:', (string) $socket->getAddress()));
 
         $http->on('error', function (\Exception $e) {
             $orig = $e;

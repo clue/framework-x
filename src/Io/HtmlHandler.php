@@ -50,12 +50,12 @@ HTML;
 
     public function escape(string $s): string
     {
-        return \preg_replace_callback(
+        return (string) \preg_replace_callback(
             '/[\x00-\x1F]+/',
             function (array $match): string {
                 return '<span>' . \addcslashes($match[0], "\x00..\xff") . '</span>';
             },
-            \preg_replace(
+            (string) \preg_replace(
                 '/(^| ) |(?: $)/',
                 '$1&nbsp;',
                 \htmlspecialchars($s, \ENT_NOQUOTES | \ENT_SUBSTITUTE | \ENT_DISALLOWED, 'utf-8')
