@@ -286,7 +286,7 @@ class App
         } while (true);
 
         // remove signal handlers when loop stops (if registered)
-        Loop::removeSignal(\defined('SIGINT') ? \SIGINT : 2, $f1);
+        Loop::removeSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 ?? 'printf');
         Loop::removeSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 ?? 'printf');
     }
 
@@ -309,11 +309,12 @@ class App
 
     /**
      * @param ServerRequestInterface $request
-     * @return ResponseInterface|PromiseInterface<ResponseInterface,void>
+     * @return ResponseInterface|PromiseInterface<ResponseInterface>
      *     Returns a response or a Promise which eventually fulfills with a
      *     response. This method never throws or resolves a rejected promise.
      *     If the request can not be routed or the handler fails, it will be
      *     turned into a valid error response before returning.
+     * @throws void
      */
     private function handleRequest(ServerRequestInterface $request)
     {

@@ -1230,7 +1230,7 @@ class AppTest extends TestCase
         $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
-            if (false) {
+            if (false) { // @phpstan-ignore-line
                 yield;
             }
 
@@ -1611,7 +1611,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 5;
         $app->get('/users', function () {
-            if (false) {
+            if (false) { // @phpstan-ignore-line
                 yield;
             }
             throw new \RuntimeException('Foo');
@@ -1837,7 +1837,7 @@ class AppTest extends TestCase
     {
         $app = $this->createAppWithoutLogger();
 
-        $app->get('/users', 'UnknownClass');
+        $app->get('/users', 'UnknownClass'); // @phpstan-ignore-line
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 

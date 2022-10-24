@@ -216,7 +216,7 @@ class SapiHandlerTest extends TestCase
 
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
-        $response = new Response(204, ['Content-Type' => 'application/json', 'Content-Length' => 2], '{}');
+        $response = new Response(204, ['Content-Type' => 'application/json', 'Content-Length' => '2'], '{}');
 
         $this->expectOutputString('');
         $sapi->sendResponse($response);

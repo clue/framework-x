@@ -13,9 +13,10 @@ class Container
     /** @var array<string,object|callable():(object|scalar|null)|scalar|null>|ContainerInterface */
     private $container;
 
-    /** @var array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
+    /** @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
+        /** @var mixed $loader explicit type check for mixed if user ignores parameter type */
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
             throw new \TypeError(
                 'Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . (\is_object($loader) ? get_class($loader) : gettype($loader)) . ' given'
@@ -233,6 +234,7 @@ class Container
         $hasDefault = $parameter->isDefaultValueAvailable() || ((!$type instanceof \ReflectionNamedType || $type->getName() !== 'mixed') && $parameter->allowsNull());
 
         // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
+        // @phpstan-ignore-next-line for PHP < 8
         if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
             if ($hasDefault) {
                 return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;

@@ -53,7 +53,7 @@ class ErrorHandlerTest extends TestCase
         $response = new Response();
 
         $generator = $handler($request, function () use ($response) {
-            if (false) {
+            if (false) { // @phpstan-ignore-line
                 yield;
             }
             return $response;
@@ -166,7 +166,7 @@ class ErrorHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $generator = $handler($request, function () {
-            if (false) {
+            if (false) { // @phpstan-ignore-line
                 yield;
             }
             throw new \RuntimeException();
@@ -324,7 +324,7 @@ class ErrorHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $generator = $handler($request, function () {
-            if (false) {
+            if (false) { // @phpstan-ignore-line
                 yield;
             }
             return null;
