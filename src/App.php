@@ -220,7 +220,7 @@ class App
         $this->any($route, new RedirectHandler($target, $code));
     }
 
-    public function run()
+    public function run(): void
     {
         if (\PHP_SAPI === 'cli') {
             $this->runLoop();
@@ -229,7 +229,7 @@ class App
         }
     }
 
-    private function runLoop()
+    private function runLoop(): void
     {
         $http = new HttpServer(function (ServerRequestInterface $request) {
             return $this->handleRequest($request);
@@ -240,7 +240,7 @@ class App
         $socket = new SocketServer($listen);
         $http->listen($socket);
 
-        $this->sapi->log('Listening on ' . \str_replace('tcp:', 'http:', $socket->getAddress()));
+        $this->sapi->log('Listening on ' . \str_replace('tcp:', 'http:', (string) $socket->getAddress()));
 
         $http->on('error', function (\Exception $e) {
             $orig = $e;
@@ -290,7 +290,7 @@ class App
         Loop::removeSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 ?? 'printf');
     }
 
-    private function runOnce()
+    private function runOnce(): void
     {
         $request = $this->sapi->requestFromGlobals();
 
@@ -319,11 +319,14 @@ class App
     private function handleRequest(ServerRequestInterface $request)
     {
         $response = ($this->handler)($request);
+        assert($response instanceof ResponseInterface || $response instanceof PromiseInterface || $response instanceof \Generator);
+
         if ($response instanceof \Generator) {
             if ($response->valid()) {
                 $response = $this->coroutine($response);
             } else {
                 $response = $response->getReturn();
+                assert($response instanceof ResponseInterface);
             }
         }
 
@@ -341,6 +344,8 @@ class App
             }
 
             $promise = $generator->current();
+            assert($promise instanceof PromiseInterface);
+
             $promise->then(function ($value) use ($generator, $next) {
                 $generator->send($value);
                 $next();

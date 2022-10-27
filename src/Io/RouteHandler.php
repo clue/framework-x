@@ -65,6 +65,7 @@ class RouteHandler
             }
         }
 
+        /** @var non-empty-array<callable> $handlers */
         $handler = \count($handlers) > 1 ? new MiddlewareHandler(array_values($handlers)) : \reset($handlers);
         $this->routeDispatcher = null;
         $this->routeCollector->addRoute($methods, $route, $handler);

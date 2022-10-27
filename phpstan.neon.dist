@@ -1,5 +1,5 @@
 parameters:
-    level: 5
+    level: max
 
     paths:
         - examples/
@@ -14,4 +14,4 @@ parameters:
         - '/^Instantiated class Fiber not found\.$/'
         - '/^Call to method (start|isTerminated|getReturn)\(\) on an unknown class Fiber\.$/'
         # ignore incomplete type information for mocks in legacy PHPUnit 7.5
-        - '/^Parameter #\d+ \$.+ of class .+ constructor expects .+, PHPUnit\\Framework\\MockObject\\MockObject given\.$/'
+        - '/^Parameter #\d+ .+ of .+ expects .+, PHPUnit\\Framework\\MockObject\\MockObject given\.$/'

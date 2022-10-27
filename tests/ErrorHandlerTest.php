@@ -13,7 +13,7 @@ use function React\Promise\resolve;
 
 class ErrorHandlerTest extends TestCase
 {
-    public function testInvokeWithHandlerReturningResponseReturnsSameResponse()
+    public function testInvokeWithHandlerReturningResponseReturnsSameResponse(): void
     {
         $handler = new ErrorHandler();
 
@@ -25,7 +25,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningPromiseResolvingWithResponseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningPromiseResolvingWithResponseReturnsPromiseResolvingWithSameResponse(): void
     {
         $handler = new ErrorHandler();
 
@@ -45,7 +45,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningResponseReturnsGeneratorYieldingSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseReturnsGeneratorYieldingSameResponse(): void
     {
         $handler = new ErrorHandler();
 
@@ -66,7 +66,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorYieldingResolvedPromiseThenReturningResponseReturnsGeneratorYieldingSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorYieldingResolvedPromiseThenReturningResponseReturnsGeneratorYieldingSameResponse(): void
     {
         $handler = new ErrorHandler();
 
@@ -87,7 +87,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorYieldingRejectedPromiseInTryCatchThenReturningResponseReturnsGeneratorYieldingSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorYieldingRejectedPromiseInTryCatchThenReturningResponseReturnsGeneratorYieldingSameResponse(): void
     {
         $handler = new ErrorHandler();
 
@@ -121,7 +121,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerThrowingExceptionReturnsError500Response()
+    public function testInvokeWithHandlerThrowingExceptionReturnsError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -136,7 +136,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningPromiseRejectingWithExceptionReturnsPromiseResolvingWithError500Response()
+    public function testInvokeWithHandlerReturningPromiseRejectingWithExceptionReturnsPromiseResolvingWithError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -159,7 +159,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningGeneratorThrowingExceptionReturnsGeneratorYieldingError500Response()
+    public function testInvokeWithHandlerReturningGeneratorThrowingExceptionReturnsGeneratorYieldingError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -181,7 +181,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningGeneratorYieldingPromiseThenThrowingExceptionReturnsGeneratorYieldingError500Response()
+    public function testInvokeWithHandlerReturningGeneratorYieldingPromiseThenThrowingExceptionReturnsGeneratorYieldingError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -202,7 +202,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningGeneratorYieldingPromiseRejectingWithExceptionReturnsGeneratorYieldingError500Response()
+    public function testInvokeWithHandlerReturningGeneratorYieldingPromiseRejectingWithExceptionReturnsGeneratorYieldingError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -233,7 +233,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningNullReturnsError500Response()
+    public function testInvokeWithHandlerReturningNullReturnsError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -248,7 +248,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningPromiseResolvingWithNullReturnsPromiseResolvingWithError500Response()
+    public function testInvokeWithHandlerReturningPromiseResolvingWithNullReturnsPromiseResolvingWithError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -271,7 +271,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningPromiseRejectingWithNullReturnsPromiseResolvingWithError500Response()
+    public function testInvokeWithHandlerReturningPromiseRejectingWithNullReturnsPromiseResolvingWithError500Response(): void
     {
         if (method_exists(PromiseInterface::class, 'catch')) {
             $this->markTestSkipped('Only supported for legacy Promise v2, Promise v3 always rejects with Throwable');
@@ -298,7 +298,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningGeneratorYieldingNullReturnsGeneratorYieldingError500Response()
+    public function testInvokeWithHandlerReturningGeneratorYieldingNullReturnsGeneratorYieldingError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -317,7 +317,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningNullReturnsGeneratorYieldingError500Response()
+    public function testInvokeWithHandlerReturningGeneratorReturningNullReturnsGeneratorYieldingError500Response(): void
     {
         $handler = new ErrorHandler();
 
@@ -339,7 +339,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testRequestNotFoundReturnsError404()
+    public function testRequestNotFoundReturnsError404(): void
     {
         $handler = new ErrorHandler();
         $response = $handler->requestNotFound();
@@ -354,7 +354,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again.</p>\n", (string) $response->getBody());
     }
 
-    public function testRequestMethodNotAllowedReturnsError405WithSingleAllowedMethod()
+    public function testRequestMethodNotAllowedReturnsError405WithSingleAllowedMethod(): void
     {
         $handler = new ErrorHandler();
         $response = $handler->requestMethodNotAllowed(['GET']);
@@ -365,7 +365,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code> request.</p>\n", (string) $response->getBody());
     }
 
-    public function testRequestMethodNotAllowedReturnsError405WithMultipleAllowedMethods()
+    public function testRequestMethodNotAllowedReturnsError405WithMultipleAllowedMethods(): void
     {
         $handler = new ErrorHandler();
         $response = $handler->requestMethodNotAllowed(['GET', 'HEAD', 'POST']);
@@ -376,7 +376,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code>/<code>HEAD</code>/<code>POST</code> request.</p>\n", (string) $response->getBody());
     }
 
-    public function testRequestProxyUnsupportedReturnsError400()
+    public function testRequestProxyUnsupportedReturnsError400(): void
     {
         $handler = new ErrorHandler();
         $response = $handler->requestProxyUnsupported();
@@ -386,7 +386,8 @@ class ErrorHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
     }
 
-    public function provideExceptionMessage()
+    /** @return list<list<string>> */
+    public function provideExceptionMessage(): array
     {
         return [
             [
@@ -439,7 +440,7 @@ class ErrorHandlerTest extends TestCase
     /**
      * @dataProvider provideExceptionMessage
      */
-    public function testErrorInvalidExceptionReturnsError500(string $in, string $expected)
+    public function testErrorInvalidExceptionReturnsError500(string $in, string $expected): void
     {
         $handler = new ErrorHandler();
 
@@ -450,13 +451,15 @@ class ErrorHandlerTest extends TestCase
         $ref = new \ReflectionMethod($handler, 'errorInvalidException');
         $ref->setAccessible(true);
         $response = $ref->invoke($handler, $e);
+        assert($response instanceof ResponseInterface);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>$expected</code> in <code title=\"See " . __FILE__ . " line $line\">ErrorHandlerTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function provideInvalidReturnValue()
+    /** @return list<list<mixed>> */
+    public function provideInvalidReturnValue(): array
     {
         return [
             [
@@ -498,7 +501,7 @@ class ErrorHandlerTest extends TestCase
      * @dataProvider provideInvalidReturnValue
      * @param mixed $value
      */
-    public function testErrorInvalidResponseReturnsError500($value, string $name)
+    public function testErrorInvalidResponseReturnsError500($value, string $name): void
     {
         $handler = new ErrorHandler();
 
@@ -506,6 +509,7 @@ class ErrorHandlerTest extends TestCase
         $ref = new \ReflectionMethod($handler, 'errorInvalidResponse');
         $ref->setAccessible(true);
         $response = $ref->invoke($handler, $value);
+        assert($response instanceof ResponseInterface);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
@@ -516,7 +520,7 @@ class ErrorHandlerTest extends TestCase
      * @dataProvider provideInvalidReturnValue
      * @param mixed $value
      */
-    public function testErrorInvalidCoroutineReturnsError500($value, string $name)
+    public function testErrorInvalidCoroutineReturnsError500($value, string $name): void
     {
         $handler = new ErrorHandler();
 
@@ -527,6 +531,7 @@ class ErrorHandlerTest extends TestCase
         $ref = new \ReflectionMethod($handler, 'errorInvalidCoroutine');
         $ref->setAccessible(true);
         $response = $ref->invoke($handler, $value, $file, $line);
+        assert($response instanceof ResponseInterface);
 
         $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
         $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());

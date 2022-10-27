@@ -4,11 +4,13 @@ namespace FrameworkX;
 
 use FrameworkX\Io\HtmlHandler;
 use FrameworkX\Io\RedirectHandler;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
 
 class FilesystemHandler
 {
+    /** @var string */
     private $root;
 
     /**
@@ -59,9 +61,10 @@ class FilesystemHandler
         $this->html = new HtmlHandler();
     }
 
-    public function __invoke(ServerRequestInterface $request)
+    public function __invoke(ServerRequestInterface $request): ResponseInterface
     {
         $local = $request->getAttribute('path', '');
+        assert(\is_string($local));
         $path = \rtrim($this->root . '/' . $local, '/');
 
         // local path should not contain "./", "../", "//" or null bytes or start with slash
@@ -80,6 +83,7 @@ class FilesystemHandler
             }
 
             $files = \scandir($path);
+            // @phpstan-ignore-next-line TODO handle error if directory can not be accessed
             foreach ($files as $file) {
                 if ($file === '.' || $file === '..') {
                     continue;
@@ -117,7 +121,7 @@ class FilesystemHandler
             return new Response(
                 Response::STATUS_OK,
                 $headers,
-                \file_get_contents($path)
+                \file_get_contents($path) // @phpstan-ignore-line TODO handle error if file can not be accessed
             );
         } else {
             return $this->errorHandler->requestNotFound();

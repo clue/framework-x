@@ -12,14 +12,15 @@ class HtmlHandlerTest extends TestCase
      * @param string $in
      * @param string $expected
      */
-    public function testEscapeHtml(string $in, string $expected)
+    public function testEscapeHtml(string $in, string $expected): void
     {
         $html = new HtmlHandler();
 
         $this->assertEquals($expected, $html->escape($in));
     }
 
-    public function provideNames()
+    /** @return list<list<string>> */
+    public function provideNames(): array
     {
         return [
             [

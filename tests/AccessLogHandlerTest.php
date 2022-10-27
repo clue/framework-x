@@ -11,7 +11,7 @@ use function React\Promise\resolve;
 
 class AccessLogHandlerTest extends TestCase
 {
-    public function testInvokePrintsRequestLogWithCurrentDateAndTime()
+    public function testInvokePrintsRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -23,7 +23,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsRequestWithQueryParametersLogWithCurrentDateAndTime()
+    public function testInvokePrintsRequestWithQueryParametersLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -35,7 +35,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsRequestWithEscapedSpecialCharactersInRequestMethodAndTargetWithCurrentDateAndTime()
+    public function testInvokePrintsRequestWithEscapedSpecialCharactersInRequestMethodAndTargetWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -48,7 +48,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsRequestLogForHeadRequestWithResponseSizeAsZero()
+    public function testInvokePrintsRequestLogForHeadRequestWithResponseSizeAsZero(): void
     {
         $handler = new AccessLogHandler();
 
@@ -60,7 +60,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsRequestLogForNoContentResponseWithResponseSizeAsZero()
+    public function testInvokePrintsRequestLogForNoContentResponseWithResponseSizeAsZero(): void
     {
         $handler = new AccessLogHandler();
 
@@ -72,7 +72,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsRequestLogForNotModifiedResponseWithResponseSizeAsZero()
+    public function testInvokePrintsRequestLogForNotModifiedResponseWithResponseSizeAsZero(): void
     {
         $handler = new AccessLogHandler();
 
@@ -84,7 +84,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsPlainProxyRequestLogWithCurrentDateAndTime()
+    public function testInvokePrintsPlainProxyRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -97,7 +97,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsConnectProxyRequestLogWithCurrentDateAndTime()
+    public function testInvokePrintsConnectProxyRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -110,7 +110,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokePrintsOptionsAsteriskLogWithCurrentDateAndTime()
+    public function testInvokePrintsOptionsAsteriskLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -123,7 +123,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokeWithDeferredNextPrintsRequestLogWithCurrentDateAndTime()
+    public function testInvokeWithDeferredNextPrintsRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -135,7 +135,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return resolve($response); });
     }
 
-    public function testInvokeWithCoroutineNextPrintsRequestLogWithCurrentDateAndTime()
+    public function testInvokeWithCoroutineNextPrintsRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -157,7 +157,7 @@ class AccessLogHandlerTest extends TestCase
         $generator->next();
     }
 
-    public function testInvokeWithStreamingResponsePrintsRequestLogWithCurrentDateAndTime()
+    public function testInvokeWithStreamingResponsePrintsRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -172,7 +172,7 @@ class AccessLogHandlerTest extends TestCase
         $stream->end('world');
     }
 
-    public function testInvokeWithStreamingResponseThatClosesAfterSomeTimePrintsRequestLogWithCurrentDateAndTime()
+    public function testInvokeWithStreamingResponseThatClosesAfterSomeTimePrintsRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -188,7 +188,7 @@ class AccessLogHandlerTest extends TestCase
         $stream->end();
     }
 
-    public function testInvokeWithClosedStreamingResponsePrintsRequestLogWithCurrentDateAndTime()
+    public function testInvokeWithClosedStreamingResponsePrintsRequestLogWithCurrentDateAndTime(): void
     {
         $handler = new AccessLogHandler();
 
@@ -202,7 +202,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokeWithStreamingResponsePrintsNothingIfStreamIsPending()
+    public function testInvokeWithStreamingResponsePrintsNothingIfStreamIsPending(): void
     {
         $handler = new AccessLogHandler();
 
@@ -215,7 +215,7 @@ class AccessLogHandlerTest extends TestCase
         $stream->write('hello');
     }
 
-    public function testInvokeWithRemoteAddrAttributePrintsRequestLogWithIpFromAttribute()
+    public function testInvokeWithRemoteAddrAttributePrintsRequestLogWithIpFromAttribute(): void
     {
         $handler = new AccessLogHandler();
 
@@ -228,7 +228,7 @@ class AccessLogHandlerTest extends TestCase
         $handler($request, function () use ($response) { return $response; });
     }
 
-    public function testInvokeWithoutRemoteAddressPrintsRequestLogWithDashAsPlaceholder()
+    public function testInvokeWithoutRemoteAddressPrintsRequestLogWithDashAsPlaceholder(): void
     {
         $handler = new AccessLogHandler();
 

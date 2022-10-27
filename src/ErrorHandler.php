@@ -120,7 +120,10 @@ class ErrorHandler
         );
     }
 
-    /** @internal */
+    /**
+     * @internal
+     * @param list<string> $allowedMethods
+     */
     public function requestMethodNotAllowed(array $allowedMethods): ResponseInterface
     {
         $methods = \implode('/', \array_map(function (string $method) { return '<code>' . $method . '</code>'; }, $allowedMethods));
@@ -155,6 +158,7 @@ class ErrorHandler
         );
     }
 
+    /** @param mixed $value */
     private function errorInvalidResponse($value): ResponseInterface
     {
         return $this->htmlResponse(
@@ -165,6 +169,7 @@ class ErrorHandler
         );
     }
 
+    /** @param mixed $value */
     private function errorInvalidCoroutine($value, string $file, int $line): ResponseInterface
     {
         $where = ' near or before '. $this->where($file, $line) . '.';
@@ -192,6 +197,7 @@ class ErrorHandler
         );
     }
 
+    /** @param mixed $value */
     private function describeType($value): string
     {
         if ($value === null) {

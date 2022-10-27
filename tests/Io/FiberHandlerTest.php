@@ -21,7 +21,7 @@ class FiberHandlerTest extends TestCase
         }
     }
 
-    public function testInvokeWithHandlerReturningResponseReturnsSameResponse()
+    public function testInvokeWithHandlerReturningResponseReturnsSameResponse(): void
     {
         $handler = new FiberHandler();
 
@@ -33,7 +33,7 @@ class FiberHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningPromiseResolvingWithResponseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningPromiseResolvingWithResponseReturnsPromiseResolvingWithSameResponse(): void
     {
         $handler = new FiberHandler();
 
@@ -53,7 +53,7 @@ class FiberHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningResponseReturnsGeneratorReturningSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseReturnsGeneratorReturningSameResponse(): void
     {
         $handler = new FiberHandler();
 
@@ -74,7 +74,7 @@ class FiberHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingResolvedPromiseReturnsGeneratorReturningSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingResolvedPromiseReturnsGeneratorReturningSameResponse(): void
     {
         $handler = new FiberHandler();
 
@@ -93,7 +93,7 @@ class FiberHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingRejectedPromiseReturnsGeneratorReturningSameResponse()
+    public function testInvokeWithHandlerReturningGeneratorReturningResponseAfterYieldingRejectedPromiseReturnsGeneratorReturningSameResponse(): void
     {
         $handler = new FiberHandler();
 
@@ -116,7 +116,7 @@ class FiberHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningResponseAfterAwaitingResolvedPromiseReturnsSameResponse()
+    public function testInvokeWithHandlerReturningResponseAfterAwaitingResolvedPromiseReturnsSameResponse(): void
     {
         $handler = new FiberHandler();
 
@@ -130,7 +130,7 @@ class FiberHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testInvokeWithHandlerReturningResponseAfterAwaitingPendingPromiseReturnsPromiseResolvingWithSameResponse()
+    public function testInvokeWithHandlerReturningResponseAfterAwaitingPendingPromiseReturnsPromiseResolvingWithSameResponse(): void
     {
         $handler = new FiberHandler();
 

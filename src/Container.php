@@ -34,6 +34,7 @@ class Container
         $this->container = $loader;
     }
 
+    /** @return mixed */
     public function __invoke(ServerRequestInterface $request, callable $next = null)
     {
         if ($next === null) {
@@ -117,6 +118,7 @@ class Container
     {
         if ($this->container instanceof ContainerInterface) {
             if ($this->container->has(AccessLogHandler::class)) {
+                // @phpstan-ignore-next-line method return type will ensure correct type or throw `TypeError`
                 return $this->container->get(AccessLogHandler::class);
             } else {
                 return new AccessLogHandler();
@@ -130,6 +132,7 @@ class Container
     {
         if ($this->container instanceof ContainerInterface) {
             if ($this->container->has(ErrorHandler::class)) {
+                // @phpstan-ignore-next-line method return type will ensure correct type or throw `TypeError`
                 return $this->container->get(ErrorHandler::class);
             } else {
                 return new ErrorHandler();
@@ -139,22 +142,25 @@ class Container
     }
 
     /**
-     * @template T
+     * @template T of object
      * @param class-string<T> $name
      * @return T
      * @throws \BadMethodCallException if object of type $name can not be loaded
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
+        assert(\is_array($this->container));
+
         if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
                 if ($depth < 1) {
                     throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
                 }
 
+                // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                 $value = $this->loadObject($this->container[$name], $depth - 1);
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
+                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . \get_class($value));
                 }
 
                 $this->container[$name] = $value;
@@ -171,6 +177,7 @@ class Container
                         throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
                     }
 
+                    // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                     $value = $this->loadObject($value, $depth - 1);
                 }
                 if (!$value instanceof $name) {
@@ -210,10 +217,14 @@ class Container
         $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false);
 
         // instantiate with list of parameters
+        // @phpstan-ignore-next-line because `$class->newInstance()` is known to return `T`
         return $this->container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
     }
 
-    /** @throws \BadMethodCallException if either parameter can not be loaded */
+    /**
+     * @return list<mixed>
+     * @throws \BadMethodCallException if either parameter can not be loaded
+     */
     private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables): array
     {
         $params = [];
@@ -230,6 +241,8 @@ class Container
      */
     private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables) /*: mixed (PHP 8.0+) */
     {
+        assert(\is_array($this->container));
+
         $type = $parameter->getType();
         $hasDefault = $parameter->isDefaultValueAvailable() || ((!$type instanceof \ReflectionNamedType || $type->getName() !== 'mixed') && $parameter->allowsNull());
 
@@ -277,6 +290,7 @@ class Container
             throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
         }
 
+        // @phpstan-ignore-next-line because `$type->getName()` is a `class-string` by definition
         return $this->loadObject($type->getName(), $depth - 1);
     }
 
@@ -286,7 +300,7 @@ class Container
      */
     private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
-        assert(\array_key_exists($name, $this->container) || isset($_SERVER[$name]));
+        assert(\is_array($this->container) && (\array_key_exists($name, $this->container) || isset($_SERVER[$name])));
 
         if (($this->container[$name] ?? null) instanceof \Closure) {
             if ($depth < 1) {
@@ -294,11 +308,13 @@ class Container
             }
 
             // build list of factory parameters based on parameter types
-            $closure = new \ReflectionFunction($this->container[$name]);
+            $factory = $this->container[$name];
+            assert($factory instanceof \Closure);
+            $closure = new \ReflectionFunction($factory);
             $params = $this->loadFunctionParams($closure, $depth - 1, true);
 
             // invoke factory with list of parameters
-            $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
+            $value = $params === [] ? $factory() : $factory(...$params);
 
             if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
                 throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar|null from factory, but got ' . \gettype($value));

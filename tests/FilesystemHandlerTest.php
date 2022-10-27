@@ -9,7 +9,7 @@ use React\Http\Message\ServerRequest;
 
 class FilesystemHandlerTest extends TestCase
 {
-    public function testInvokeWithValidPathToComposerJsonWillReturnResponseWithFileContentsAndContentType()
+    public function testInvokeWithValidPathToComposerJsonWillReturnResponseWithFileContentsAndContentType(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -25,7 +25,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(file_get_contents(__DIR__ . '/../composer.json'), (string) $response->getBody());
     }
 
-    public function testInvokeWithValidPathToLicenseWillReturnResponseWithFileContentsAndDefaultContentType()
+    public function testInvokeWithValidPathToLicenseWillReturnResponseWithFileContentsAndDefaultContentType(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -41,7 +41,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(file_get_contents(__DIR__ . '/../LICENSE'), (string) $response->getBody());
     }
 
-    public function testInvokeWithValidPathToOneCharacterFilenameWillReturnResponseWithFileContentsAndDefaultContentType()
+    public function testInvokeWithValidPathToOneCharacterFilenameWillReturnResponseWithFileContentsAndDefaultContentType(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -57,7 +57,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(file_get_contents(__DIR__ . '/data/a'), (string) $response->getBody());
     }
 
-    public function testInvokeWithValidPathToTwoCharacterFilenameWillReturnResponseWithFileContentsAndDefaultContentType()
+    public function testInvokeWithValidPathToTwoCharacterFilenameWillReturnResponseWithFileContentsAndDefaultContentType(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -73,7 +73,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(file_get_contents(__DIR__ . '/data/bb'), (string) $response->getBody());
     }
 
-    public function testInvokeWithValidPathToComposerJsonAndCachingHeaderWillReturnResponseNotModifiedWithoutContents()
+    public function testInvokeWithValidPathToComposerJsonAndCachingHeaderWillReturnResponseNotModifiedWithoutContents(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -93,7 +93,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals('', (string) $response->getBody());
     }
 
-    public function testInvokeWithInvalidPathWillReturnNotFoundResponse()
+    public function testInvokeWithInvalidPathWillReturnNotFoundResponse(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -109,7 +109,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithDoubleSlashWillReturnNotFoundResponse()
+    public function testInvokeWithDoubleSlashWillReturnNotFoundResponse(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -125,7 +125,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithPathWithLeadingSlashWillReturnNotFoundResponse()
+    public function testInvokeWithPathWithLeadingSlashWillReturnNotFoundResponse(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -141,7 +141,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithPathWithDotSegmentWillReturnNotFoundResponse()
+    public function testInvokeWithPathWithDotSegmentWillReturnNotFoundResponse(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -157,7 +157,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithPathBelowRootWillReturnNotFoundResponse()
+    public function testInvokeWithPathBelowRootWillReturnNotFoundResponse(): void
     {
         $handler = new FilesystemHandler(__DIR__);
 
@@ -173,7 +173,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithBinaryPathWillReturnNotFoundResponse()
+    public function testInvokeWithBinaryPathWillReturnNotFoundResponse(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -189,7 +189,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringContainsString("<title>Error 404: Page Not Found</title>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithoutPathWillReturnResponseWithDirectoryListing()
+    public function testInvokeWithoutPathWillReturnResponseWithDirectoryListing(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -206,7 +206,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringNotContainsString('<a href="../">../</a>', (string) $response->getBody());
     }
 
-    public function testInvokeWithEmptyPathWillReturnResponseWithDirectoryListing()
+    public function testInvokeWithEmptyPathWillReturnResponseWithDirectoryListing(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -224,7 +224,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringNotContainsString('<a href="../">../</a>', (string) $response->getBody());
     }
 
-    public function testInvokeWithoutPathAndRootIsFileWillReturnResponseWithFileContents()
+    public function testInvokeWithoutPathAndRootIsFileWillReturnResponseWithFileContents(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__) . '/LICENSE');
 
@@ -239,7 +239,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals(file_get_contents(__DIR__ . '/../LICENSE'), (string) $response->getBody());
     }
 
-    public function testInvokeWithValidPathToDirectoryWillReturnResponseWithDirectoryListing()
+    public function testInvokeWithValidPathToDirectoryWillReturnResponseWithDirectoryListing(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -255,7 +255,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertEquals("<strong>.github/</strong>\n<ul>\n    <li><a href=\"../\">../</a></li>\n    <li><a href=\"FUNDING.yml\">FUNDING.yml</a></li>\n    <li><a href=\"ISSUE_TEMPLATE/\">ISSUE_TEMPLATE/</a></li>\n    <li><a href=\"workflows/\">workflows/</a></li>\n</ul>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithValidPathToDirectoryButWithoutTrailingSlashWillReturnRedirectToPathWithSlash()
+    public function testInvokeWithValidPathToDirectoryButWithoutTrailingSlashWillReturnRedirectToPathWithSlash(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 
@@ -275,7 +275,7 @@ class FilesystemHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\".github/\"><code>.github/</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithValidPathToFileButWithTrailingSlashWillReturnRedirectToPathWithoutSlash()
+    public function testInvokeWithValidPathToFileButWithTrailingSlashWillReturnRedirectToPathWithoutSlash(): void
     {
         $handler = new FilesystemHandler(dirname(__DIR__));
 

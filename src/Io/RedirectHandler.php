@@ -10,8 +10,13 @@ use React\Http\Message\Response;
  */
 class RedirectHandler
 {
+    /** @var string */
     private $target;
+
+    /** @var int */
     private $code;
+
+    /** @var string */
     private $reason;
 
     /** @var HtmlHandler */
