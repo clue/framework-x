@@ -296,7 +296,7 @@ class Container
 
     private function hasVariable(string $name): bool
     {
-        return (\is_array($this->container) && \array_key_exists($name, $this->container)) || (\is_string($_SERVER[$name] ?? null) && \preg_match('/^[A-Z][A-Z0-9_]+$/', $name));
+        return (\is_array($this->container) && \array_key_exists($name, $this->container)) || (isset($_ENV[$name]) || (\is_string($_SERVER[$name] ?? null)) && \preg_match('/^[A-Z][A-Z0-9_]+$/', $name));
     }
 
     /**
@@ -329,6 +329,9 @@ class Container
             $this->container[$name] = $value;
         } elseif (\is_array($this->container) && \array_key_exists($name, $this->container)) {
             $value = $this->container[$name];
+        } elseif (isset($_ENV[$name])) {
+            assert(\is_string($_ENV[$name]));
+            $value = $_ENV[$name];
         } else {
             assert(\is_string($_SERVER[$name] ?? null));
             $value = $_SERVER[$name];
