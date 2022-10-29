@@ -13,6 +13,9 @@ class Container
     /** @var array<string,object|callable():(object|scalar|null)|scalar|null>|ContainerInterface */
     private $container;
 
+    /** @var bool */
+    private $useProcessEnv;
+
     /** @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
@@ -32,6 +35,9 @@ class Container
             }
         }
         $this->container = $loader;
+
+        // prefer reading environment from `$_ENV` and `$_SERVER`, only fall back to `getenv()` in thread-safe environments
+        $this->useProcessEnv = \ZEND_THREAD_SAFE === false || \in_array(\PHP_SAPI, ['cli', 'cli-server', 'cgi-fcgi', 'fpm-fcgi'], true);
     }
 
     /** @return mixed */
@@ -296,7 +302,7 @@ class Container
 
     private function hasVariable(string $name): bool
     {
-        return (\is_array($this->container) && \array_key_exists($name, $this->container)) || (isset($_ENV[$name]) || (\is_string($_SERVER[$name] ?? null)) && \preg_match('/^[A-Z][A-Z0-9_]+$/', $name));
+        return (\is_array($this->container) && \array_key_exists($name, $this->container)) || (isset($_ENV[$name]) || (\is_string($_SERVER[$name] ?? null) || ($this->useProcessEnv && \getenv($name) !== false)) && \preg_match('/^[A-Z][A-Z0-9_]+$/', $name));
     }
 
     /**
@@ -332,9 +338,12 @@ class Container
         } elseif (isset($_ENV[$name])) {
             assert(\is_string($_ENV[$name]));
             $value = $_ENV[$name];
-        } else {
-            assert(\is_string($_SERVER[$name] ?? null));
+        } elseif (isset($_SERVER[$name])) {
+            assert(\is_string($_SERVER[$name]));
             $value = $_SERVER[$name];
+        } else {
+            $value = \getenv($name);
+            assert($this->useProcessEnv && $value !== false);
         }
 
         assert(\is_object($value) || \is_scalar($value) || $value === null);
