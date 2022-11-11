@@ -13,5 +13,3 @@ parameters:
         # ignore unknown `Fiber` class (PHP 8.1+)
         - '/^Instantiated class Fiber not found\.$/'
         - '/^Call to method (start|isTerminated|getReturn)\(\) on an unknown class Fiber\.$/'
-        # ignore incomplete type information for mocks in legacy PHPUnit 7.5
-        - '/^Parameter #\d+ .+ of .+ expects .+, PHPUnit\\Framework\\MockObject\\MockObject given\.$/'

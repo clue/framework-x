@@ -74,6 +74,7 @@ class AppTest extends TestCase
         $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
         $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
 
+        assert($container instanceof Container);
         $app = new App($container);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -109,6 +110,7 @@ class AppTest extends TestCase
         $container = $this->createMock(Container::class);
         $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($middleware);
 
+        assert($container instanceof Container);
         $app = new App($container, \stdClass::class);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -224,6 +226,7 @@ class AppTest extends TestCase
         $container = $this->createMock(Container::class);
         $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
 
+        assert($container instanceof Container);
         $app = new App($container, ErrorHandler::class);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -257,6 +260,8 @@ class AppTest extends TestCase
         $container = $this->createMock(Container::class);
         $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
 
+        assert($unused instanceof Container);
+        assert($container instanceof Container);
         $app = new App($unused, $container, ErrorHandler::class, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -291,6 +296,8 @@ class AppTest extends TestCase
         $container = $this->createMock(Container::class);
         $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
 
+        assert($unused instanceof Container);
+        assert($container instanceof Container);
         $app = new App($unused, $container, $middleware, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -361,6 +368,9 @@ class AppTest extends TestCase
         $container2 = $this->createMock(Container::class);
         $container2->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler2);
 
+        assert($unused instanceof Container);
+        assert($container1 instanceof Container);
+        assert($container2 instanceof Container);
         $app = new App($unused, $container1, $middleware, $container2, ErrorHandler::class, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -448,6 +458,7 @@ class AppTest extends TestCase
         $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
         $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
 
+        assert($container instanceof Container);
         $app = new App($container, AccessLogHandler::class, ErrorHandler::class);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -515,6 +526,8 @@ class AppTest extends TestCase
         $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
         $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
 
+        assert($unused instanceof Container);
+        assert($container instanceof Container);
         $app = new App($unused, $container, AccessLogHandler::class, ErrorHandler::class, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
@@ -554,6 +567,8 @@ class AppTest extends TestCase
         $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
         $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
 
+        assert($unused instanceof Container);
+        assert($container instanceof Container);
         $app = new App($unused, $container, $middleware, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');

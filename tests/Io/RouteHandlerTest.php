@@ -54,6 +54,7 @@ class RouteHandlerTest extends TestCase
         $container = $this->createMock(Container::class);
         $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($controller);
 
+        assert($container instanceof Container);
         $handler = new RouteHandler($container);
 
         $router = $this->createMock(RouteCollector::class);
@@ -98,6 +99,7 @@ class RouteHandlerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($handler, $router);
 
+        assert($container instanceof Container);
         $handler->map(['GET'], '/', $container, \stdClass::class);
     }
 

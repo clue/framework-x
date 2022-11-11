@@ -1,7 +1,6 @@
 {
     "require": {
-        "clue/framework-x": "*@dev",
-        "react/async": "^4@dev || ^3@dev"
+        "clue/framework-x": "*@dev"
     },
     "repositories": [
         {
