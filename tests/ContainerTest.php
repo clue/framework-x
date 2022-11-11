@@ -1982,6 +1982,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->never())->method('has');
         $psr->expects($this->once())->method('get')->with(get_class($controller))->willReturn($controller);
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $callable = $container->callable(get_class($controller));
@@ -2002,6 +2003,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->never())->method('has');
         $psr->expects($this->once())->method('get')->with('FooBar')->willThrowException($exception);
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $callable = $container->callable('FooBar'); // @phpstan-ignore-line
@@ -2054,6 +2056,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(true);
         $psr->expects($this->once())->method('get')->with('X_FOO')->willReturn('bar');
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $this->assertEquals('bar', $container->getEnv('X_FOO'));
@@ -2065,6 +2068,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(false);
         $psr->expects($this->never())->method('get');
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $this->assertNull($container->getEnv('X_FOO'));
@@ -2076,6 +2080,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(false);
         $psr->expects($this->never())->method('get');
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $_SERVER['X_FOO'] = 'bar';
@@ -2102,6 +2107,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(true);
         $psr->expects($this->once())->method('get')->with('X_FOO')->willReturn(42);
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $this->expectException(\TypeError::class);
@@ -2139,6 +2145,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with(AccessLogHandler::class)->willReturn(true);
         $psr->expects($this->once())->method('get')->with(AccessLogHandler::class)->willReturn($accessLogHandler);
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $ret = $container->getAccessLogHandler();
@@ -2152,6 +2159,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with(AccessLogHandler::class)->willReturn(false);
         $psr->expects($this->never())->method('get');
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $accessLogHandler = $container->getAccessLogHandler();
@@ -2189,6 +2197,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with(ErrorHandler::class)->willReturn(true);
         $psr->expects($this->once())->method('get')->with(ErrorHandler::class)->willReturn($errorHandler);
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $ret = $container->getErrorHandler();
@@ -2202,6 +2211,7 @@ class ContainerTest extends TestCase
         $psr->expects($this->once())->method('has')->with(ErrorHandler::class)->willReturn(false);
         $psr->expects($this->never())->method('get');
 
+        assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
         $errorHandler = $container->getErrorHandler();
