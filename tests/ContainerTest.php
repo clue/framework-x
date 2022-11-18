@@ -2039,6 +2039,17 @@ class ContainerTest extends TestCase
         $this->assertEquals('bar', $container->getEnv('X_FOO'));
     }
 
+    public function testGetEnvReturnsStringFromGlobalEnvIfNotSetInMap(): void
+    {
+        $container = new Container([]);
+
+        $_ENV['X_FOO'] = 'bar';
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+
+        $this->assertEquals('bar', $ret);
+    }
+
     public function testGetEnvReturnsStringFromGlobalServerIfNotSetInMap(): void
     {
         $container = new Container([]);
@@ -2048,6 +2059,42 @@ class ContainerTest extends TestCase
         unset($_SERVER['X_FOO']);
 
         $this->assertEquals('bar', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromProcessEnvIfNotSetInMap(): void
+    {
+        $container = new Container([]);
+
+        putenv('X_FOO=bar');
+        $ret = $container->getEnv('X_FOO');
+        putenv('X_FOO');
+
+        $this->assertEquals('bar', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromGlobalEnvBeforeServerIfNotSetInMap(): void
+    {
+        $container = new Container([]);
+
+        $_ENV['X_FOO'] = 'foo';
+        $_SERVER['X_FOO'] = 'bar';
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO'], $_SERVER['X_FOO']);
+
+        $this->assertEquals('foo', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromGlobalEnvBeforeProcessEnvIfNotSetInMap(): void
+    {
+        $container = new Container([]);
+
+        $_ENV['X_FOO'] = 'foo';
+        putenv('X_FOO=bar');
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+        putenv('X_FOO');
+
+        $this->assertEquals('foo', $ret);
     }
 
     public function testGetEnvReturnsStringFromPsrContainer(): void
@@ -2074,10 +2121,42 @@ class ContainerTest extends TestCase
         $this->assertNull($container->getEnv('X_FOO'));
     }
 
+    public function testGetEnvReturnsStringFromProcessEnvIfPsrContainerHasNoEntry(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->atLeastOnce())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        putenv('X_FOO=bar');
+        $ret = $container->getEnv('X_FOO');
+        putenv('X_FOO');
+
+        $this->assertEquals('bar', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromGlobalEnvIfPsrContainerHasNoEntry(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->atLeastOnce())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $_ENV['X_FOO'] = 'bar';
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+
+        $this->assertEquals('bar', $ret);
+    }
+
     public function testGetEnvReturnsStringFromGlobalServerIfPsrContainerHasNoEntry(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->atLeastOnce())->method('has')->with('X_FOO')->willReturn(false);
         $psr->expects($this->never())->method('get');
 
         assert($psr instanceof ContainerInterface);
@@ -2088,6 +2167,41 @@ class ContainerTest extends TestCase
         unset($_SERVER['X_FOO']);
 
         $this->assertEquals('bar', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromGlobalEnvBeforeServerIfPsrContainerHasNoEntry(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->atLeastOnce())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $_ENV['X_FOO'] = 'foo';
+        $_SERVER['X_FOO'] = 'bar';
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO'], $_SERVER['X_FOO']);
+
+        $this->assertEquals('foo', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromGlobalEnvBeforeProcessEnvIfPsrContainerHasNoEntry(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->atLeastOnce())->method('has')->with('X_FOO')->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $_ENV['X_FOO'] = 'foo';
+        putenv('X_FOO=bar');
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+        putenv('X_FOO');
+
+        $this->assertEquals('foo', $ret);
     }
 
     public function testGetEnvThrowsIfMapContainsInvalidType(): void
