@@ -8,14 +8,14 @@ COPY composer.json composer.lock ./
 # dev environment already has dependencies installed:
 COPY vendor/ vendor/
 
-FROM php:8.1-alpine
+FROM php:8.2-alpine
 
 # recommended: install optional extensions ext-ev and ext-sockets
-RUN apk --no-cache add ${PHPIZE_DEPS} libev \ 
+RUN apk --no-cache add ${PHPIZE_DEPS} libev linux-headers \ 
     && pecl install ev \
     && docker-php-ext-enable ev \
     && docker-php-ext-install sockets \
-    && apk del ${PHPIZE_DEPS} \
+    && apk del ${PHPIZE_DEPS} linux-headers \
     && echo "memory_limit = -1" >> "$PHP_INI_DIR/conf.d/acme.ini"
 
 WORKDIR /app/

@@ -220,7 +220,7 @@ If you're not already running an Apache server, you can run your X project with
 Apache in a temporary Docker container like this:
 
 ```bash
-$ docker run -it --rm -p 80:80 -v "$PWD":/srv php:8.1-apache sh -c "rmdir /var/www/html;ln -s /srv/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+$ docker run -it --rm -p 80:80 -v "$PWD":/srv php:8.2-apache sh -c "rmdir /var/www/html;ln -s /srv/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
 ```
 
 In order to check your web application responds as expected, you can use your
@@ -304,10 +304,10 @@ limit to match your concurrency workload. On Ubuntu- or Debian-based systems,
 you may change your PHP configuration like this:
 
 ```bash
-$ sudoedit /etc/php/8.1/cli/php.ini
+$ sudoedit /etc/php/8.2/cli/php.ini
 ```
 
-```diff title="/etc/php/8.1/cli/php.ini"
+```diff title="/etc/php/8.2/cli/php.ini"
 - memory_limit = 128M
 + memory_limit = -1
 ```
@@ -519,7 +519,7 @@ be achieved by using a `Dockerfile` with the following contents:
 
     ```docker title="Dockerfile"
     # syntax=docker/dockerfile:1
-    FROM php:8.1-cli
+    FROM php:8.2-cli
 
     WORKDIR /app/
     COPY public/ public/
@@ -541,14 +541,14 @@ be achieved by using a `Dockerfile` with the following contents:
     COPY composer.json composer.lock ./
     RUN composer install --no-dev --ignore-platform-reqs --optimize-autoloader
 
-    FROM php:8.1-alpine
+    FROM php:8.2-alpine
 
     # recommended: install optional extensions ext-ev and ext-sockets
-    RUN apk --no-cache add ${PHPIZE_DEPS} libev \ 
+    RUN apk --no-cache add ${PHPIZE_DEPS} libev linux-headers \ 
         && pecl install ev \
         && docker-php-ext-enable ev \
         && docker-php-ext-install sockets \
-        && apk del ${PHPIZE_DEPS} \
+        && apk del ${PHPIZE_DEPS} linux-headers \
         && echo "memory_limit = -1" >> "$PHP_INI_DIR/conf.d/acme.ini"
 
     WORKDIR /app/
