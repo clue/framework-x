@@ -184,7 +184,7 @@ class AccessLogHandlerTest extends TestCase
         $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} 127\.0\.0\.1 \"GET \/users HTTP\/1\.1\" 200 0 0\.1\d\d" . PHP_EOL . "$/");
         $handler($request, function () use ($response) { return $response; });
 
-        usleep(110000); // 100ms + 10ms to account for inaccurate clocks
+        usleep(150000); // 100ms + 50ms to account for inaccurate clocks
         $stream->end();
     }
 
