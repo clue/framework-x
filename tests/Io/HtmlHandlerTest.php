@@ -20,7 +20,7 @@ class HtmlHandlerTest extends TestCase
     }
 
     /** @return list<list<string>> */
-    public function provideNames(): array
+    public static function provideNames(): array
     {
         return [
             [

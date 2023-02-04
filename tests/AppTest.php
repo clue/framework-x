@@ -1902,7 +1902,7 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class UnknownClass not found</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function provideInvalidClasses(): \Generator
+    public static function provideInvalidClasses(): \Generator
     {
         yield [
             InvalidConstructorPrivate::class,

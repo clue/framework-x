@@ -387,7 +387,7 @@ class ErrorHandlerTest extends TestCase
     }
 
     /** @return list<list<string>> */
-    public function provideExceptionMessage(): array
+    public static function provideExceptionMessage(): array
     {
         return [
             [
@@ -459,7 +459,7 @@ class ErrorHandlerTest extends TestCase
     }
 
     /** @return list<list<mixed>> */
-    public function provideInvalidReturnValue(): array
+    public static function provideInvalidReturnValue(): array
     {
         return [
             [

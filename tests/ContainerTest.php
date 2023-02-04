@@ -567,7 +567,7 @@ class ContainerTest extends TestCase
     }
 
     /** @return list<list<\stdClass|string|null>> */
-    public function provideMixedValue(): array
+    public static function provideMixedValue(): array
     {
         return [
             [
