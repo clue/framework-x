@@ -108,7 +108,7 @@ class SapiHandler
         ini_set('default_charset', '');
         foreach ($response->getHeaders() as $name => $values) {
             foreach ($values as $value) {
-                header($name . ': ' . $value);
+                header($name . ': ' . $value, false);
             }
         }
         ini_set('default_charset', $old);
