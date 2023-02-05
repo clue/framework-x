@@ -123,6 +123,8 @@ out=$(curl -v $base/headers -H 'Content-Type;' 2>&1);       skipif "Server: Apac
 out=$(curl -v $base/headers -H 'DNT: 1' 2>&1);              skipif "Server: nginx" && match "HTTP/.* 200" && match "\"DNT\"" && notmatch "\"Dnt\"" # skip nginx which doesn't report original case (DNT->Dnt)
 out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: nginx" && skipif -v "Server:" && match "HTTP/.* 200" && match "\"V\": \"a, b\"" # skip nginx (last only) and PHP webserver (first only)
 
+out=$(curl -v $base/set-cookie 2>&1);                       match "HTTP/.* 200" && match "Set-Cookie: 1=1" && match "Set-Cookie: 2=2"
+
 out=$(curl -v --proxy $baseWithPort $base/debug 2>&1);      skipif "Server: nginx" && match "HTTP/.* 400" # skip nginx (continues like direct request)
 out=$(curl -v --proxy $baseWithPort -p $base/debug 2>&1);   skipif "CONNECT aborted" && match "HTTP/.* 400" # skip PHP development server (rejects as "Malformed HTTP request")
 
