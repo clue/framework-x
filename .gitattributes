@@ -4,7 +4,6 @@
 /.github/workflows/ export-ignore
 /.gitignore export-ignore
 /docs/ export-ignore
-/examples/ export-ignore
 /mkdocs.yml export-ignore
 /phpstan.neon.dist export-ignore
 /phpunit.xml.dist export-ignore

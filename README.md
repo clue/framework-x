@@ -127,14 +127,14 @@ generate a code coverage report locally like this:
 $ XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-text
 ```
 
-Additionally, you can run some simple acceptance tests to verify the framework
-examples work as expected behind your web server. Use your web server of choice
-(see deployment documentation) and execute the tests with the URL to your
-installation like this:
+Additionally, you can run our sophisticated integration tests to verify the
+framework examples work as expected behind your web server. Use your web server
+of choice (see deployment documentation) and execute the tests with the URL to
+your installation like this:
 
 ```bash
-$ php examples/index.php
-$ tests/acceptance.sh http://localhost:8080
+$ php tests/integration/public/index.php
+$ tests/integration.bash http://localhost:8080
 ```
 
 ## License
