@@ -70,6 +70,12 @@ server {
         try_files $uri $uri/ /index.php$is_args$args;
     }
 
+    # Optional: handle Apache config with Framework X if it exists in `public/`
+    error_page 403 = /index.php;
+    location ~ \.htaccess$ {
+        deny all;
+    }
+
     location ~ \.php$ {
         fastcgi_pass localhost:9000;
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
@@ -185,6 +191,9 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule .* index.php
+
+# Optional: handle `.htaccess` with Framework X instead of `403 Forbidden`
+ErrorDocument 403 /%{REQUEST_URI}/../index.php
 
 # This adds support for authorization header
 SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
