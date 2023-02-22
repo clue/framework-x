@@ -144,12 +144,14 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $response = new Response(200, [], '');
 
         $this->expectOutputString('');
         $sapi->sendResponse($response);
+
         $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
     }
 
@@ -159,6 +161,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $response = new Response(200, ['Content-Type' => 'application/json'], '{}');
@@ -166,8 +169,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('{}');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type: application/json', 'Content-Length: 2']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type: application/json', 'Content-Length: 2'], xdebug_get_headers());
     }
 
     /**
@@ -179,6 +181,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -187,8 +190,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type: application/json', 'Content-Length: 2']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type: application/json', 'Content-Length: 2'], xdebug_get_headers());
     }
 
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsNoContentLengthForNoContentResponse(): void
@@ -197,6 +199,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $response = new Response(204, ['Content-Type' => 'application/json'], '{}');
@@ -204,8 +207,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:', 'Content-Length: 2'];
-        $this->assertEquals(array_merge($previous, ['Content-Type: application/json']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type: application/json'], xdebug_get_headers());
     }
 
     public function testSendResponseSendsEmptyBodyWithGivenHeadersButWithoutExplicitContentLengthForNoContentResponse(): void
@@ -214,6 +216,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $response = new Response(204, ['Content-Type' => 'application/json', 'Content-Length' => '2'], '{}');
@@ -221,8 +224,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:', 'Content-Length: 2'];
-        $this->assertEquals(array_merge($previous, ['Content-Type: application/json']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type: application/json'], xdebug_get_headers());
     }
 
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsContentLengthForNotModifiedResponse(): void
@@ -231,6 +233,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $response = new Response(304, ['Content-Type' => 'application/json'], 'null');
@@ -238,8 +241,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type: application/json', 'Content-Length: 4']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type: application/json', 'Content-Length: 4'], xdebug_get_headers());
     }
 
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndExplicitContentLengthForNotModifiedResponse(): void
@@ -248,6 +250,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $response = new Response(304, ['Content-Type' => 'application/json', 'Content-Length' => '2'], '');
@@ -255,8 +258,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type: application/json', 'Content-Length: 2']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type: application/json', 'Content-Length: 2'], xdebug_get_headers());
     }
 
     public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamData(): void
@@ -265,6 +267,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $body = new ThroughStream();
@@ -273,8 +276,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('test');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:', 'Content-Length: 2'];
-        $this->assertEquals(array_merge($previous, ['Content-Type:']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
 
         $body->end('test');
     }
@@ -288,6 +290,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -297,8 +300,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:', 'Content-Length: 2', 'Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type:']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
         $this->assertFalse($body->isReadable());
     }
 
@@ -308,6 +310,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $body = new ThroughStream();
@@ -316,8 +319,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:', 'Content-Length: 2', 'Content-Type:', 'Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type:']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
         $this->assertFalse($body->isReadable());
     }
 
@@ -327,6 +329,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
         $body = new ThroughStream();
@@ -335,8 +338,7 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:', 'Content-Length: 2', 'Content-Type:', 'Content-Type:', 'Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type:']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
         $this->assertFalse($body->isReadable());
     }
 
@@ -346,6 +348,7 @@ class SapiHandlerTest extends TestCase
             $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
         }
 
+        header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['SERVER_SOFTWARE'] = 'nginx/1';
         $sapi = new SapiHandler();
@@ -355,10 +358,26 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('test');
         $sapi->sendResponse($response);
 
-        $previous = ['Content-Type:', 'Content-Length: 2', 'Content-Type:', 'Content-Type:', 'Content-Type:', 'Content-Type:'];
-        $this->assertEquals(array_merge($previous, ['Content-Type:', 'X-Accel-Buffering: no']), xdebug_get_headers());
+        $this->assertEquals(['Content-Type:', 'X-Accel-Buffering: no'], xdebug_get_headers());
 
         $body->end('test');
+    }
+
+    public function testSendResponseSetsMultipleCookieHeaders(): void
+    {
+        if (headers_sent() || !function_exists('xdebug_get_headers')) {
+            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+        }
+
+        header_remove();
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $sapi = new SapiHandler();
+        $response = new Response(204, ['Set-Cookie' => ['1=1', '2=2']], '');
+
+        $this->expectOutputString('');
+        $sapi->sendResponse($response);
+
+        $this->assertEquals(['Content-Type:', 'Set-Cookie: 1=1', 'Set-Cookie: 2=2'], xdebug_get_headers());
     }
 
     public function testLogPrintsMessageWithCurrentDateAndTime(): void

@@ -188,6 +188,12 @@ $app->map(['GET', 'POST'], '/headers', function (ServerRequestInterface $request
     );
 });
 
+$app->get('/set-cookie', function (ServerRequestInterface $request) {
+    return React\Http\Message\Response::plaintext(
+        "Cookies have been set.\n"
+    )->withHeader('Set-Cookie', '1=1')->withAddedHeader('Set-Cookie', '2=2');
+});
+
 $app->get('/error', function () {
     throw new RuntimeException('Unable to load error');
 });
