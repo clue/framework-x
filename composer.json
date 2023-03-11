@@ -18,8 +18,8 @@
         "react/promise": "^3 || ^2.7"
     },
     "require-dev": {
-        "phpstan/phpstan": "1.9.2 || 1.4.10",
-        "phpunit/phpunit": "^9.5 || ^7.5",
+        "phpstan/phpstan": "1.10.6 || 1.4.10",
+        "phpunit/phpunit": "^9.6 || ^7.5",
         "psr/container": "^2 || ^1"
     },
     "autoload": {
