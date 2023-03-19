@@ -141,7 +141,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsEmptyResponseWithNoHeadersAndEmptyBodyAndAssignsNoContentTypeAndEmptyContentLength(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -158,7 +158,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsJsonResponseWithGivenHeadersAndBodyAndAssignsMatchingContentLength(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -178,7 +178,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsJsonResponseWithGivenHeadersAndMatchingContentLengthButEmptyBodyForHeadRequest(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -196,7 +196,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsNoContentLengthForNoContentResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -213,7 +213,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsEmptyBodyWithGivenHeadersButWithoutExplicitContentLengthForNoContentResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -230,7 +230,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsContentLengthForNotModifiedResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -247,7 +247,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndExplicitContentLengthForNotModifiedResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -264,7 +264,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamData(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -287,7 +287,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForHeadRequest(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -307,7 +307,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNotModifiedResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -326,7 +326,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNoContentResponse(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -345,7 +345,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamDataAndNoBufferHeaderForNginxServer(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
@@ -366,7 +366,7 @@ class SapiHandlerTest extends TestCase
     public function testSendResponseSetsMultipleCookieHeaders(): void
     {
         if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running phpunit with --stderr and Xdebug enabled');
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
         }
 
         header_remove();
