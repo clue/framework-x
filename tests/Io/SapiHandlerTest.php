@@ -379,13 +379,4 @@ class SapiHandlerTest extends TestCase
 
         $this->assertEquals(['Content-Type:', 'Set-Cookie: 1=1', 'Set-Cookie: 2=2'], xdebug_get_headers());
     }
-
-    public function testLogPrintsMessageWithCurrentDateAndTime(): void
-    {
-        // 2021-01-29 12:22:01.717 Hello\n
-        $this->expectOutputRegex("/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} Hello" . PHP_EOL . "$/");
-
-        $sapi = new SapiHandler();
-        $sapi->log('Hello');
-    }
 }

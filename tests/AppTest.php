@@ -37,6 +37,7 @@ use ReflectionProperty;
 use function React\Async\await;
 use function React\Promise\reject;
 use function React\Promise\resolve;
+use FrameworkX\Io\LogStreamHandler;
 
 class AppTest extends TestCase
 {
@@ -623,6 +624,14 @@ class AppTest extends TestCase
 
         $app = new App();
 
+        $logger = $this->createMock(LogStreamHandler::class);
+        $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://127.0.0.1:8080']);
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
+
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
             $resources = get_resources();
@@ -635,7 +644,6 @@ class AppTest extends TestCase
             Loop::stop();
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:8080' . PHP_EOL, '/') . '.*/');
         $app->run();
     }
 
@@ -652,6 +660,14 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
+        $logger = $this->createMock(LogStreamHandler::class);
+        $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://' . $addr]);
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
+
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
             $resources = get_resources();
@@ -664,7 +680,6 @@ class AppTest extends TestCase
             Loop::stop();
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '.*/');
         $app->run();
     }
 
@@ -676,6 +691,14 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
+        $logger = $this->createMock(LogStreamHandler::class);
+        $logger->expects($this->atLeastOnce())->method('log')->withConsecutive([$this->matches('Listening on http://127.0.0.1:%d')]);
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
+
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
             $resources = get_resources();
@@ -688,7 +711,6 @@ class AppTest extends TestCase
             Loop::stop();
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on http://127.0.0.1:', '/') . '\d+' . PHP_EOL . '.*/');
         $app->run();
     }
 
@@ -700,8 +722,15 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
+        $logger = $this->createMock(LogStreamHandler::class);
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
+
         // lovely: remove socket server on next tick to terminate loop
-        Loop::futureTick(function () {
+        Loop::futureTick(function () use ($logger) {
             $resources = get_resources();
             $socket = end($resources);
             assert(is_resource($socket));
@@ -713,10 +742,10 @@ class AppTest extends TestCase
                 Loop::stop();
             });
 
+            $logger->expects($this->once())->method('log')->with('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
             Loop::stop();
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.' . PHP_EOL, '/') . '$/');
         $app->run();
     }
 
@@ -732,7 +761,14 @@ class AppTest extends TestCase
             'X_LISTEN' => $addr
         ]);
 
-        $app = new App($container);
+        $app = $this->createAppWithoutLogger($container);
+
+        $logger = $this->createMock(LogStreamHandler::class);
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
 
         Loop::futureTick(function () use ($addr): void {
             $connector = new Connector();
@@ -759,7 +795,6 @@ class AppTest extends TestCase
             });
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '.*/');
         $app->run();
     }
 
@@ -777,9 +812,17 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
-        Loop::futureTick(function () use ($addr): void {
+        $logger = $this->createMock(LogStreamHandler::class);
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
+
+        Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
-            $connector->connect($addr)->then(function (ConnectionInterface $connection): void {
+            $connector->connect($addr)->then(function (ConnectionInterface $connection) use ($logger): void {
+                $logger->expects($this->once())->method('log')->with($this->matchesRegularExpression('/^HTTP error: .*$/'));
                 $connection->write("not a valid HTTP request\r\n\r\n");
 
                 // lovely: remove socket server on client connection close to terminate loop
@@ -798,7 +841,6 @@ class AppTest extends TestCase
             });
         });
 
-        $this->expectOutputRegex('/HTTP error: .*' . PHP_EOL . '$/');
         $app->run();
     }
 
@@ -814,13 +856,23 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
-        Loop::futureTick(function () {
+        $logger = $this->createMock(LogStreamHandler::class);
+        $logger->expects($this->exactly(2))->method('log');
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
+
+        Loop::futureTick(function () use ($logger) {
+            $logger->expects($this->once())->method('log')->with('Received SIGINT, stopping loop');
+
             $pid = getmypid();
             assert(is_int($pid));
             posix_kill($pid, defined('SIGINT') ? SIGINT : 2);
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Received SIGINT, stopping loop' . PHP_EOL, '/') . '$/');
+        $this->expectOutputRegex("#^\r?$#");
         $app->run();
     }
 
@@ -836,13 +888,21 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
-        Loop::futureTick(function () {
+        $logger = $this->createMock(LogStreamHandler::class);
+
+        // $app->logger = $logger;
+        $ref = new \ReflectionProperty($app, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($app, $logger);
+
+        Loop::futureTick(function () use ($logger) {
+            $logger->expects($this->once())->method('log')->with('Received SIGTERM, stopping loop');
+
             $pid = getmypid();
             assert(is_int($pid));
             posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
         });
 
-        $this->expectOutputRegex('/' . preg_quote('Received SIGTERM, stopping loop' . PHP_EOL, '/') . '$/');
         $app->run();
     }
 
@@ -853,7 +913,6 @@ class AppTest extends TestCase
         ]);
 
         $app = new App($container);
-
 
         $this->expectException(\InvalidArgumentException::class);
         $app->run();
@@ -2201,9 +2260,9 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    private function createAppWithoutLogger(): App
+    private function createAppWithoutLogger(callable ...$middleware): App
     {
-        $app = new App();
+        $app = new App(...$middleware);
 
         $ref = new \ReflectionProperty($app, 'handler');
         $ref->setAccessible(true);

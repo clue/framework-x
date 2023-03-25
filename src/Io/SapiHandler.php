@@ -13,15 +13,6 @@ use React\Stream\ReadableStreamInterface;
  */
 class SapiHandler
 {
-    /** @var resource */
-    private $logStream;
-
-    public function __construct()
-    {
-        // @phpstan-ignore-next-line because `fopen()` is known to always return a `resource` for built-in wrappers
-        $this->logStream = PHP_SAPI === 'cli' ? \fopen('php://output', 'a') : (\defined('STDERR') ? \STDERR : \fopen('php://stderr', 'a'));
-    }
-
     public function requestFromGlobals(): ServerRequestInterface
     {
         $host = null;
@@ -139,13 +130,5 @@ class SapiHandler
         } else {
             echo $body;
         }
-    }
-
-    public function log(string $message): void
-    {
-        $time = microtime(true);
-        $log = date('Y-m-d H:i:s', (int)$time) . sprintf('.%03d ', (int)(($time - (int)$time) * 1e3)) . $message . PHP_EOL;
-
-        fwrite($this->logStream, $log);
     }
 }
