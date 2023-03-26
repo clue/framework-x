@@ -4,15 +4,44 @@ namespace FrameworkX\Io;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Loop;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Promise\PromiseInterface;
 use React\Stream\ReadableStreamInterface;
 
 /**
+ * [Internal] Request handler for traditional PHP SAPIs.
+ *
+ * This request handler will be used when executed behind traditional PHP SAPIs
+ * (PHP-FPM, FastCGI, Apache, etc.). It will handle a single request and run
+ * until a single response is sent. This is particularly useful because it
+ * allows you to run the exact same app in any environment.
+ *
+ * Note that this is an internal class only and nothing you should usually have
+ * to care about. See also the `App` and `ReactiveHandler` for more details.
+ *
  * @internal
  */
 class SapiHandler
 {
+    public function run(callable $handler): void
+    {
+        $request = $this->requestFromGlobals();
+
+        $response = $handler($request);
+
+        if ($response instanceof ResponseInterface) {
+            $this->sendResponse($response);
+        } elseif ($response instanceof PromiseInterface) {
+            $response->then(function (ResponseInterface $response): void {
+                $this->sendResponse($response);
+            });
+        }
+
+        Loop::run();
+    }
+
     public function requestFromGlobals(): ServerRequestInterface
     {
         $host = null;

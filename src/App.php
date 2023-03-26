@@ -3,19 +3,16 @@
 namespace FrameworkX;
 
 use FrameworkX\Io\FiberHandler;
-use FrameworkX\Io\LogStreamHandler;
 use FrameworkX\Io\MiddlewareHandler;
+use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RedirectHandler;
 use FrameworkX\Io\RouteHandler;
 use FrameworkX\Io\SapiHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\Loop;
-use React\Http\HttpServer;
 use React\Http\Message\Response;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use React\Socket\SocketServer;
 
 class App
 {
@@ -25,14 +22,8 @@ class App
     /** @var RouteHandler */
     private $router;
 
-    /** @var ?SapiHandler */
+    /** @var ReactiveHandler|SapiHandler */
     private $sapi;
-
-    /** @var ?LogStreamHandler */
-    private $logger;
-
-    /** @var Container */
-    private $container;
 
     /**
      * Instantiate new X application
@@ -53,19 +44,19 @@ class App
         // new MiddlewareHandler([$fiberHandler, $accessLogHandler, $errorHandler, ...$middleware, $routeHandler])
         $handlers = [];
 
-        $this->container = $needsErrorHandler = new Container();
+        $container = $needsErrorHandler = new Container();
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
-        $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') ? $this->container : null;
+        $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') ? $container : null;
 
         if ($middleware) {
             $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
                 // load AccessLogHandler and ErrorHandler instance from last Container
                 if ($handler === AccessLogHandler::class) {
-                    $handler = $this->container->getAccessLogHandler();
+                    $handler = $container->getAccessLogHandler();
                 } elseif ($handler === ErrorHandler::class) {
-                    $handler = $this->container->getErrorHandler();
+                    $handler = $container->getErrorHandler();
                 }
 
                 // ensure AccessLogHandler is always followed by ErrorHandler
@@ -76,14 +67,14 @@ class App
 
                 if ($handler instanceof Container) {
                     // remember last Container to load any following class names
-                    $this->container = $handler;
+                    $container = $handler;
 
                     // add default ErrorHandler from last Container before adding any other handlers, may be followed by other Container instances (unlikely)
                     if (!$handlers) {
-                        $needsErrorHandler = $needsAccessLog = $this->container;
+                        $needsErrorHandler = $needsAccessLog = $container;
                     }
                 } elseif (!\is_callable($handler)) {
-                    $handlers[] = $this->container->callable($handler);
+                    $handlers[] = $container->callable($handler);
                 } else {
                     // don't need a default ErrorHandler if we're adding one as first handler or AccessLogHandler as first followed by one
                     if ($needsErrorHandler && ($handler instanceof ErrorHandler || $handler instanceof AccessLogHandler) && !$handlers) {
@@ -116,11 +107,10 @@ class App
             \array_unshift($handlers, new FiberHandler()); // @codeCoverageIgnore
         }
 
-        $this->router = new RouteHandler($this->container);
+        $this->router = new RouteHandler($container);
         $handlers[] = $this->router;
         $this->handler = new MiddlewareHandler($handlers);
-        $this->sapi = (\PHP_SAPI !== 'cli' ? new SapiHandler() : null);
-        $this->logger = (\PHP_SAPI === 'cli' ? new LogStreamHandler('php://output') : null);
+        $this->sapi = \PHP_SAPI === 'cli' ? new ReactiveHandler($container->getEnv('X_LISTEN')) : new SapiHandler();
     }
 
     /**
@@ -225,90 +215,29 @@ class App
         $this->any($route, new RedirectHandler($target, $code));
     }
 
+    /**
+     * Runs the app to handle HTTP requests according to any registered routes and middleware.
+     *
+     * This is where the magic happens: When executed on the command line (CLI),
+     * this will run the powerful reactive request handler built on top of
+     * ReactPHP. This works by running the efficient built-in HTTP web server to
+     * handle incoming HTTP requests through ReactPHP's HTTP and socket server.
+     * This async execution mode is usually recommended as it can efficiently
+     * process a large number of concurrent connections and process multiple
+     * incoming requests simultaneously. The long-running server process will
+     * continue to run until it is interrupted by a signal.
+     *
+     * When executed behind traditional PHP SAPIs (PHP-FPM, FastCGI, Apache, etc.),
+     * this will handle a single request and run until a single response is sent.
+     * This is particularly useful because it allows you to run the exact same
+     * app in any environment.
+     *
+     * @see ReactiveHandler::run()
+     * @see SapiHandler::run()
+     */
     public function run(): void
     {
-        if (\PHP_SAPI === 'cli') {
-            $this->runLoop();
-        } else {
-            $this->runOnce(); // @codeCoverageIgnore
-        }
-    }
-
-    private function runLoop(): void
-    {
-        $logger = $this->logger;
-        assert($logger instanceof LogStreamHandler);
-
-        $http = new HttpServer(function (ServerRequestInterface $request) {
-            return $this->handleRequest($request);
-        });
-
-        $listen = $this->container->getEnv('X_LISTEN') ?? '127.0.0.1:8080';
-
-        $socket = new SocketServer($listen);
-        $http->listen($socket);
-
-        $logger->log('Listening on ' . \str_replace('tcp:', 'http:', (string) $socket->getAddress()));
-
-        $http->on('error', static function (\Exception $e) use ($logger): void {
-            $logger->log('HTTP error: ' . $e->getMessage());
-        });
-
-        // @codeCoverageIgnoreStart
-        try {
-            Loop::addSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 = static function () use ($socket, $logger) {
-                if (\PHP_VERSION_ID >= 70200 && \stream_isatty(\STDIN)) {
-                    echo "\r";
-                }
-                $logger->log('Received SIGINT, stopping loop');
-
-                $socket->close();
-                Loop::stop();
-            });
-            Loop::addSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 = static function () use ($socket, $logger) {
-                $logger->log('Received SIGTERM, stopping loop');
-
-                $socket->close();
-                Loop::stop();
-            });
-        } catch (\BadMethodCallException $e) {
-            $logger->log('Notice: No signal handler support, installing ext-ev or ext-pcntl recommended for production use.');
-        }
-        // @codeCoverageIgnoreEnd
-
-        do {
-            Loop::run();
-
-            if ($socket->getAddress() !== null) {
-                // Fiber compatibility mode for PHP < 8.1: Restart loop as long as socket is available
-                $logger->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
-            } else {
-                break;
-            }
-        } while (true);
-
-        // remove signal handlers when loop stops (if registered)
-        Loop::removeSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 ?? 'printf');
-        Loop::removeSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 ?? 'printf');
-    }
-
-    private function runOnce(): void
-    {
-        assert($this->sapi instanceof SapiHandler);
-        $request = $this->sapi->requestFromGlobals();
-
-        $response = $this->handleRequest($request);
-
-        if ($response instanceof ResponseInterface) {
-            $this->sapi->sendResponse($response);
-        } elseif ($response instanceof PromiseInterface) {
-            $response->then(function (ResponseInterface $response) {
-                assert($this->sapi instanceof SapiHandler);
-                $this->sapi->sendResponse($response);
-            });
-        }
-
-        Loop::run();
+        $this->sapi->run(\Closure::fromCallable([$this, 'handleRequest']));
     }
 
     /**

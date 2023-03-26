@@ -8,8 +8,8 @@ use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
 use FrameworkX\Io\FiberHandler;
 use FrameworkX\Io\MiddlewareHandler;
+use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RouteHandler;
-use FrameworkX\Io\SapiHandler;
 use FrameworkX\Tests\Fixtures\InvalidAbstract;
 use FrameworkX\Tests\Fixtures\InvalidConstructorInt;
 use FrameworkX\Tests\Fixtures\InvalidConstructorIntersection;
@@ -24,20 +24,16 @@ use FrameworkX\Tests\Fixtures\InvalidTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\Loop;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
-use React\Socket\ConnectionInterface;
-use React\Socket\Connector;
 use ReflectionMethod;
 use ReflectionProperty;
 use function React\Async\await;
 use function React\Promise\reject;
 use function React\Promise\resolve;
-use FrameworkX\Io\LogStreamHandler;
 
 class AppTest extends TestCase
 {
@@ -613,383 +609,41 @@ class AppTest extends TestCase
         new App($accessLogHandler, $middleware);
     }
 
-    public function testRunWillReportListeningAddressAndRunLoopWithSocketServer(): void
+    public function testConstructWithContainerWithListenAddressWillPassListenAddressToReactiveHandler(): void
     {
-        $socket = @stream_socket_server('127.0.0.1:8080');
-        if ($socket === false) {
-            $this->markTestSkipped('Listen address :8080 already in use');
-        }
-        assert(is_resource($socket));
-        fclose($socket);
+        $container = new Container([
+            'X_LISTEN' => '0.0.0.0:8081'
+        ]);
 
+        $app = new App($container);
+
+        // $sapi = $app->sapi;
+        $ref = new \ReflectionProperty($app, 'sapi');
+        $ref->setAccessible(true);
+        $sapi = $ref->getValue($app);
+        assert($sapi instanceof ReactiveHandler);
+
+        // $listenAddress = $sapi->listenAddress;
+        $ref = new \ReflectionProperty($sapi, 'listenAddress');
+        $ref->setAccessible(true);
+        $listenAddress = $ref->getValue($sapi);
+
+        $this->assertEquals('0.0.0.0:8081', $listenAddress);
+    }
+
+    public function testRunWillExecuteRunOnSapiHandler(): void
+    {
         $app = new App();
 
-        $logger = $this->createMock(LogStreamHandler::class);
-        $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://127.0.0.1:8080']);
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        // lovely: remove socket server on next tick to terminate loop
-        Loop::futureTick(function () {
-            $resources = get_resources();
-            $socket = end($resources);
-            assert(is_resource($socket));
-
-            Loop::removeReadStream($socket);
-            fclose($socket);
-
-            Loop::stop();
-        });
-
-        $app->run();
-    }
-
-    public function testRunWillReportListeningAddressFromContainerEnvironmentAndRunLoopWithSocketServer(): void
-    {
-        $socket = stream_socket_server('127.0.0.1:0');
-        assert(is_resource($socket));
-        $addr = stream_socket_get_name($socket, false);
-        fclose($socket);
-
-        $container = new Container([
-            'X_LISTEN' => $addr
-        ]);
-
-        $app = new App($container);
-
-        $logger = $this->createMock(LogStreamHandler::class);
-        $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://' . $addr]);
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        // lovely: remove socket server on next tick to terminate loop
-        Loop::futureTick(function () {
-            $resources = get_resources();
-            $socket = end($resources);
-            assert(is_resource($socket));
-
-            Loop::removeReadStream($socket);
-            fclose($socket);
-
-            Loop::stop();
-        });
-
-        $app->run();
-    }
-
-    public function testRunWillReportListeningAddressFromContainerEnvironmentWithRandomPortAndRunLoopWithSocketServer(): void
-    {
-        $container = new Container([
-            'X_LISTEN' => '127.0.0.1:0'
-        ]);
-
-        $app = new App($container);
-
-        $logger = $this->createMock(LogStreamHandler::class);
-        $logger->expects($this->atLeastOnce())->method('log')->withConsecutive([$this->matches('Listening on http://127.0.0.1:%d')]);
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        // lovely: remove socket server on next tick to terminate loop
-        Loop::futureTick(function () {
-            $resources = get_resources();
-            $socket = end($resources);
-            assert(is_resource($socket));
-
-            Loop::removeReadStream($socket);
-            fclose($socket);
-
-            Loop::stop();
-        });
-
-        $app->run();
-    }
-
-    public function testRunWillRestartLoopUntilSocketIsClosed(): void
-    {
-        $container = new Container([
-            'X_LISTEN' => '127.0.0.1:0'
-        ]);
-
-        $app = new App($container);
-
-        $logger = $this->createMock(LogStreamHandler::class);
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        // lovely: remove socket server on next tick to terminate loop
-        Loop::futureTick(function () use ($logger) {
-            $resources = get_resources();
-            $socket = end($resources);
-            assert(is_resource($socket));
-
-            Loop::futureTick(function () use ($socket) {
-                Loop::removeReadStream($socket);
-                fclose($socket);
-
-                Loop::stop();
-            });
-
-            $logger->expects($this->once())->method('log')->with('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
-            Loop::stop();
-        });
-
-        $app->run();
-    }
-
-    public function testRunWillListenForHttpRequestAndSendBackHttpResponseOverSocket(): void
-    {
-        $socket = stream_socket_server('127.0.0.1:0');
-        assert(is_resource($socket));
-        $addr = stream_socket_get_name($socket, false);
-        assert(is_string($addr));
-        fclose($socket);
-
-        $container = new Container([
-            'X_LISTEN' => $addr
-        ]);
-
-        $app = $this->createAppWithoutLogger($container);
-
-        $logger = $this->createMock(LogStreamHandler::class);
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        Loop::futureTick(function () use ($addr): void {
-            $connector = new Connector();
-            $connector->connect($addr)->then(function (ConnectionInterface $connection): void {
-                $connection->on('data', function (string $data): void {
-                    $this->assertStringStartsWith("HTTP/1.0 404 Not Found\r\n", $data);
-                });
-
-                // lovely: remove socket server on client connection close to terminate loop
-                $connection->on('close', function (): void {
-                    $resources = get_resources();
-                    end($resources);
-                    prev($resources);
-                    $socket = prev($resources);
-                    assert(is_resource($socket));
-
-                    Loop::removeReadStream($socket);
-                    fclose($socket);
-
-                    Loop::stop();
-                });
-
-                $connection->write("GET /unknown HTTP/1.0\r\nHost: localhost\r\n\r\n");
-            });
-        });
-
-        $app->run();
-    }
-
-    public function testRunWillReportHttpErrorForInvalidClientRequest(): void
-    {
-        $socket = stream_socket_server('127.0.0.1:0');
-        assert(is_resource($socket));
-        $addr = stream_socket_get_name($socket, false);
-        assert(is_string($addr));
-        fclose($socket);
-
-        $container = new Container([
-            'X_LISTEN' => $addr
-        ]);
-
-        $app = new App($container);
-
-        $logger = $this->createMock(LogStreamHandler::class);
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        Loop::futureTick(function () use ($addr, $logger): void {
-            $connector = new Connector();
-            $connector->connect($addr)->then(function (ConnectionInterface $connection) use ($logger): void {
-                $logger->expects($this->once())->method('log')->with($this->matchesRegularExpression('/^HTTP error: .*$/'));
-                $connection->write("not a valid HTTP request\r\n\r\n");
-
-                // lovely: remove socket server on client connection close to terminate loop
-                $connection->on('close', function (): void {
-                    $resources = get_resources();
-                    end($resources);
-                    prev($resources);
-                    $socket = prev($resources);
-                    assert(is_resource($socket));
-
-                    Loop::removeReadStream($socket);
-                    fclose($socket);
-
-                    Loop::stop();
-                });
-            });
-        });
-
-        $app->run();
-    }
-
-    /**
-     * @requires function pcntl_signal
-     * @requires function posix_kill
-     */
-    public function testRunWillStopWhenReceivingSigint(): void
-    {
-        $container = new Container([
-            'X_LISTEN' => '127.0.0.1:0'
-        ]);
-
-        $app = new App($container);
-
-        $logger = $this->createMock(LogStreamHandler::class);
-        $logger->expects($this->exactly(2))->method('log');
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        Loop::futureTick(function () use ($logger) {
-            $logger->expects($this->once())->method('log')->with('Received SIGINT, stopping loop');
-
-            $pid = getmypid();
-            assert(is_int($pid));
-            posix_kill($pid, defined('SIGINT') ? SIGINT : 2);
-        });
-
-        $this->expectOutputRegex("#^\r?$#");
-        $app->run();
-    }
-
-    /**
-     * @requires function pcntl_signal
-     * @requires function posix_kill
-     */
-    public function testRunWillStopWhenReceivingSigterm(): void
-    {
-        $container = new Container([
-            'X_LISTEN' => '127.0.0.1:0'
-        ]);
-
-        $app = new App($container);
-
-        $logger = $this->createMock(LogStreamHandler::class);
-
-        // $app->logger = $logger;
-        $ref = new \ReflectionProperty($app, 'logger');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $logger);
-
-        Loop::futureTick(function () use ($logger) {
-            $logger->expects($this->once())->method('log')->with('Received SIGTERM, stopping loop');
-
-            $pid = getmypid();
-            assert(is_int($pid));
-            posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
-        });
-
-        $app->run();
-    }
-
-    public function testRunAppWithEmptyAddressThrows(): void
-    {
-        $container = new Container([
-            'X_LISTEN' => ''
-        ]);
-
-        $app = new App($container);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $app->run();
-    }
-
-    public function testRunAppWithBusyPortThrows(): void
-    {
-        $socket = stream_socket_server('127.0.0.1:0');
-        assert(is_resource($socket));
-        $addr = stream_socket_get_name($socket, false);
-        assert(is_string($addr));
-
-        if (@stream_socket_server($addr) !== false) {
-            $this->markTestSkipped('System does not prevent listening on same address twice');
-        }
-
-        $container = new Container([
-            'X_LISTEN' => $addr
-        ]);
-
-        $app = new App($container);
-
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Failed to listen on');
-        $app->run();
-    }
-
-    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromHandler(): void
-    {
-        $app = $this->createAppWithoutLogger();
-
-        $response = new Response();
-        $app->get('/', function () use ($response) {
-            return $response;
-        });
-
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $sapi = $this->createMock(SapiHandler::class);
-        $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
-        $sapi->expects($this->once())->method('sendResponse')->with($response);
+        $sapi = $this->createMock(ReactiveHandler::class);
+        $sapi->expects($this->once())->method('run');
 
         // $app->sapi = $sapi;
         $ref = new \ReflectionProperty($app, 'sapi');
         $ref->setAccessible(true);
         $ref->setValue($app, $sapi);
 
-        // $app->runOnce();
-        $ref = new \ReflectionMethod($app, 'runOnce');
-        $ref->setAccessible(true);
-        $ref->invoke($app);
-    }
-
-    public function testRunOnceWillCreateRequestFromSapiThenRouteRequestAndThenSendResponseFromDeferredHandler(): void
-    {
-        $app = $this->createAppWithoutLogger();
-
-        $response = new Response();
-        $app->get('/', function () use ($response) {
-            return resolve($response);
-        });
-
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $sapi = $this->createMock(SapiHandler::class);
-        $sapi->expects($this->once())->method('requestFromGlobals')->willReturn($request);
-        $sapi->expects($this->once())->method('sendResponse')->with($response);
-
-        // $app->sapi = $sapi;
-        $ref = new \ReflectionProperty($app, 'sapi');
-        $ref->setAccessible(true);
-        $ref->setValue($app, $sapi);
-
-        // $app->runOnce();
-        $ref = new \ReflectionMethod($app, 'runOnce');
-        $ref->setAccessible(true);
-        $ref->invoke($app);
+        $app->run();
     }
 
     public function testGetMethodAddsGetRouteOnRouter(): void
