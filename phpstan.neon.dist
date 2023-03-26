@@ -10,6 +10,3 @@ parameters:
     ignoreErrors:
         # ignore generic usage like `PromiseInterface<ResponseInterface>` until fixed upstream
         - '/^PHPDoc tag @return contains generic type React\\Promise\\PromiseInterface<Psr\\Http\\Message\\ResponseInterface> but interface React\\Promise\\PromiseInterface is not generic\.$/'
-        # ignore unknown `Fiber` class (PHP 8.1+)
-        - '/^Instantiated class Fiber not found\.$/'
-        - '/^Call to method (start|isTerminated|getReturn)\(\) on an unknown class Fiber\.$/'
