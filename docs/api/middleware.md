@@ -514,6 +514,82 @@ This is commonly used for cache handling and response body transformations (comp
 > [Generator-based coroutines](../async/coroutines.md) anymore.
 > See [fibers](../async/fibers.md) for more details.
 
+Using async components such as the `React Http` library, you can run asynchronous processes within your middleware without sacrificing any performance that you have come to appreciate.
+
+=== "Dependency Injection (pre PHP 8.0)"
+
+   ```php hl_lines="6" title="src/Http/Middleware/DemoMiddleware.php"
+   <?php
+   
+   namespace Acme\Http\Middleware;
+   
+   use Psr\Http\Message\ResponseInterface;
+   use Psr\Http\Message\ServerRequestInterface;
+   use React\Http\Browser;
+   
+   class DemoMiddleware
+   {
+       private Browser $browser;
+       
+       public function __construct(Browser $browser)
+       {
+           $this->browser = $browser;
+       }
+       
+       public function __invoke(ServerRequestInterface $request, callable $next): ResponseInterface
+       {
+           $response = $next($request);
+           assert($response instanceof ResponseInterface);
+           
+           // Send an Async HTTP Request here.
+           $this->browser->post(
+               'some-url-here',
+               ['Content-Type' => 'application/json],
+               '{"foo": "bar}',
+           );
+           
+           return $response;
+       }
+   }
+   ```
+
+=== "Dependency Injection (PHP 8.0+)"
+
+   ```php hl_lines="6" title="src/Http/Middleware/DemoMiddleware.php"
+    <?php
+   
+   namespace Acme\Http\Middleware;
+   
+   use Psr\Http\Message\ResponseInterface;
+   use Psr\Http\Message\ServerRequestInterface;
+   use React\Http\Browser;
+   
+   class DemoMiddleware
+   {
+       private Browser $browser;
+       
+       public function __construct(
+           private readonly Browser $browser,
+       ) {}
+       
+       public function __invoke(ServerRequestInterface $request, callable $next): ResponseInterface
+       {
+           $response = $next($request);
+           assert($response instanceof ResponseInterface);
+           
+           // Send an Async HTTP Request here.
+           $this->browser->post(
+               'some-url-here',
+               ['Content-Type' => 'application/json],
+               '{"foo": "bar}',
+           );
+           
+           return $response;
+       }
+   }
+   ```
+
+
 ## Global middleware
 
 Additionally, you can also add middleware to the [`App`](app.md) object itself
