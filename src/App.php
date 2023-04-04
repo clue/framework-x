@@ -242,18 +242,11 @@ class App
 
         $this->sapi->log('Listening on ' . \str_replace('tcp:', 'http:', (string) $socket->getAddress()));
 
-        $http->on('error', function (\Exception $e) {
-            $orig = $e;
-            $message = 'Error: ' . $e->getMessage();
-            while (($e = $e->getPrevious()) !== null) {
-                $message .= '. Previous: ' . $e->getMessage();
-            }
-
-            $this->sapi->log($message);
-
-            \fwrite(STDERR, (string)$orig);
+        $http->on('error', function (\Exception $e): void {
+            $this->sapi->log('HTTP error: ' . $e->getMessage());
         });
 
+        // @codeCoverageIgnoreStart
         try {
             Loop::addSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 = function () use ($socket) {
                 if (\PHP_VERSION_ID >= 70200 && \stream_isatty(\STDIN)) {
@@ -270,9 +263,10 @@ class App
                 $socket->close();
                 Loop::stop();
             });
-        } catch (\BadMethodCallException $e) { // @codeCoverageIgnoreStart
+        } catch (\BadMethodCallException $e) {
             $this->sapi->log('Notice: No signal handler support, installing ext-ev or ext-pcntl recommended for production use.');
-        } // @codeCoverageIgnoreEnd
+        }
+        // @codeCoverageIgnoreEnd
 
         do {
             Loop::run();
