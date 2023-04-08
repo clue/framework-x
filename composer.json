@@ -30,6 +30,9 @@
     "autoload-dev": {
         "psr-4": {
             "FrameworkX\\Tests\\": "tests/"
-        }
+        },
+        "files": [
+            "tests/FiberStub.php"
+        ]
     }
 }

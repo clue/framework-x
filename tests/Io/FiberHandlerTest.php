@@ -14,13 +14,6 @@ use function React\Promise\resolve;
 
 class FiberHandlerTest extends TestCase
 {
-    public function setUp(): void
-    {
-        if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
-            $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
-        }
-    }
-
     public function testInvokeWithHandlerReturningResponseReturnsSameResponse(): void
     {
         $handler = new FiberHandler();
@@ -132,6 +125,11 @@ class FiberHandlerTest extends TestCase
 
     public function testInvokeWithHandlerReturningResponseAfterAwaitingPendingPromiseReturnsPromiseResolvingWithSameResponse(): void
     {
+        // work around lack of actual fibers in PHP < 8.1
+        if (\method_exists(\Fiber::class, 'mockSuspend')) {
+            \Fiber::mockSuspend();
+        }
+
         $handler = new FiberHandler();
 
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -140,6 +138,16 @@ class FiberHandlerTest extends TestCase
         $deferred = new Deferred();
 
         $promise = $handler($request, function () use ($deferred) {
+            // going the extra mile if using reactphp/async < 4 on PHP 8.1+
+            if (PHP_VERSION_ID >= 80100 && !function_exists('React\Async\async')) {
+                $fiber = \Fiber::getCurrent();
+                assert($fiber instanceof \Fiber);
+                $deferred->promise()->then(function () use ($fiber): void {
+                    $fiber->resume();
+                });
+                \Fiber::suspend();
+            }
+
             return await($deferred->promise());
         });
 
@@ -154,6 +162,11 @@ class FiberHandlerTest extends TestCase
         $this->assertNull($ret);
 
         $deferred->resolve($response);
+
+        // work around lack of actual fibers in PHP < 8.1
+        if (\method_exists(\Fiber::class, 'mockResume')) {
+            \Fiber::mockResume();
+        }
 
         $this->assertSame($response, $ret);
     }

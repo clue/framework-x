@@ -35,7 +35,7 @@ class FiberHandler
      *     be turned into a valid error response before returning.
      * @throws void
      */
-    public function __invoke(ServerRequestInterface $request, callable $next): mixed
+    public function __invoke(ServerRequestInterface $request, callable $next)
     {
         $deferred = null;
         $fiber = new \Fiber(function () use ($request, $next, &$deferred) {

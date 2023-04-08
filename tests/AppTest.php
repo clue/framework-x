@@ -30,6 +30,8 @@ use React\Http\Message\ServerRequest;
 use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
+use React\Socket\ConnectionInterface;
+use React\Socket\Connector;
 use ReflectionMethod;
 use ReflectionProperty;
 use function React\Async\await;
@@ -715,6 +717,88 @@ class AppTest extends TestCase
         });
 
         $this->expectOutputRegex('/' . preg_quote('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.' . PHP_EOL, '/') . '$/');
+        $app->run();
+    }
+
+    public function testRunWillListenForHttpRequestAndSendBackHttpResponseOverSocket(): void
+    {
+        $socket = stream_socket_server('127.0.0.1:0');
+        assert(is_resource($socket));
+        $addr = stream_socket_get_name($socket, false);
+        assert(is_string($addr));
+        fclose($socket);
+
+        $container = new Container([
+            'X_LISTEN' => $addr
+        ]);
+
+        $app = new App($container);
+
+        Loop::futureTick(function () use ($addr): void {
+            $connector = new Connector();
+            $connector->connect($addr)->then(function (ConnectionInterface $connection): void {
+                $connection->on('data', function (string $data): void {
+                    $this->assertStringStartsWith("HTTP/1.0 404 Not Found\r\n", $data);
+                });
+
+                // lovely: remove socket server on client connection close to terminate loop
+                $connection->on('close', function (): void {
+                    $resources = get_resources();
+                    end($resources);
+                    prev($resources);
+                    $socket = prev($resources);
+                    assert(is_resource($socket));
+
+                    Loop::removeReadStream($socket);
+                    fclose($socket);
+
+                    Loop::stop();
+                });
+
+                $connection->write("GET /unknown HTTP/1.0\r\nHost: localhost\r\n\r\n");
+            });
+        });
+
+        $this->expectOutputRegex('/' . preg_quote('Listening on http://' . $addr . PHP_EOL, '/') . '.*/');
+        $app->run();
+    }
+
+    public function testRunWillReportHttpErrorForInvalidClientRequest(): void
+    {
+        $socket = stream_socket_server('127.0.0.1:0');
+        assert(is_resource($socket));
+        $addr = stream_socket_get_name($socket, false);
+        assert(is_string($addr));
+        fclose($socket);
+
+        $container = new Container([
+            'X_LISTEN' => $addr
+        ]);
+
+        $app = new App($container);
+
+        Loop::futureTick(function () use ($addr): void {
+            $connector = new Connector();
+            $connector->connect($addr)->then(function (ConnectionInterface $connection): void {
+                $connection->write("not a valid HTTP request\r\n\r\n");
+
+                // lovely: remove socket server on client connection close to terminate loop
+                $connection->on('close', function (): void {
+                    $resources = get_resources();
+                    end($resources);
+                    prev($resources);
+                    $socket = prev($resources);
+                    assert(is_resource($socket));
+
+                    Loop::removeReadStream($socket);
+                    fclose($socket);
+
+                    Loop::stop();
+                });
+            });
+        });
+
+        $this->expectOutputRegex('/HTTP error: .*' . PHP_EOL . '$/');
         $app->run();
     }
 

@@ -6,7 +6,8 @@
          bootstrap="vendor/autoload.php"
          cacheResult="false"
          colors="true"
-         convertDeprecationsToExceptions="true">
+         convertDeprecationsToExceptions="true"
+         stderr="true">
     <testsuites>
         <testsuite name="Framework X test suite">
             <directory>./tests/</directory>
