@@ -2,7 +2,7 @@
 
 namespace FrameworkX;
 
-use FrameworkX\Io\SapiHandler;
+use FrameworkX\Io\LogStreamHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -14,15 +14,17 @@ use React\Stream\ReadableStreamInterface;
  */
 class AccessLogHandler
 {
-    /** @var SapiHandler */
-    private $sapi;
+    /** @var LogStreamHandler */
+    private $logger;
 
     /** @var bool */
     private $hasHighResolution;
 
+    /** @throws void */
     public function __construct()
     {
-        $this->sapi = new SapiHandler();
+        /** @throws void because `fopen()` is known to always return a `resource` for built-in wrappers */
+        $this->logger = new LogStreamHandler(\PHP_SAPI === 'cli' ? 'php://output' : 'php://stderr');
         $this->hasHighResolution = \function_exists('hrtime'); // PHP 7.3+
     }
 
@@ -85,7 +87,7 @@ class AccessLogHandler
             $responseSize = 0;
         }
 
-        $this->sapi->log(
+        $this->logger->log(
             ($request->getAttribute('remote_addr') ?? $request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
             '"' . $this->escape($method) . ' ' . $this->escape($request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . '" ' .
             $status . ' ' . $responseSize . ' ' . sprintf('%.3F', $time < 0 ? 0 : $time)

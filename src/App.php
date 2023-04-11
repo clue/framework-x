@@ -3,6 +3,7 @@
 namespace FrameworkX;
 
 use FrameworkX\Io\FiberHandler;
+use FrameworkX\Io\LogStreamHandler;
 use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\RedirectHandler;
 use FrameworkX\Io\RouteHandler;
@@ -24,8 +25,11 @@ class App
     /** @var RouteHandler */
     private $router;
 
-    /** @var SapiHandler */
+    /** @var ?SapiHandler */
     private $sapi;
+
+    /** @var ?LogStreamHandler */
+    private $logger;
 
     /** @var Container */
     private $container;
@@ -115,7 +119,8 @@ class App
         $this->router = new RouteHandler($this->container);
         $handlers[] = $this->router;
         $this->handler = new MiddlewareHandler($handlers);
-        $this->sapi = new SapiHandler();
+        $this->sapi = (\PHP_SAPI !== 'cli' ? new SapiHandler() : null);
+        $this->logger = (\PHP_SAPI === 'cli' ? new LogStreamHandler('php://output') : null);
     }
 
     /**
@@ -231,6 +236,9 @@ class App
 
     private function runLoop(): void
     {
+        $logger = $this->logger;
+        assert($logger instanceof LogStreamHandler);
+
         $http = new HttpServer(function (ServerRequestInterface $request) {
             return $this->handleRequest($request);
         });
@@ -240,31 +248,31 @@ class App
         $socket = new SocketServer($listen);
         $http->listen($socket);
 
-        $this->sapi->log('Listening on ' . \str_replace('tcp:', 'http:', (string) $socket->getAddress()));
+        $logger->log('Listening on ' . \str_replace('tcp:', 'http:', (string) $socket->getAddress()));
 
-        $http->on('error', function (\Exception $e): void {
-            $this->sapi->log('HTTP error: ' . $e->getMessage());
+        $http->on('error', static function (\Exception $e) use ($logger): void {
+            $logger->log('HTTP error: ' . $e->getMessage());
         });
 
         // @codeCoverageIgnoreStart
         try {
-            Loop::addSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 = function () use ($socket) {
+            Loop::addSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 = static function () use ($socket, $logger) {
                 if (\PHP_VERSION_ID >= 70200 && \stream_isatty(\STDIN)) {
                     echo "\r";
                 }
-                $this->sapi->log('Received SIGINT, stopping loop');
+                $logger->log('Received SIGINT, stopping loop');
 
                 $socket->close();
                 Loop::stop();
             });
-            Loop::addSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 = function () use ($socket) {
-                $this->sapi->log('Received SIGTERM, stopping loop');
+            Loop::addSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 = static function () use ($socket, $logger) {
+                $logger->log('Received SIGTERM, stopping loop');
 
                 $socket->close();
                 Loop::stop();
             });
         } catch (\BadMethodCallException $e) {
-            $this->sapi->log('Notice: No signal handler support, installing ext-ev or ext-pcntl recommended for production use.');
+            $logger->log('Notice: No signal handler support, installing ext-ev or ext-pcntl recommended for production use.');
         }
         // @codeCoverageIgnoreEnd
 
@@ -273,7 +281,7 @@ class App
 
             if ($socket->getAddress() !== null) {
                 // Fiber compatibility mode for PHP < 8.1: Restart loop as long as socket is available
-                $this->sapi->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
+                $logger->log('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
             } else {
                 break;
             }
@@ -286,6 +294,7 @@ class App
 
     private function runOnce(): void
     {
+        assert($this->sapi instanceof SapiHandler);
         $request = $this->sapi->requestFromGlobals();
 
         $response = $this->handleRequest($request);
@@ -294,6 +303,7 @@ class App
             $this->sapi->sendResponse($response);
         } elseif ($response instanceof PromiseInterface) {
             $response->then(function (ResponseInterface $response) {
+                assert($this->sapi instanceof SapiHandler);
                 $this->sapi->sendResponse($response);
             });
         }
