@@ -6,6 +6,7 @@ use FrameworkX\Io\SapiHandler;
 use PHPUnit\Framework\TestCase;
 use React\Http\Message\Response;
 use React\Stream\ThroughStream;
+use function React\Promise\resolve;
 
 class SapiHandlerTest extends TestCase
 {
@@ -378,5 +379,43 @@ class SapiHandlerTest extends TestCase
         $sapi->sendResponse($response);
 
         $this->assertEquals(['Content-Type:', 'Set-Cookie: 1=1', 'Set-Cookie: 2=2'], xdebug_get_headers());
+    }
+
+    public function testRunWillSendResponseHeadersFromHandler(): void
+    {
+        if (headers_sent() || !function_exists('xdebug_get_headers')) {
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
+        }
+
+        $sapi = new SapiHandler();
+
+        header_remove();
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+
+        $this->expectOutputString('');
+        $sapi->run(function () {
+            return new Response();
+        });
+
+        $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
+    }
+
+    public function testRunWillSendResponseHeadersFromDeferredHandler(): void
+    {
+        if (headers_sent() || !function_exists('xdebug_get_headers')) {
+            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
+        }
+
+        $sapi = new SapiHandler();
+
+        header_remove();
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+
+        $this->expectOutputString('');
+        $sapi->run(function () {
+            return resolve(new Response());
+        });
+
+        $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
     }
 }
