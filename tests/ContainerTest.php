@@ -804,7 +804,7 @@ class ContainerTest extends TestCase
             }
         };
 
-        $fn = null;
+        $fn = $data = null;
         $fn = #[PHP8] fn(mixed $data = 42) => new Response(200, [], (string) json_encode($data)); // @phpstan-ignore-line
         $container = new Container([
             ResponseInterface::class => $fn,
@@ -1269,17 +1269,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1301,17 +1293,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1333,17 +1317,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class('') {
-            /** @var string */
-            private $data;
-
             public function __construct(string $stdClass)
             {
-                $this->data = $stdClass;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert(is_string($stdClass));
             }
         };
 
@@ -1367,17 +1343,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1402,17 +1370,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1435,17 +1395,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1468,17 +1420,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1501,17 +1445,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1534,17 +1470,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1567,17 +1495,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1597,17 +1517,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var ?\stdClass */
-            private $data;
-
             public function __construct(?\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1627,17 +1539,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1657,17 +1561,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1687,17 +1583,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var ?\stdClass */
-            private $data;
-
             public function __construct(?\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1717,17 +1605,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class(new \stdClass()) {
-            /** @var \stdClass */
-            private $data;
-
             public function __construct(\stdClass $data)
             {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert($data instanceof \stdClass);
             }
         };
 
@@ -1747,17 +1627,9 @@ class ContainerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $controller = new class('Alice') {
-            /** @var string */
-            private $data;
-
             public function __construct(string $name)
             {
-                $this->data = $name;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
+                assert(is_string($name));
             }
         };
 
