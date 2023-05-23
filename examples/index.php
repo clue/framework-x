@@ -205,8 +205,7 @@ $app->get('/error/yield', function () {
 });
 $app->get('/error/class', 'Acme\Http\UnknownDeleteUserController'); // @phpstan-ignore-line
 
-// OPTIONS *
-$app->options('', function () {
+$app->options('*', function () {
     return new React\Http\Message\Response(200);
 });
 

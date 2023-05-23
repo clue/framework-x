@@ -180,6 +180,11 @@ class App
      */
     public function options(string $route, $handler, ...$handlers): void
     {
+        // backward compatibility: `OPTIONS * HTTP/1.1` can be matched with empty path (legacy)
+        if ($route === '') {
+            $route = '*';
+        }
+
         $this->map(['OPTIONS'], $route, $handler, ...$handlers);
     }
 

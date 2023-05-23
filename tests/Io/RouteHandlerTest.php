@@ -332,14 +332,14 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyHandler(): void
+    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingAsteriskHandler(): void
     {
         $request = new ServerRequest('OPTIONS', 'http://example.com');
         $request = $request->withRequestTarget('*');
         $response = new Response(200, [], '');
 
         $handler = new RouteHandler();
-        $handler->map(['OPTIONS'], '', function () use ($response) { return $response; });
+        $handler->map(['OPTIONS'], '*', function () use ($response) { return $response; });
 
         $ret = $handler($request);
 
