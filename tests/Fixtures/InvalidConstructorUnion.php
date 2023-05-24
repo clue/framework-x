@@ -2,6 +2,8 @@
 
 namespace FrameworkX\Tests\Fixtures;
 
+use FrameworkX\Tests\PHP8;
+
 /** PHP 8.0+ **/
 class InvalidConstructorUnion
 {
