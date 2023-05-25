@@ -76,15 +76,18 @@ class RouteHandler
      */
     public function __invoke(ServerRequestInterface $request)
     {
-        if ($request->getRequestTarget()[0] !== '/' && $request->getRequestTarget() !== '*') {
+        $target = $request->getRequestTarget();
+        if ($target[0] !== '/' && $target !== '*') {
             return $this->errorHandler->requestProxyUnsupported();
+        } elseif ($target !== '*') {
+            $target = $request->getUri()->getPath();
         }
 
         if ($this->routeDispatcher === null) {
             $this->routeDispatcher = new RouteDispatcher($this->routeCollector->getData());
         }
 
-        $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
+        $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $target);
         assert(\is_array($routeInfo) && isset($routeInfo[0]));
 
         // happy path: matching route found, assign route attributes and invoke request handler

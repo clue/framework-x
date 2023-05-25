@@ -973,7 +973,36 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyRouteHandler(): void
+    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingAsteriskRouteHandler(): void
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $app->options('*', function () {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK\n"
+            );
+        });
+
+        $request = new ServerRequest('OPTIONS', 'http://localhost');
+        $request = $request->withRequestTarget('*');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingDeprecatedEmptyRouteHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
