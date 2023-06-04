@@ -6,7 +6,6 @@ use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
 use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
-use FrameworkX\Io\FiberHandler;
 use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RouteHandler;
@@ -52,11 +51,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(4, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
         $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
@@ -85,11 +79,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(3, $handlers);
         $this->assertSame($accessLogHandler, $handlers[0]);
@@ -122,11 +111,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(4, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
         $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
@@ -155,11 +139,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
@@ -179,11 +158,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -206,11 +180,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -237,11 +206,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -272,11 +236,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -309,11 +268,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(4, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
@@ -337,11 +291,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(5, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -382,11 +331,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(5, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
         $this->assertSame($errorHandler1, $handlers[1]);
@@ -412,11 +356,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(3, $handlers);
         $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
@@ -436,11 +375,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(3, $handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
@@ -470,11 +404,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(3, $handlers);
         $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
@@ -498,11 +427,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(5, $handlers);
         $this->assertInstanceOf(ErrorHandler::class, $handlers[0]);
@@ -539,11 +463,6 @@ class AppTest extends TestCase
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
-
         $this->assertCount(3, $handlers);
         $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
@@ -579,11 +498,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-        }
 
         $this->assertCount(4, $handlers);
         $this->assertSame($accessLogHandler, $handlers[0]);
@@ -1748,16 +1662,6 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($middleware);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-
-            $next = array_shift($handlers);
-            $this->assertInstanceOf(AccessLogHandler::class, $next);
-
-            array_unshift($handlers, $next, $first);
-        }
 
         $first = array_shift($handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $first);

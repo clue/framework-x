@@ -4,7 +4,6 @@ namespace FrameworkX\Tests;
 
 use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
-use FrameworkX\Io\FiberHandler;
 use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
@@ -686,16 +685,6 @@ class AppMiddlewareTest extends TestCase
         $ref->setAccessible(true);
         $handlers = $ref->getValue($middleware);
         assert(is_array($handlers));
-
-        if (PHP_VERSION_ID >= 80100) {
-            $first = array_shift($handlers);
-            $this->assertInstanceOf(FiberHandler::class, $first);
-
-            $next = array_shift($handlers);
-            $this->assertInstanceOf(AccessLogHandler::class, $next);
-
-            array_unshift($handlers, $next, $first);
-        }
 
         $first = array_shift($handlers);
         $this->assertInstanceOf(AccessLogHandler::class, $first);
