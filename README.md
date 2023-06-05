@@ -2,6 +2,7 @@
 
 [![CI status](https://github.com/clue-access/framework-x/workflows/CI/badge.svg)](https://github.com/clue-access/framework-x/actions)
 [![code coverage](https://img.shields.io/badge/code%20coverage-100%25-success)](#tests)
+[![PHPStan level](https://img.shields.io/badge/PHPStan%20level-max-success)](#tests)
 [![installs on Packagist](https://img.shields.io/packagist/dt/clue/framework-x?color=blue&label=installs%20on%20Packagist)](https://packagist.org/packages/clue/framework-x)
 
 Framework X – the simple and fast micro framework for building reactive web applications that run anywhere.
@@ -138,6 +139,12 @@ your installation like this:
 ```bash
 $ php tests/integration/public/index.php
 $ tests/integration.bash http://localhost:8080/
+```
+
+On top of this, we use PHPStan on max level to ensure type safety across the project:
+
+```bash
+$ vendor/bin/phpstan
 ```
 
 ## License
