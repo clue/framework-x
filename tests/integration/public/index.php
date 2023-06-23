@@ -1,11 +1,29 @@
 <?php
 
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Loop;
+use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 use React\Stream\ThroughStream;
 
 // example uses `@include` for test suite only, real-world examples should use `require` instead
 if(!@include __DIR__ . '/../vendor/autoload.php') {
     require __DIR__ . '/../../../vendor/autoload.php';
+}
+
+/**
+ * basic "async sleep" to test deferred responses
+ *
+ * @return PromiseInterface<void>
+ * @link https://github.com/reactphp/async#delay
+ * @link https://github.com/reactphp/promise-timer#sleep
+ */
+function asleep(float $s): PromiseInterface
+{
+    /** @var PromiseInterface<void> */
+    return new Promise(function (callable $resolve) use ($s): void { // @phpstan-ignore-line for legacy PHP 7.1
+        Loop::addTimer($s, function () use ($resolve): void { $resolve(null); });
+    });
 }
 
 $app = new FrameworkX\App();
@@ -31,15 +49,15 @@ $app->get('/users/{name}', function (Psr\Http\Message\ServerRequestInterface $re
 });
 
 $app->get('/sleep/fiber', function () {
-    React\Async\await(React\Promise\Timer\sleep(0.1));
+    React\Async\delay(0.1); // React\Async\await(asleep(0.1));
     return React\Http\Message\Response::plaintext("OK\n");
 });
 $app->get('/sleep/coroutine', function () {
-    yield React\Promise\Timer\sleep(0.1);
+    yield asleep(0.1);
     return React\Http\Message\Response::plaintext("OK\n");
 });
 $app->get('/sleep/promise', function () {
-    return React\Promise\Timer\sleep(0.1)->then(function () {
+    return asleep(0.1)->then(function () {
         return React\Http\Message\Response::plaintext("OK\n");
     });
 });
