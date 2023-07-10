@@ -101,9 +101,15 @@ class FiberHandlerTest extends TestCase
             }
         });
 
-        /** @var \Generator $generator */
-        $this->assertInstanceOf(\Generator::class, $generator);
-        $generator->throw(new \RuntimeException('Foo'));
+        assert($generator instanceof \Generator);
+        $promise = $generator->current();
+
+        assert($promise instanceof PromiseInterface);
+        $promise->then(null, function (\Throwable $e) use ($generator) {
+            $generator->throw($e);
+        });
+
+        assert(!$generator->valid());
         $ret = $generator->getReturn();
 
         $this->assertSame($response, $ret);
