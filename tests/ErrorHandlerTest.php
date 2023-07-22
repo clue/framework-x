@@ -34,7 +34,7 @@ class ErrorHandlerTest extends TestCase
 
         $promise = $handler($request, function () use ($response) { return resolve($response); });
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $ret = null;
@@ -106,7 +106,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertInstanceOf(\Generator::class, $generator);
         $promise = $generator->current();
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<never> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
         $e = null;
         $promise->then(null, function ($reason) use (&$e) {
@@ -146,7 +146,7 @@ class ErrorHandlerTest extends TestCase
             return reject(new \RuntimeException());
         });
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -216,7 +216,7 @@ class ErrorHandlerTest extends TestCase
         $this->assertInstanceOf(\Generator::class, $generator);
         $promise = $generator->current();
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<never> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
         $e = null;
         $promise->then(null, function ($reason) use (&$e) {
@@ -258,7 +258,7 @@ class ErrorHandlerTest extends TestCase
             return resolve(null);
         });
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -282,10 +282,10 @@ class ErrorHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $promise = $handler($request, function () {
-            return reject(null);
+            return reject(null); // @phpstan-ignore-line
         });
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;

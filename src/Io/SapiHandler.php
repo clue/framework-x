@@ -34,6 +34,7 @@ class SapiHandler
         if ($response instanceof ResponseInterface) {
             $this->sendResponse($response);
         } elseif ($response instanceof PromiseInterface) {
+            /** @var PromiseInterface<ResponseInterface> $response */
             $response->then(function (ResponseInterface $response): void {
                 $this->sendResponse($response);
             });

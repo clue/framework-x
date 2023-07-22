@@ -37,6 +37,7 @@ class AccessLogHandler
         $response = $next($request);
 
         if ($response instanceof PromiseInterface) {
+            /** @var PromiseInterface<ResponseInterface> $response */
             return $response->then(function (ResponseInterface $response) use ($request, $now) {
                 $this->logWhenClosed($request, $response, $now);
                 return $response;
