@@ -271,6 +271,9 @@ class App
         return $response;
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface>
+     */
     private function coroutine(\Generator $generator): PromiseInterface
     {
         $next = null;

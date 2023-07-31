@@ -1052,7 +1052,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1082,7 +1082,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $resolved = false;
@@ -1150,7 +1150,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1193,7 +1193,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1223,7 +1223,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<never> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $resolved = false;
@@ -1285,7 +1285,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1384,7 +1384,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1412,7 +1412,7 @@ class AppTest extends TestCase
         $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
-            return reject(null);
+            return reject(null); // @phpstan-ignore-line
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
@@ -1422,7 +1422,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1457,7 +1457,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1523,7 +1523,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1593,7 +1593,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1632,7 +1632,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1889,7 +1889,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -1924,7 +1924,7 @@ class AppTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;

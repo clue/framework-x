@@ -156,7 +156,10 @@ class ReactiveHandlerTest extends TestCase
 
         Loop::futureTick(function () use ($addr): void {
             $connector = new Connector();
-            $connector->connect($addr)->then(function (ConnectionInterface $connection): void {
+            $promise = $connector->connect($addr);
+
+            /** @var \React\Promise\PromiseInterface<ConnectionInterface> $promise */
+            $promise->then(function (ConnectionInterface $connection): void {
                 $connection->on('data', function (string $data): void {
                     $this->assertEquals("HTTP/1.0 200 OK\r\nContent-Length: 3\r\n\r\nOK\n", $data);
                 });
@@ -203,7 +206,10 @@ class ReactiveHandlerTest extends TestCase
 
         Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
-            $connector->connect($addr)->then(function (ConnectionInterface $connection) use ($logger): void {
+            $promise = $connector->connect($addr);
+
+            /** @var \React\Promise\PromiseInterface<ConnectionInterface> $promise */
+            $promise->then(function (ConnectionInterface $connection) use ($logger): void {
                 $logger->expects($this->once())->method('log')->with($this->matchesRegularExpression('/^HTTP error: .*$/'));
                 $connection->write("not a valid HTTP request\r\n\r\n");
 

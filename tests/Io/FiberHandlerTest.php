@@ -35,7 +35,7 @@ class FiberHandlerTest extends TestCase
 
         $promise = $handler($request, function () use ($response) { return resolve($response); });
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<Response> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $ret = null;
@@ -157,7 +157,7 @@ class FiberHandlerTest extends TestCase
             return await($deferred->promise());
         });
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<Response> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $ret = null;

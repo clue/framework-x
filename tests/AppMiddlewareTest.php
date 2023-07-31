@@ -280,6 +280,7 @@ class AppMiddlewareTest extends TestCase
         $middleware = function (ServerRequestInterface $request, callable $next) {
             $promise = $next($request);
             assert($promise instanceof PromiseInterface);
+            /** @var PromiseInterface<ResponseInterface> $promise */
 
             return $promise->then(function (ResponseInterface $response) {
                 return $response->withHeader('Content-Type', 'text/html');
@@ -303,7 +304,7 @@ class AppMiddlewareTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -350,7 +351,7 @@ class AppMiddlewareTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -680,7 +681,7 @@ class AppMiddlewareTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -720,7 +721,7 @@ class AppMiddlewareTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
@@ -764,7 +765,7 @@ class AppMiddlewareTest extends TestCase
         $ref->setAccessible(true);
         $promise = $ref->invoke($app, $request);
 
-        /** @var PromiseInterface $promise */
+        /** @var PromiseInterface<ResponseInterface> $promise */
         $this->assertInstanceOf(PromiseInterface::class, $promise);
 
         $response = null;
