@@ -105,7 +105,7 @@ $app->get('/stream', function (ServerRequestInterface $request) {
     );
 });
 
-$app->get('/LICENSE', new FrameworkX\FilesystemHandler(__DIR__ . '/../LICENSE'));
+$app->get('/robots.txt', new FrameworkX\FilesystemHandler(__DIR__ . '/robots.txt'));
 $app->get('/source/{path:.*}', new FrameworkX\FilesystemHandler(__DIR__ . '/../'));
 $app->redirect('/source', '/source/');
 

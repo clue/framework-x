@@ -103,7 +103,7 @@ jobs:
           php-version: 8.3
       - run: composer install -d tests/integration/
       - run: docker build -f tests/integration/${{ matrix.dockerfile }} tests/integration/
-      - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json -v "$PWD/LICENSE":/app/LICENSE $(docker images -q | head -n1)
+      - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
       - run: bash tests/await.sh
       - run: bash tests/integration.bash
       - run: docker stop $(docker ps -qn1)
@@ -134,6 +134,8 @@ jobs:
       - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD/tests/integration/":/home/framework-x/ -v "$PWD"/tests/integration/nginx-fpm.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
       - run: bash tests/await.sh http://localhost
       - run: bash tests/integration.bash http://localhost
+      - run: docker logs $(docker ps -qn1)
+        if: ${{ always() }}
 
   Apache-webserver:
     name: Apache webserver (PHP ${{ matrix.php }})
@@ -158,6 +160,8 @@ jobs:
       - run: docker run -d -p 80:80 -v "$PWD/tests/integration/":/home/framework-x/ php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/framework-x/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
       - run: bash tests/await.sh http://localhost
       - run: bash tests/integration.bash http://localhost
+      - run: docker logs $(docker ps -qn1)
+        if: ${{ always() }}
 
   PHP-webserver:
     name: PHP webserver (PHP ${{ matrix.php }})
