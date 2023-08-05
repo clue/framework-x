@@ -287,4 +287,187 @@ class LogStreamHandlerTest extends TestCase
 
         $logger->log('Hello');
     }
+
+    public function testIsDevNullReturnsFalseForCurrentFile(): void
+    {
+        $logger = new LogStreamHandler(__FILE__);
+
+        $this->assertFalse($logger->isDevNull());
+    }
+
+    public function testIsDevNullReturnsTrueForDevNull(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
+        $logger = new LogStreamHandler('/dev/null');
+
+        $this->assertTrue($logger->isDevNull());
+    }
+
+    public function testIsDevNullReturnsTrueForSymlinkToDevNull(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'null');
+        assert(is_string($path));
+        unlink($path);
+        symlink('/dev/null', $path);
+
+        $logger = new LogStreamHandler($path);
+
+        $this->assertTrue($logger->isDevNull());
+
+        unlink($path);
+    }
+
+    public function testIsDevNullReturnsFalseForStdoutInChildProcess(): void
+    {
+        $pipes = [];
+        $process = proc_open(
+            escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . 'LogStreamHandlerCliIsDevNull.php'),
+            [
+                0 => STDIN,
+                1 => ['pipe', 'w'],
+                2 => STDERR
+            ],
+            $pipes,
+            null,
+            null,
+            [
+                'bypass_shell' => true
+            ]
+        );
+        assert(is_resource($process));
+
+        assert(is_resource($pipes[1]));
+        $output = stream_get_contents($pipes[1]);
+        assert(is_string($output));
+        proc_close($process);
+
+        $this->assertEquals('false' . PHP_EOL, $output);
+    }
+
+    public function testIsDevNullReturnsTrueForStdoutInChildProcessRedirectedToDevNull(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
+        $pipes = [];
+        $process = proc_open(
+            escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . 'LogStreamHandlerCliIsDevNull.php') . ' php://stdout php://stderr',
+            [
+                0 => STDIN,
+                1 => ['file', '/dev/null', 'r'],
+                2 => ['pipe', 'w']
+            ],
+            $pipes,
+            null,
+            null,
+            [
+                'bypass_shell' => true
+            ]
+        );
+        assert(is_resource($process));
+
+        assert(is_resource($pipes[2]));
+        $output = stream_get_contents($pipes[2]);
+        assert(is_string($output));
+        proc_close($process);
+
+        $this->assertEquals('true' . PHP_EOL, $output);
+    }
+
+    public function testIsDevNullReturnsTrueForOutputStreamInChildProcessRedirectedToDevNull(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
+        $pipes = [];
+        $process = proc_open(
+            escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/LogStreamHandlerCliIsDevNull.php') . ' php://output php://stderr',
+            [
+                0 => STDIN,
+                1 => ['file', '/dev/null', 'r'],
+                2 => ['pipe', 'w']
+            ],
+            $pipes,
+            null,
+            null,
+            [
+                'bypass_shell' => true
+            ]
+        );
+        assert(is_resource($process));
+
+        assert(is_resource($pipes[2]));
+        $output = stream_get_contents($pipes[2]);
+        assert(is_string($output));
+        proc_close($process);
+
+        $this->assertEquals('true' . PHP_EOL, $output);
+    }
+
+    public function testIsDevNullReturnsTrueForOutputStreamReferencingClosedStdoutInChildProcess(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
+        $pipes = [];
+        $process = proc_open(
+            escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/LogStreamHandlerCliIsDevNullAfterClose.php') . ' php://output php://stderr',
+            [
+                0 => STDIN,
+                1 => STDOUT,
+                2 => ['pipe', 'w']
+            ],
+            $pipes,
+            null,
+            null,
+            [
+                'bypass_shell' => true
+            ]
+        );
+        assert(is_resource($process));
+
+        assert(is_resource($pipes[2]));
+        $output = stream_get_contents($pipes[2]);
+        assert(is_string($output));
+        proc_close($process);
+
+        $this->assertEquals('true' . PHP_EOL, $output);
+    }
+
+    public function testCtorWithStdoutStreamThrowsIfStdoutIsAlreadyClosed(): void
+    {
+        $pipes = [];
+        $process = proc_open(
+            escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/LogStreamHandlerCliIsDevNullAfterClose.php') . ' php://stdout php://stderr',
+            [
+                0 => STDIN,
+                1 => STDOUT,
+                2 => ['pipe', 'w']
+            ],
+            $pipes,
+            null,
+            null,
+            [
+                'bypass_shell' => true
+            ]
+        );
+        assert(is_resource($process));
+
+        assert(is_resource($pipes[2]));
+        $output = stream_get_contents($pipes[2]);
+        assert(is_string($output));
+        proc_close($process);
+
+        $this->assertEquals('RuntimeException: Unable to open log file "php://stdout": operation failed' . PHP_EOL, $output);
+    }
 }
