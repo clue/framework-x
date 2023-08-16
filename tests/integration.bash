@@ -18,6 +18,9 @@ notmatch() {
 skipif() {
     echo "$out" | grep "$@" >/dev/null && echo -n S && return 1 || return 0
 }
+skipifnot() {
+    echo "$out" | grep "$@" >/dev/null && return 0 || echo -n S && return 1
+}
 
 out=$(curl -v $base/ 2>&1);         match "HTTP/.* 200" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
 out=$(curl -v $base/invalid 2>&1);  match "HTTP/.* 404" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
@@ -121,7 +124,7 @@ out=$(curl -v $base/headers -H 'Content-Length: 0' 2>&1);   match "HTTP/.* 200" 
 out=$(curl -v $base/headers -H 'Empty;' 2>&1);              match "HTTP/.* 200" && match "\"Empty\": \"\""
 out=$(curl -v $base/headers -H 'Content-Type;' 2>&1);       skipif "Server: Apache" && match "HTTP/.* 200" && match "\"Content-Type\": \"\"" # skip Apache (discards empty Content-Type)
 out=$(curl -v $base/headers -H 'DNT: 1' 2>&1);              skipif "Server: nginx" && match "HTTP/.* 200" && match "\"DNT\"" && notmatch "\"Dnt\"" # skip nginx which doesn't report original case (DNT->Dnt)
-out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: nginx" && skipif -v "Server:" && match "HTTP/.* 200" && match "\"V\": \"a, b\"" # skip nginx (last only) and PHP webserver (first only)
+out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: nginx" && skipifnot "Server:" && match "HTTP/.* 200" && match "\"V\": \"a, b\"" # skip nginx (last only) and PHP webserver (first only)
 
 out=$(curl -v $base/set-cookie 2>&1);                       match "HTTP/.* 200" && match "Set-Cookie: 1=1" && match "Set-Cookie: 2=2"
 
