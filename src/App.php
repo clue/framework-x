@@ -13,6 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use function React\Async\await;
 
 class App
 {
@@ -243,6 +244,54 @@ class App
     public function run(): void
     {
         $this->sapi->run(\Closure::fromCallable([$this, 'handleRequest']));
+    }
+
+    /**
+     * Invokes the app to handle a single HTTP request according to any registered routes and middleware.
+     *
+     * This method allows you to pass in a single HTTP request object that will
+     * be processed according to any registered routes and middleware and will
+     * return an HTTP response object as a result.
+     *
+     * ```php
+     * $app = new FrameworkX\App();
+     * $app->get('/', fn() => React\Http\Message\Response::plaintext("Hello!\n"));
+     *
+     * $request = new React\Http\Message\ServerRequest('GET', 'https://example.com/');
+     * $response = $app($request);
+     *
+     * assert($response instanceof Psr\Http\Message\ResponseInterface);
+     * assert($response->getStatusCode() === 200);
+     * assert($response->getBody()->getContents() === "Hello\n");
+     * ```
+     *
+     * This is particularly useful for higher-level integration test suites and
+     * for custom integrations with other runtime environments like serverless
+     * functions or other frameworks. Otherwise, most applications would likely
+     * want to use the `run()` method to run the application and automatically
+     * accept incoming HTTP requests according to the PHP SAPI in use.
+     *
+     * @param ServerRequestInterface $request The HTTP request object to process.
+     * @return ResponseInterface This method returns an HTTP response object
+     *     according to any registered routes and middleware. If any handler is
+     *     async, it will await its execution before returning, running the
+     *     event loop as needed. If the request can not be routed or any handler
+     *     fails, it will return a matching HTTP error response object.
+     * @throws void This method never throws. If the request can not be routed
+     *     or any handler fails, it will be turned into a valid error response
+     *     before returning.
+     * @see self::run()
+     */
+    public function __invoke(ServerRequestInterface $request): ResponseInterface
+    {
+        $response = $this->handleRequest($request);
+        if ($response instanceof PromiseInterface) {
+            /** @throws void */
+            $response = await($response);
+            assert($response instanceof ResponseInterface);
+        }
+
+        return $response;
     }
 
     /**
