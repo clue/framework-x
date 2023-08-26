@@ -20,11 +20,18 @@ class AccessLogHandler
     /** @var bool */
     private $hasHighResolution;
 
-    /** @throws void */
-    public function __construct()
+    /**
+     * @param ?string $path (optional) absolute log file path or will log to console output by default
+     * @throws \InvalidArgumentException if given `$path` is not an absolute file path
+     * @throws \RuntimeException if given `$path` can not be opened in append mode
+     */
+    public function __construct(?string $path = null)
     {
-        /** @throws void because `fopen()` is known to always return a `resource` for built-in wrappers */
-        $this->logger = new LogStreamHandler(\PHP_SAPI === 'cli' ? 'php://output' : 'php://stderr');
+        if ($path === null) {
+            $path = \PHP_SAPI === 'cli' ? 'php://output' : 'php://stderr';
+        }
+
+        $this->logger = new LogStreamHandler($path);
         $this->hasHighResolution = \function_exists('hrtime'); // PHP 7.3+
     }
 

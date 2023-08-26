@@ -4,7 +4,7 @@ namespace FrameworkX\Tests;
 
 use FrameworkX\AccessLogHandler;
 use FrameworkX\App;
-use FrameworkX\Io\MiddlewareHandler;
+use FrameworkX\ErrorHandler;
 use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -674,23 +674,10 @@ class AppMiddlewareTest extends TestCase
     /** @param callable|class-string ...$middleware */
     private function createAppWithoutLogger(...$middleware): App
     {
-        $app = new App(...$middleware);
-
-        $ref = new \ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
-        $middleware = $ref->getValue($app);
-        assert($middleware instanceof MiddlewareHandler);
-
-        $ref = new \ReflectionProperty($middleware, 'handlers');
-        $ref->setAccessible(true);
-        $handlers = $ref->getValue($middleware);
-        assert(is_array($handlers));
-
-        $first = array_shift($handlers);
-        $this->assertInstanceOf(AccessLogHandler::class, $first);
-
-        $ref->setValue($middleware, $handlers);
-
-        return $app;
+        return new App(
+            new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul'),
+            new ErrorHandler(),
+            ...$middleware
+        );
     }
 }
