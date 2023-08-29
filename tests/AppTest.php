@@ -29,8 +29,8 @@ use React\Http\Message\ServerRequest;
 use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Promise\PromiseInterface;
-use ReflectionMethod;
 use ReflectionProperty;
+use function React\Async\async; // @phpstan-ignore-line
 use function React\Async\await;
 use function React\Promise\reject;
 use function React\Promise\resolve;
@@ -852,20 +852,16 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Redirecting to <a href=\"/users\"><code>/users</code></a>...</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed(): void
+    public function testInvokeWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed(): void
     {
         $app = $this->createAppWithoutLogger();
 
         $request = new ServerRequest('GET', 'http://google.com/');
         $request = $request->withRequestTarget('http://google.com/');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(400, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -874,19 +870,15 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithUnknownRouteReturnsResponseWithFileNotFoundMessage(): void
+    public function testInvokeWithUnknownRouteReturnsResponseWithFileNotFoundMessage(): void
     {
         $app = $this->createAppWithoutLogger();
 
         $request = new ServerRequest('GET', 'http://localhost/invalid');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -895,7 +887,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithSingleMethodNotAllowedMessage(): void
+    public function testInvokeWithInvalidRequestMethodReturnsResponseWithSingleMethodNotAllowedMessage(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -903,13 +895,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('POST', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
 
@@ -919,7 +907,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code> request.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithInvalidRequestMethodReturnsResponseWithMultipleMethodNotAllowedMessage(): void
+    public function testInvokeWithInvalidRequestMethodReturnsResponseWithMultipleMethodNotAllowedMessage(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -929,13 +917,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('DELETE', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
 
@@ -945,7 +929,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Please check the URL in the address bar and try again with <code>GET</code>/<code>HEAD</code>/<code>POST</code> request.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandler(): void
+    public function testInvokeWithMatchingRouteReturnsResponseFromMatchingRouteHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -961,19 +945,15 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingAsteriskRouteHandler(): void
+    public function testInvokeWithOptionsAsteriskRequestReturnsResponseFromMatchingAsteriskRouteHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -990,19 +970,15 @@ class AppTest extends TestCase
         $request = new ServerRequest('OPTIONS', 'http://localhost');
         $request = $request->withRequestTarget('*');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingDeprecatedEmptyRouteHandler(): void
+    public function testInvokeWithOptionsAsteriskRequestReturnsResponseFromMatchingDeprecatedEmptyRouteHandler(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1019,19 +995,15 @@ class AppTest extends TestCase
         $request = new ServerRequest('OPTIONS', 'http://localhost');
         $request = $request->withRequestTarget('*');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse(): void
+    public function testInvokeWithMatchingRouteReturnsResponseWhenHandlerReturnsPromiseWhichFulfillsWithResponse(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1047,28 +1019,20 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsPendingPromise(): void
+    public function testInvokeWithMatchingRouteReturnsNeverWhenHandlerReturnsPendingPromise(): void
     {
+        if (!function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires reactphp/async v4 (PHP 8.1+)');
+        }
+
         $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
@@ -1077,13 +1041,8 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
-
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
+        /** @var PromiseInterface<never> $promise */
+        $promise = async($app)($request); // @phpstan-ignore-line
 
         $resolved = false;
         $promise->then(function () use (&$resolved) {
@@ -1095,7 +1054,7 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseWithoutYielding(): void
+    public function testInvokeWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseWithoutYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1115,19 +1074,15 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise(): void
+    public function testInvokeWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterYieldingResolvedPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1145,27 +1100,15 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise(): void
+    public function testInvokeWithMatchingRouteReturnsResponseWhenHandlerReturnsCoroutineWhichReturnsResponseAfterCatchingExceptionFromYieldingRejectedPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1188,28 +1131,20 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPendingPromiseWhenHandlerReturnsCoroutineThatYieldsPendingPromise(): void
+    public function testInvokeWithMatchingRouteReturnsNeverWhenHandlerReturnsCoroutineThatYieldsPendingPromise(): void
     {
+        if (!function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires reactphp/async v4 (PHP 8.1+)');
+        }
+
         $app = $this->createAppWithoutLogger();
 
         $app->get('/users', function () {
@@ -1218,13 +1153,8 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
-
         /** @var PromiseInterface<never> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
+        $promise = async($app)($request); // @phpstan-ignore-line
 
         $resolved = false;
         $promise->then(function () use (&$resolved) {
@@ -1236,7 +1166,7 @@ class AppTest extends TestCase
         $this->assertFalse($resolved);
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse(): void
+    public function testInvokeWithMatchingRouteReturnsResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvedWithResponse(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1252,22 +1182,18 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseResolvingWithResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingWithResponse(): void
+    public function testInvokeWithMatchingRouteReturnsResponseWhenHandlerReturnsResponseAfterAwaitingPromiseResolvingDeferredWithResponse(): void
     {
-        if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
-            $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
+        if (!function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires reactphp/async v4 (PHP 8.1+)');
         }
 
         $app = $this->createAppWithoutLogger();
@@ -1280,13 +1206,8 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
-
         /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
+        $promise = async($app)($request); // @phpstan-ignore-line
 
         $response = null;
         $promise->then(function ($value) use (&$response) {
@@ -1310,7 +1231,7 @@ class AppTest extends TestCase
         $this->assertEquals("OK\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes(): void
+    public function testInvokeWithMatchingRouteAndRouteVariablesReturnsResponseFromHandlerWithRouteVariablesAssignedAsRequestAttributes(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1329,19 +1250,15 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users/alice');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertEquals("Hello alice\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsException(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1352,13 +1269,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1368,7 +1281,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithException(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1379,21 +1292,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1403,7 +1304,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull(): void
     {
         if (method_exists(PromiseInterface::class, 'catch')) {
             $this->markTestSkipped('Only supported for legacy Promise v2, Promise v3 always rejects with Throwable');
@@ -1417,21 +1318,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1441,7 +1330,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>React\Promise\RejectedPromise</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1452,21 +1341,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1476,7 +1353,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionWithoutYielding(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionWithoutYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1490,13 +1367,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1506,7 +1379,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichThrowsExceptionAfterYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1518,21 +1391,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1542,7 +1403,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectedWithException(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1553,13 +1414,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1569,10 +1426,10 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingWithException(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerThrowsAfterAwaitingPromiseRejectingDeferredWithException(): void
     {
-        if (PHP_VERSION_ID < 80100 || !function_exists('React\Async\async')) {
-            $this->markTestSkipped('Requires PHP 8.1+ with react/async 4+');
+        if (!function_exists('React\Async\async')) {
+            $this->markTestSkipped('Requires reactphp/async v4 (PHP 8.1+)');
         }
 
         $app = $this->createAppWithoutLogger();
@@ -1588,13 +1445,8 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
-
         /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
+        $promise = async($app)($request); // @phpstan-ignore-line
 
         $response = null;
         $promise->then(function ($value) use (&$response) {
@@ -1616,7 +1468,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichReturnsNull(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1627,21 +1479,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1651,7 +1491,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNullImmediately(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsNullImmediately(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1662,13 +1502,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1678,7 +1514,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to yield <code>React\Promise\PromiseInterface</code> but got <code>null</code> near or before <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValue(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1688,13 +1524,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1704,7 +1536,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassDoesNotExist(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassDoesNotExist(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1712,13 +1544,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1795,7 +1623,7 @@ class AppTest extends TestCase
      * @param class-string $class
      * @param string $error
      */
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassIsInvalid(string $class, string $error): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassIsInvalid(string $class, string $error): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1803,13 +1631,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1819,7 +1643,7 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class " . $class . " failed to load: $error</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassRequiresUnexpectedCallableParameter(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1832,13 +1656,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1848,7 +1668,7 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>TypeError</code> with message <code>%s</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassHasNoInvokeMethod(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerClassHasNoInvokeMethod(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1858,13 +1678,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $response = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1874,7 +1690,7 @@ class AppTest extends TestCase
         $this->assertStringMatchesFormat("%a<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>BadMethodCallException</code> with message <code>Request handler class %s has no public __invoke() method</code> in <code title=\"See %s\">Container.php:%d</code>.</p>\n%a", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsPromiseWhichFulfillsWithInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsPromiseWhichFulfillsWithWrongValue(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1884,21 +1700,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
@@ -1908,7 +1712,7 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValueAfterYielding(): void
+    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsWrongValueAfterYielding(): void
     {
         $app = $this->createAppWithoutLogger();
 
@@ -1919,21 +1723,9 @@ class AppTest extends TestCase
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
-        // $promise = $app->handleRequest($request);
-        $ref = new ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $promise = $ref->invoke($app, $request);
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
 
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
