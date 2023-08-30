@@ -738,6 +738,106 @@ class AppTest extends TestCase
         $this->assertSame($routeHandler, $handlers[3]);
     }
 
+    public function testConstructWithRouteHandlerOnlyAssignsRouteHandlerAfterDefaultErrorHandler(): void
+    {
+        $routeHandler = $this->createMock(RouteHandler::class);
+        assert($routeHandler instanceof RouteHandler);
+
+        $app = new App($routeHandler);
+
+        $ref = new ReflectionProperty($app, 'router');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handler = $ref->getValue($app);
+
+        $this->assertSame($routeHandler, $handler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
+
+        $ref = new ReflectionProperty($handler, 'handlers');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
+
+        $this->assertCount(3, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
+        $this->assertSame($routeHandler, $handlers[2]);
+    }
+
+    public function testConstructWithRouteHandlerClassOnlyAssignsRouteHandlerAfterDefaultErrorHandler(): void
+    {
+        $app = new App(RouteHandler::class);
+
+        $ref = new ReflectionProperty($app, 'router');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handler = $ref->getValue($app);
+
+        $this->assertInstanceOf(RouteHandler::class, $handler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
+
+        $ref = new ReflectionProperty($handler, 'handlers');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
+
+        $this->assertCount(3, $handlers);
+        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
+    }
+
+    public function testConstructWithContainerAndAccessLogHandlerAndErrorHandlerAndRouteHandlerAssignsGivenHandlersWithoutUsingContainer(): void
+    {
+        $accessLog = new AccessLogHandler();
+        $errorHandler = new ErrorHandler();
+        $routeHandler = $this->createMock(RouteHandler::class);
+        assert($routeHandler instanceof RouteHandler);
+
+        $container = $this->createMock(Container::class);
+        $container->expects($this->never())->method('getObject');
+        assert($container instanceof Container);
+
+        $app = new App($container, $accessLog, $errorHandler, $routeHandler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
+
+        $ref = new ReflectionProperty($handler, 'handlers');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
+
+        $this->assertCount(3, $handlers);
+        $this->assertSame($accessLog, $handlers[0]);
+        $this->assertSame($errorHandler, $handlers[1]);
+        $this->assertSame($routeHandler, $handlers[2]);
+    }
+
     public function testConstructWithAccessLogHandlerOnlyThrows(): void
     {
         $accessLogHandler = new AccessLogHandler();
@@ -753,6 +853,25 @@ class AppTest extends TestCase
 
         $this->expectException(\TypeError::class);
         new App($accessLogHandler, $middleware);
+    }
+
+    public function testConstructWithRouteHandlerInstanceFollowedByMiddlewareThrows(): void
+    {
+        $routeHandler = $this->createMock(RouteHandler::class);
+        assert($routeHandler instanceof RouteHandler);
+
+        $middleware = function (ServerRequestInterface $request, callable $next) { };
+
+        $this->expectException(\TypeError::class);
+        new App($routeHandler, $middleware);
+    }
+
+    public function testConstructWithRouteHandlerClassNameFollowedByMiddlewareThrows(): void
+    {
+        $middleware = function (ServerRequestInterface $request, callable $next) { };
+
+        $this->expectException(\TypeError::class);
+        new App(RouteHandler::class, $middleware);
     }
 
     public function testConstructWithContainerWithListenAddressWillPassListenAddressToReactiveHandler(): void
@@ -800,144 +919,99 @@ class AppTest extends TestCase
 
     public function testGetMethodAddsGetRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->get('/', function () { });
     }
 
     public function testHeadMethodAddsHeadRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['HEAD'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->head('/', function () { });
     }
 
     public function testPostMethodAddsPostRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['POST'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->post('/', function () { });
     }
 
     public function testPutMethodAddsPutRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['PUT'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->put('/', function () { });
     }
 
     public function testPatchMethodAddsPatchRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['PATCH'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->patch('/', function () { });
     }
 
     public function testDeleteMethodAddsDeleteRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['DELETE'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->delete('/', function () { });
     }
 
     public function testOptionsMethodAddsOptionsRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['OPTIONS'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->options('/', function () { });
     }
 
     public function testAnyMethodAddsRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->any('/', function () { });
     }
 
     public function testMapMethodAddsRouteOnRouter(): void
     {
-        $app = new App();
-
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET', 'POST'], '/', $this->anything());
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->map(['GET', 'POST'], '/', function () { });
     }
@@ -960,20 +1034,15 @@ class AppTest extends TestCase
 
     public function testRedirectMethodAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithTargetLocation(): void
     {
-        $app = new App();
-
         $handler = null;
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->redirect('/', '/users');
 
@@ -994,20 +1063,15 @@ class AppTest extends TestCase
 
     public function testRedirectMethodWithCustomRedirectCodeAddsAnyRouteOnRouterWhichWhenInvokedReturnsRedirectResponseWithCustomRedirectCode(): void
     {
-        $app = new App();
-
         $handler = null;
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->callback(function ($fn) use (&$handler) {
             $handler = $fn;
             return true;
         }));
+        assert($router instanceof RouteHandler);
 
-        $ref = new ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->redirect('/', '/users', 307);
 
