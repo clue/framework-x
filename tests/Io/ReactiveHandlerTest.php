@@ -23,17 +23,11 @@ class ReactiveHandlerTest extends TestCase
         assert(is_resource($socket));
         fclose($socket);
 
-        $handler = new ReactiveHandler(null);
-
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://127.0.0.1:8080']);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, null);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -58,17 +52,11 @@ class ReactiveHandlerTest extends TestCase
         assert(is_string($addr));
         fclose($socket);
 
-        $handler = new ReactiveHandler($addr);
-
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://' . $addr]);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, $addr);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -87,17 +75,11 @@ class ReactiveHandlerTest extends TestCase
 
     public function testRunWillReportGivenListeningAddressWithRandomPortAndRunLoop(): void
     {
-        $handler = new ReactiveHandler('127.0.0.1:0');
-
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive([$this->matches('Listening on http://127.0.0.1:%d')]);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -116,16 +98,10 @@ class ReactiveHandlerTest extends TestCase
 
     public function testRunWillRestartLoopUntilSocketIsClosed(): void
     {
-        $handler = new ReactiveHandler('127.0.0.1:0');
-
         $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () use ($logger) {
@@ -155,16 +131,10 @@ class ReactiveHandlerTest extends TestCase
         assert(is_string($addr));
         fclose($socket);
 
-        $handler = new ReactiveHandler($addr);
-
         $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, $addr);
 
         Loop::futureTick(function () use ($addr): void {
             $connector = new Connector();
@@ -206,16 +176,10 @@ class ReactiveHandlerTest extends TestCase
         assert(is_string($addr));
         fclose($socket);
 
-        $handler = new ReactiveHandler($addr);
-
         $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, $addr);
 
         Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
@@ -276,16 +240,10 @@ class ReactiveHandlerTest extends TestCase
         assert(is_string($addr));
         fclose($socket);
 
-        $handler = new ReactiveHandler($addr);
-
         $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, $addr);
 
         Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
@@ -320,17 +278,11 @@ class ReactiveHandlerTest extends TestCase
      */
     public function testRunWillStopWhenReceivingSigint(): void
     {
-        $handler = new ReactiveHandler('127.0.0.1:0');
-
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->exactly(2))->method('log');
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
 
         Loop::futureTick(function () use ($logger) {
             $logger->expects($this->once())->method('log')->with('Received SIGINT, stopping loop');
@@ -350,16 +302,10 @@ class ReactiveHandlerTest extends TestCase
      */
     public function testRunWillStopWhenReceivingSigterm(): void
     {
-        $handler = new ReactiveHandler('127.0.0.1:0');
-
         $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
 
-        // $handler->logger = $logger;
-        $ref = new \ReflectionProperty($handler, 'logger');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($handler, $logger);
+        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
 
         Loop::futureTick(function () use ($logger) {
             $logger->expects($this->once())->method('log')->with('Received SIGTERM, stopping loop');
@@ -374,7 +320,10 @@ class ReactiveHandlerTest extends TestCase
 
     public function testRunWithEmptyAddressThrows(): void
     {
-        $handler = new ReactiveHandler('');
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $handler = new ReactiveHandler($logger, '');
 
         $this->expectException(\InvalidArgumentException::class);
         $handler->run(function (): void { });
@@ -391,7 +340,10 @@ class ReactiveHandlerTest extends TestCase
             $this->markTestSkipped('System does not prevent listening on same address twice');
         }
 
-        $handler = new ReactiveHandler($addr);
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $handler = new ReactiveHandler($logger, $addr);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');

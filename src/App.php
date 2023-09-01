@@ -2,6 +2,7 @@
 
 namespace FrameworkX;
 
+use FrameworkX\Io\LogStreamHandler;
 use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RedirectHandler;
@@ -126,7 +127,7 @@ class App
 
         $this->router = $router;
         $this->handler = new MiddlewareHandler($handlers);
-        $this->sapi = \PHP_SAPI === 'cli' ? new ReactiveHandler($container->getEnv('X_LISTEN')) : new SapiHandler();
+        $this->sapi = \PHP_SAPI === 'cli' ? new ReactiveHandler(new LogStreamHandler('php://output'), $container->getEnv('X_LISTEN')) : new SapiHandler();
     }
 
     /**
