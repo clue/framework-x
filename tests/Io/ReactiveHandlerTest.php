@@ -7,8 +7,10 @@ use FrameworkX\Io\ReactiveHandler;
 use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
 use React\Http\Message\Response;
+use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
+use function React\Async\await;
 
 class ReactiveHandlerTest extends TestCase
 {
@@ -185,6 +187,75 @@ class ReactiveHandlerTest extends TestCase
         $handler->run(function (): Response {
             return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
         });
+    }
+
+    public function testRunWillOnlyRestartLoopAfterAwaitingWhenFibersAreNotAvailable(): void
+    {
+        $socket = stream_socket_server('127.0.0.1:0');
+        assert(is_resource($socket));
+        $addr = stream_socket_get_name($socket, false);
+        assert(is_string($addr));
+        fclose($socket);
+
+        $handler = new ReactiveHandler($addr);
+
+        $logger = $this->createMock(LogStreamHandler::class);
+
+        // $handler->logger = $logger;
+        $ref = new \ReflectionProperty($handler, 'logger');
+        $ref->setAccessible(true);
+        $ref->setValue($handler, $logger);
+
+        Loop::futureTick(function () use ($addr, $logger): void {
+            $connector = new Connector();
+            $promise = $connector->connect($addr);
+
+            // the loop will only need to be restarted if fibers are not available (PHP < 8.1)
+            if (PHP_VERSION_ID < 80100) {
+                $logger->expects($this->once())->method('log')->with('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
+            } else {
+                $logger->expects($this->never())->method('log');
+            }
+
+            /** @var \React\Promise\PromiseInterface<ConnectionInterface> $promise */
+            $promise->then(function (ConnectionInterface $connection): void {
+                $connection->on('data', function (string $data): void {
+                    $this->assertEquals("HTTP/1.0 200 OK\r\nContent-Length: 3\r\n\r\nOK\n", $data);
+                });
+
+                // lovely: remove socket server on client connection close to terminate loop
+                $connection->on('close', function (): void {
+                    Loop::futureTick(function (): void {
+                        $resources = get_resources();
+                        $socket = end($resources);
+                        assert(is_resource($socket));
+
+                        Loop::removeReadStream($socket);
+                        fclose($socket);
+
+                        Loop::stop();
+                    });
+                });
+
+                $connection->write("GET /unknown HTTP/1.0\r\nHost: localhost\r\n\r\n");
+            });
+        });
+
+        $done = false;
+        $handler->run(function () use (&$done): Response {
+            $promise = new Promise(function (callable $resolve) use (&$done): void {
+                Loop::futureTick(function () use ($resolve, &$done): void {
+                    $resolve(null);
+                    $done = true;
+                });
+            });
+            await($promise);
+
+            return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
+        });
+
+        // check the loop kept running after awaiting the promise
+        $this->assertTrue($done);
     }
 
     public function testRunWillReportHttpErrorForInvalidClientRequest(): void

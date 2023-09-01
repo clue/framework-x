@@ -2,7 +2,6 @@
 
 namespace FrameworkX;
 
-use FrameworkX\Io\FiberHandler;
 use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RedirectHandler;
@@ -101,11 +100,6 @@ class App
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
         if ($needsAccessLog instanceof Container) {
             \array_unshift($handlers, $needsAccessLog->getAccessLogHandler());
-        }
-
-        // automatically start new fiber for each request on PHP 8.1+
-        if (\PHP_VERSION_ID >= 80100) {
-            \array_unshift($handlers, new FiberHandler()); // @codeCoverageIgnore
         }
 
         $this->router = new RouteHandler($container);

@@ -40,7 +40,8 @@ class ReactiveHandler
     {
         $socket = new SocketServer($this->listenAddress);
 
-        $http = new HttpServer($handler);
+        // create HTTP server, automatically start new fiber for each request on PHP 8.1+
+        $http = new HttpServer(...(\PHP_VERSION_ID >= 80100 ? [new FiberHandler(), $handler] : [$handler]));
         $http->listen($socket);
 
         $logger = $this->logger;
