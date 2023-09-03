@@ -5,6 +5,8 @@ namespace FrameworkX\Tests;
 use FrameworkX\AccessLogHandler;
 use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
+use FrameworkX\Io\LogStreamHandler;
+use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -2636,7 +2638,7 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $router);
 
         $ref = new \ReflectionProperty($router, 'container');
-        if (\PHP_VERSION_ID < 801000) {
+        if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
         }
         $ret = $ref->getValue($router);
@@ -2702,7 +2704,7 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $router);
 
         $ref = new \ReflectionProperty($router, 'container');
-        if (\PHP_VERSION_ID < 801000) {
+        if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
         }
         $ret = $ref->getValue($router);
@@ -2821,6 +2823,130 @@ class ContainerTest extends TestCase
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Return value of ' . get_class($psr) . '::get() for FrameworkX\AccessLogHandler must be of type FrameworkX\AccessLogHandler, int returned');
         $container->getObject(AccessLogHandler::class);
+    }
+
+    public function testGetSapiReturnsDefaultReactiveHandlerInstance(): void
+    {
+        $container = new Container([]);
+
+        $sapi = $container->getSapi();
+
+        $this->assertInstanceOf(ReactiveHandler::class, $sapi);
+
+        $ref = new \ReflectionProperty($sapi, 'listenAddress');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $listenAddress = $ref->getValue($sapi);
+
+        $this->assertEquals('127.0.0.1:8080', $listenAddress);
+    }
+
+    public function testGetSapiReturnsDefaultReactiveHandlerInstanceWithCustomListenAddress(): void
+    {
+        $container = new Container([
+            'X_LISTEN' => '127.0.0.1:8081'
+        ]);
+
+        $sapi = $container->getSapi();
+
+        $this->assertInstanceOf(ReactiveHandler::class, $sapi);
+
+        $ref = new \ReflectionProperty($sapi, 'listenAddress');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $listenAddress = $ref->getValue($sapi);
+
+        $this->assertEquals('127.0.0.1:8081', $listenAddress);
+    }
+
+    public function testGetSapiTwiceReturnsSameReactiveHandlerInstance(): void
+    {
+        $container = new Container([]);
+
+        $sapi = $container->getSapi();
+
+        $this->assertSame($sapi, $container->getSapi());
+    }
+
+    public function testGetSapiReturnsReactiveHandlerInstanceFromConfig(): void
+    {
+        $sapi = new ReactiveHandler(new LogStreamHandler('php://output'), null);
+
+        $container = new Container([
+            ReactiveHandler::class => $sapi
+        ]);
+
+        $ret = $container->getSapi();
+
+        $this->assertSame($sapi, $ret);
+    }
+
+    public function testGetSapiReturnsReactiveHandlerInstanceFromPsrContainer(): void
+    {
+        $sapi = new ReactiveHandler(new LogStreamHandler('php://output'), null);
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(ReactiveHandler::class)->willReturn(true);
+        $psr->expects($this->once())->method('get')->with(ReactiveHandler::class)->willReturn($sapi);
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $ret = $container->getSapi();
+
+        $this->assertSame($sapi, $ret);
+    }
+
+    public function testGetSapiReturnsDefaultReactiveHandlerInstanceWithDefaultListenAddressIfPsrContainerHasNoEntry(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->exactly(2))->method('has')->willReturnMap([
+            [ReactiveHandler::class, false],
+            ['X_LISTEN', false],
+        ]);
+        $psr->expects($this->never())->method('get');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $sapi = $container->getSapi();
+
+        $this->assertInstanceOf(ReactiveHandler::class, $sapi);
+
+        $ref = new \ReflectionProperty($sapi, 'listenAddress');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $listenAddress = $ref->getValue($sapi);
+
+        $this->assertEquals('127.0.0.1:8080', $listenAddress);
+    }
+
+    public function testGetSapiReturnsDefaultReactiveHandlerInstanceWithCustomListenAddressIfPsrContainerHasNoEntryButCustomListenAddress(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->exactly(2))->method('has')->willReturnMap([
+            [ReactiveHandler::class, false],
+            ['X_LISTEN', true],
+        ]);
+        $psr->expects($this->once())->method('get')->with('X_LISTEN')->willReturn('127.0.0.1:8081');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $sapi = $container->getSapi();
+
+        $this->assertInstanceOf(ReactiveHandler::class, $sapi);
+
+        $ref = new \ReflectionProperty($sapi, 'listenAddress');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $listenAddress = $ref->getValue($sapi);
+
+        $this->assertEquals('127.0.0.1:8081', $listenAddress);
     }
 
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler(): void

@@ -127,7 +127,7 @@ class App
 
         $this->router = $router;
         $this->handler = new MiddlewareHandler($handlers);
-        $this->sapi = \PHP_SAPI === 'cli' ? new ReactiveHandler(new LogStreamHandler('php://output'), $container->getEnv('X_LISTEN')) : new SapiHandler();
+        $this->sapi = $container->getSapi();
     }
 
     /**
