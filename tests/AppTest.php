@@ -68,8 +68,10 @@ class AppTest extends TestCase
         $errorHandler = new ErrorHandler();
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($container instanceof Container);
         $app = new App($container);
@@ -105,8 +107,15 @@ class AppTest extends TestCase
     {
         $middleware = function (ServerRequestInterface $request, callable $next) { };
 
+        $accessLogHandler = new AccessLogHandler();
+        $errorHandler = new ErrorHandler();
+
         $container = $this->createMock(Container::class);
         $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($middleware);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($container instanceof Container);
         $app = new App($container, \stdClass::class);
@@ -126,8 +135,8 @@ class AppTest extends TestCase
         assert(is_array($handlers));
 
         $this->assertCount(4, $handlers);
-        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
-        $this->assertInstanceOf(ErrorHandler::class, $handlers[1]);
+        $this->assertSame($accessLogHandler, $handlers[0]);
+        $this->assertSame($errorHandler, $handlers[1]);
         $this->assertSame($middleware, $handlers[2]);
         $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
 
@@ -217,10 +226,14 @@ class AppTest extends TestCase
 
     public function testConstructWithContainerAndErrorHandlerClassAssignsErrorHandlerFromContainerAfterDefaultAccessLogHandler(): void
     {
+        $accessLogHandler = new AccessLogHandler();
         $errorHandler = new ErrorHandler();
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($container instanceof Container);
         $app = new App($container, ErrorHandler::class);
@@ -240,20 +253,24 @@ class AppTest extends TestCase
         assert(is_array($handlers));
 
         $this->assertCount(3, $handlers);
-        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
     public function testConstructWithMultipleContainersAndErrorHandlerClassAssignsErrorHandlerFromLastContainerBeforeErrorHandlerAfterDefaultAccessLogHandler(): void
     {
+        $accessLogHandler = new AccessLogHandler();
         $errorHandler = new ErrorHandler();
 
         $unused = $this->createMock(Container::class);
-        $unused->expects($this->never())->method('getErrorHandler');
+        $unused->expects($this->never())->method('getObject');
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($unused instanceof Container);
         assert($container instanceof Container);
@@ -274,7 +291,7 @@ class AppTest extends TestCase
         assert(is_array($handlers));
 
         $this->assertCount(3, $handlers);
-        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
@@ -282,13 +299,17 @@ class AppTest extends TestCase
     public function testConstructWithMultipleContainersAndMiddlewareAssignsErrorHandlerFromLastContainerBeforeMiddlewareAfterDefaultAccessLogHandler(): void
     {
         $middleware = function (ServerRequestInterface $request, callable $next) { };
+        $accessLogHandler = new AccessLogHandler();
         $errorHandler = new ErrorHandler();
 
         $unused = $this->createMock(Container::class);
-        $unused->expects($this->never())->method('getErrorHandler');
+        $unused->expects($this->never())->method('getObject');
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($unused instanceof Container);
         assert($container instanceof Container);
@@ -309,7 +330,7 @@ class AppTest extends TestCase
         assert(is_array($handlers));
 
         $this->assertCount(4, $handlers);
-        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
         $this->assertSame($middleware, $handlers[2]);
         $this->assertInstanceOf(RouteHandler::class, $handlers[3]);
@@ -350,15 +371,19 @@ class AppTest extends TestCase
         $middleware = function (ServerRequestInterface $request, callable $next) { };
 
         $unused = $this->createMock(Container::class);
-        $unused->expects($this->never())->method('getErrorHandler');
+        $unused->expects($this->never())->method('getObject');
 
+        $accessLogHandler = new AccessLogHandler();
         $errorHandler1 = new ErrorHandler();
         $container1 = $this->createMock(Container::class);
-        $container1->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler1);
+        $container1->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler1],
+        ]);
 
         $errorHandler2 = new ErrorHandler();
         $container2 = $this->createMock(Container::class);
-        $container2->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler2);
+        $container2->expects($this->exactly(1))->method('getObject')->with(ErrorHandler::class)->willReturn($errorHandler2);
 
         assert($unused instanceof Container);
         assert($container1 instanceof Container);
@@ -380,7 +405,7 @@ class AppTest extends TestCase
         assert(is_array($handlers));
 
         $this->assertCount(5, $handlers);
-        $this->assertInstanceOf(AccessLogHandler::class, $handlers[0]);
+        $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler1, $handlers[1]);
         $this->assertSame($middleware, $handlers[2]);
         $this->assertSame($errorHandler2, $handlers[3]);
@@ -473,8 +498,10 @@ class AppTest extends TestCase
         $errorHandler = new ErrorHandler();
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($container instanceof Container);
         $app = new App($container, AccessLogHandler::class, ErrorHandler::class);
@@ -507,8 +534,10 @@ class AppTest extends TestCase
         $errorHandler = new ErrorHandler();
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($container instanceof Container);
         $app = new App($container, AccessLogHandler::class, ErrorHandler::class);
@@ -569,11 +598,13 @@ class AppTest extends TestCase
         $errorHandler = new ErrorHandler();
 
         $unused = $this->createMock(Container::class);
-        $unused->expects($this->never())->method('getErrorHandler');
+        $unused->expects($this->never())->method('getObject');
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($unused instanceof Container);
         assert($container instanceof Container);
@@ -608,12 +639,13 @@ class AppTest extends TestCase
         $errorHandler = new ErrorHandler();
 
         $unused = $this->createMock(Container::class);
-        $unused->expects($this->never())->method('getAccessLogHandler');
-        $unused->expects($this->never())->method('getErrorHandler');
+        $unused->expects($this->never())->method('getObject');
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
-        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+            [AccessLogHandler::class, $accessLogHandler],
+            [ErrorHandler::class, $errorHandler],
+        ]);
 
         assert($unused instanceof Container);
         assert($container instanceof Container);

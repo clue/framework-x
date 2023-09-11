@@ -2510,7 +2510,7 @@ class ContainerTest extends TestCase
         $container->getEnv('X_FOO');
     }
 
-    public function testGetEnvThrowsIfMapPsrContainerReturnsInvalidType(): void
+    public function testGetEnvThrowsIfPsrContainerReturnsInvalidType(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
         $psr->expects($this->once())->method('has')->with('X_FOO')->willReturn(true);
@@ -2524,16 +2524,25 @@ class ContainerTest extends TestCase
         $container->getEnv('X_FOO');
     }
 
-    public function testGetAccessLogHandlerReturnsDefaultAccessLogHandlerInstance(): void
+    public function testGetObjectReturnsDefaultAccessLogHandlerInstance(): void
     {
         $container = new Container([]);
 
-        $accessLogHandler = $container->getAccessLogHandler();
+        $accessLogHandler = $container->getObject(AccessLogHandler::class);
 
         $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
     }
 
-    public function testGetAccessLogHandlerReturnsAccessLogHandlerInstanceFromMap(): void
+    public function testGetObjectReturnsDefaultErrorHandlerInstance(): void
+    {
+        $container = new Container([]);
+
+        $errorHandler = $container->getObject(ErrorHandler::class);
+
+        $this->assertInstanceOf(ErrorHandler::class, $errorHandler);
+    }
+
+    public function testGetObjectReturnsAccessLogHandlerInstanceFromConfig(): void
     {
         $accessLogHandler = new AccessLogHandler();
 
@@ -2541,12 +2550,12 @@ class ContainerTest extends TestCase
             AccessLogHandler::class => $accessLogHandler
         ]);
 
-        $ret = $container->getAccessLogHandler();
+        $ret = $container->getObject(AccessLogHandler::class);
 
         $this->assertSame($accessLogHandler, $ret);
     }
 
-    public function testGetAccessLogHandlerReturnsAccessLogHandlerInstanceFromPsrContainer(): void
+    public function testGetObjectReturnsAccessLogHandlerInstanceFromPsrContainer(): void
     {
         $accessLogHandler = new AccessLogHandler();
 
@@ -2557,12 +2566,12 @@ class ContainerTest extends TestCase
         assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
-        $ret = $container->getAccessLogHandler();
+        $ret = $container->getObject(AccessLogHandler::class);
 
         $this->assertSame($accessLogHandler, $ret);
     }
 
-    public function testGetAccessLogHandlerReturnsDefaultAccessLogHandlerInstanceIfPsrContainerHasNoEntry(): void
+    public function testGetObjectReturnsDefaultAccessLogHandlerInstanceIfPsrContainerHasNoEntry(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
         $psr->expects($this->once())->method('has')->with(AccessLogHandler::class)->willReturn(false);
@@ -2571,12 +2580,12 @@ class ContainerTest extends TestCase
         assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
-        $accessLogHandler = $container->getAccessLogHandler();
+        $accessLogHandler = $container->getObject(AccessLogHandler::class);
 
         $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
     }
 
-    public function testGetAccessLogHandlerThrowsIfFactoryFunctionThrows(): void
+    public function testGetObjectThrowsIfFactoryFunctionThrows(): void
     {
         $container = new Container([
             AccessLogHandler::class => function () {
@@ -2586,10 +2595,10 @@ class ContainerTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Demo');
-        $container->getAccessLogHandler();
+        $container->getObject(AccessLogHandler::class);
     }
 
-    public function testGetAccessLogHandlerThrowsIfFactoryFunctionReturnsInvalidValue(): void
+    public function testGetObjectThrowsIfFactoryFunctionReturnsInvalidValue(): void
     {
         $line = __LINE__ + 2;
         $container = new Container([
@@ -2600,10 +2609,10 @@ class ContainerTest extends TestCase
 
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for FrameworkX\AccessLogHandler must be of type FrameworkX\AccessLogHandler, null returned');
-        $container->getAccessLogHandler();
+        $container->getObject(AccessLogHandler::class);
     }
 
-    public function testGetAccessLogHandlerThrowsIfConfigIsRecursive(): void
+    public function testGetObjectThrowsIfConfigIsRecursive(): void
     {
         $container = new Container([
             AccessLogHandler::class => AccessLogHandler::class
@@ -2611,10 +2620,10 @@ class ContainerTest extends TestCase
 
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
-        $container->getAccessLogHandler();
+        $container->getObject(AccessLogHandler::class);
     }
 
-    public function testGetAccessLogHandlerThrowsIfFactoryFunctionIsRecursive(): void
+    public function testGetObjectThrowsIfFactoryFunctionIsRecursive(): void
     {
         $container = new Container([
             AccessLogHandler::class => function () {
@@ -2624,10 +2633,10 @@ class ContainerTest extends TestCase
 
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
-        $container->getAccessLogHandler();
+        $container->getObject(AccessLogHandler::class);
     }
 
-    public function testGetAccessLogHandlerThrowsIfConfigReferencesInterface(): void
+    public function testGetObjectThrowsIfConfigReferencesInterface(): void
     {
         $container = new Container([
             AccessLogHandler::class => \Iterator::class
@@ -2635,86 +2644,44 @@ class ContainerTest extends TestCase
 
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Cannot instantiate interface Iterator');
-        $container->getAccessLogHandler();
+        $container->getObject(AccessLogHandler::class);
     }
 
-    public function testGetErrorHandlerReturnsDefaultErrorHandlerInstance(): void
+    public function testGetObjectThrowsWhenTryingToInstantiateInterface(): void
     {
         $container = new Container([]);
 
-        $errorHandler = $container->getErrorHandler();
-
-        $this->assertInstanceOf(ErrorHandler::class, $errorHandler);
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Cannot instantiate interface Iterator');
+        $container->getObject(\Iterator::class);
     }
 
-    public function testGetErrorHandlerReturnsErrorHandlerInstanceFromMap(): void
-    {
-        $errorHandler = new ErrorHandler();
-
-        $container = new Container([
-            ErrorHandler::class => $errorHandler
-        ]);
-
-        $ret = $container->getErrorHandler();
-
-        $this->assertSame($errorHandler, $ret);
-    }
-
-    public function testGetErrorHandlerReturnsErrorHandlerInstanceFromPsrContainer(): void
-    {
-        $errorHandler = new ErrorHandler();
-
-        $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->once())->method('has')->with(ErrorHandler::class)->willReturn(true);
-        $psr->expects($this->once())->method('get')->with(ErrorHandler::class)->willReturn($errorHandler);
-
-        assert($psr instanceof ContainerInterface);
-        $container = new Container($psr);
-
-        $ret = $container->getErrorHandler();
-
-        $this->assertSame($errorHandler, $ret);
-    }
-
-    public function testGetErrorHandlerReturnsDefaultErrorHandlerInstanceIfPsrContainerHasNoEntry(): void
+    public function testGetObjectThrowsWhenTryingToInstantiateInterfaceWithPsrContainer(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->once())->method('has')->with(ErrorHandler::class)->willReturn(false);
+        $psr->expects($this->once())->method('has')->with(\Iterator::class)->willReturn(false);
         $psr->expects($this->never())->method('get');
 
         assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
 
-        $errorHandler = $container->getErrorHandler();
-
-        $this->assertInstanceOf(ErrorHandler::class, $errorHandler);
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Cannot instantiate interface Iterator');
+        $container->getObject(\Iterator::class);
     }
 
-    public function testGetErrorHandlerThrowsIfFactoryFunctionThrows(): void
+    public function testGetObjectThrowsIfPsrContainerReturnsWrongType(): void
     {
-        $container = new Container([
-            ErrorHandler::class => function () {
-                throw new \RuntimeException('Demo');
-            }
-        ]);
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(AccessLogHandler::class)->willReturn(true);
+        $psr->expects($this->once())->method('get')->with(AccessLogHandler::class)->willReturn(42);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Demo');
-        $container->getErrorHandler();
-    }
-
-    public function testGetErrorHandlerThrowsIfFactoryFunctionReturnsInvalidValue(): void
-    {
-        $line = __LINE__ + 2;
-        $container = new Container([
-            ErrorHandler::class => function () {
-                return null;
-            }
-        ]);
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
 
         $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for FrameworkX\ErrorHandler must be of type FrameworkX\ErrorHandler, null returned');
-        $container->getErrorHandler();
+        $this->expectExceptionMessage('Return value of ' . get_class($psr) . '::get() for FrameworkX\AccessLogHandler must be of type FrameworkX\AccessLogHandler, int returned');
+        $container->getObject(AccessLogHandler::class);
     }
 
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler(): void
