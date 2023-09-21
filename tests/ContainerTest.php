@@ -1324,6 +1324,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             get_class($controller) => function (string $stdClass) use ($controller) {
                 $class = get_class($controller);
@@ -1335,7 +1336,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadVariable() for $stdClass must be of type string, stdClass returned');
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line . '}() must be of type string, stdClass given');
         $callable($request);
     }
 
@@ -1378,6 +1379,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (\stdClass $http) {
                 return (object) ['name' => $http];
@@ -1388,7 +1390,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadVariable() for $http must be of type stdClass, int returned');
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() must be of type stdClass, int given');
         $callable($request);
     }
 
@@ -1403,6 +1405,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (string $http) {
                 return (object) ['name' => $http];
@@ -1413,7 +1416,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadVariable() for $http must be of type string, int returned');
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() must be of type string, int given');
         $callable($request);
     }
 
@@ -1428,6 +1431,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (int $http) {
                 return (object) ['name' => $http];
@@ -1438,7 +1442,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadVariable() for $http must be of type int, string returned');
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() must be of type int, string given');
         $callable($request);
     }
 
@@ -1453,6 +1457,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (float $percent) {
                 return (object) ['percent' => $percent];
@@ -1463,7 +1468,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadVariable() for $percent must be of type float, string returned');
+        $this->expectExceptionMessage('Argument #1 ($percent) of {closure:' . __FILE__ . ':' . $line . '}() must be of type float, string given');
         $callable($request);
     }
 
@@ -1478,6 +1483,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (bool $admin) {
                 return (object) ['admin' => $admin];
@@ -1488,7 +1494,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadVariable() for $admin must be of type bool, string returned');
+        $this->expectExceptionMessage('Argument #1 ($admin) of {closure:' . __FILE__ . ':' . $line . '}() must be of type bool, string given');
         $callable($request);
     }
 

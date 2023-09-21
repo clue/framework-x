@@ -123,7 +123,7 @@ class Container
         if ($this->container instanceof ContainerInterface && $this->container->has($name)) {
             $value = $this->container->get($name);
         } elseif ($this->hasVariable($name)) {
-            $value = $this->loadVariable($name, 'mixed', true, 64);
+            $value = $this->loadVariable($name);
         } else {
             return null;
         }
@@ -302,7 +302,17 @@ class Container
         // load container variables if parameter name is known
         assert($type === null || $type instanceof \ReflectionNamedType);
         if ($allowVariables && $this->hasVariable($parameter->getName())) {
-            return $this->loadVariable($parameter->getName(), $type === null ? 'mixed' : $type->getName(), $parameter->allowsNull(), $depth);
+            $value = $this->loadVariable($parameter->getName(), $depth);
+
+            // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
+            // allow null values if parameter is marked nullable or untyped or mixed
+            if ($type === null || ($value === null && $parameter->allowsNull()) || $type->getName() === 'mixed' || $this->validateType($value, $type)) {
+                return $value;
+            }
+
+            throw new \TypeError(
+                self::parameterError($parameter) . ' must be of type ' . ($type->allowsNull() ? '?' : '') . $type->getName() . ', ' . $this->gettype($value) . ' given'
+            );
         }
 
         // abort if parameter is untyped and not explicitly defined by container variable
@@ -349,7 +359,7 @@ class Container
      * @throws \BadMethodCallException if $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
-    private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
+    private function loadVariable(string $name, int $depth = 64) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
         assert($this->hasVariable($name));
         assert(\is_array($this->container) || !$this->container->has($name));
@@ -389,28 +399,24 @@ class Container
         }
 
         assert(\is_object($value) || \is_scalar($value) || $value === null);
-
-        // allow null values if parameter is marked nullable or untyped or mixed
-        if ($nullable && $value === null) {
-            return null;
-        }
-
-        // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
-        if ($type === 'mixed') {
-            return $value;
-        }
-
-        if (
-            (\is_object($value) && !$value instanceof $type) ||
-            (!\is_object($value) && !\in_array($type, ['string', 'int', 'float', 'bool'])) ||
-            ($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))
-        ) {
-            throw new \TypeError(
-                'Return value of ' . __METHOD__ . '() for $' . $name . ' must be of type ' . $type . ', ' . $this->gettype($value) . ' returned'
-            );
-        }
-
         return $value;
+    }
+
+    /**
+     * @param object|string|int|float|bool|null $value
+     * @param \ReflectionNamedType $type
+     * @throws void
+     */
+    private function validateType($value, \ReflectionNamedType $type): bool
+    {
+        $type = $type->getName();
+        return (
+            (\is_object($value) && $value instanceof $type) ||
+            (\is_string($value) && $type === 'string') ||
+            (\is_int($value) && $type === 'int') ||
+            (\is_float($value) && $type === 'float') ||
+            (\is_bool($value) && $type === 'bool')
+        );
     }
 
     /** @throws void */
