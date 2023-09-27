@@ -101,8 +101,10 @@ class App
         if ($needsAccessLog instanceof Container) {
             \array_unshift($handlers, $needsAccessLog->getAccessLogHandler());
         }
-
-        $this->router = new RouteHandler($container);
+        $errorHandler = \array_reduce($handlers, function ($carry, $handler) {
+            return $carry ?? ($handler instanceof ErrorHandler ? $handler : null);
+        });
+        $this->router = new RouteHandler($container, $errorHandler);
         $handlers[] = $this->router;
         $this->handler = new MiddlewareHandler($handlers);
         $this->sapi = \PHP_SAPI === 'cli' ? new ReactiveHandler($container->getEnv('X_LISTEN')) : new SapiHandler();
