@@ -1649,6 +1649,32 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
+    public function testRouteHandlerUsesErrorHandlerPassedFromApp(): void
+    {
+        $errorHandler = $this->createMock(ErrorHandler::class);
+        $errorHandler->expects($this->once())
+                     ->method('requestNotFound')
+                     ->willReturn(Response::json(['error' => 'Not Found'])->withStatus(404));
+        $errorHandler->method('__invoke')
+                     ->will(
+                         $this->returnCallback(
+                             function (ServerRequestInterface $request, callable $next) {
+                                 return $next($request);
+                             }
+                         )
+                     );
+        $app = $this->createAppWithoutLogger($errorHandler);
+
+        $request = new ServerRequest('GET', 'http://localhost/invalid');
+
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertStringMatchesFormat("{%a}", (string) $response->getBody());
+    }
+
     private function createAppWithoutLogger(callable ...$middleware): App
     {
         $app = new App(...$middleware);
