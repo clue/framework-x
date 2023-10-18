@@ -25,6 +25,12 @@ class App
     /** @var ReactiveHandler|SapiHandler */
     private $sapi;
 
+    /** @var string */
+    protected $currentGroupPrefix;
+
+    /** @var callable|class-string[] */
+    protected $currentGroupHandlers = [];
+
     /**
      * Instantiate new X application
      *
@@ -190,7 +196,27 @@ class App
      */
     public function any(string $route, $handler, ...$handlers): void
     {
-        $this->map(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $route, $handler, ...$handlers);
+        $this->map(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $this->currentGroupPrefix . $route, $handler, ...$handlers);
+    }
+
+    /**
+     * Create a route group with a common prefix.
+     *
+     * All routes created in the passed callback will have the given group prefix prepended.
+     *
+     * @param string $prefix
+     * @param callable|class-string[] $handlers
+     * @param callable $callback
+     */
+    public function addGroup(string $prefix, array $handlers, callable $callback): void
+    {
+        $previousGroupPrefix = $this->currentGroupPrefix;
+        $previousGroupHandlers = $this->currentGroupHandlers;
+        $this->currentGroupPrefix = $previousGroupPrefix . $prefix;
+        $this->currentGroupHandlers = array_merge($previousGroupHandlers, $handlers);
+        $callback($this);
+        $this->currentGroupPrefix = $previousGroupPrefix;
+        $this->currentGroupHandlers = $previousGroupHandlers;
     }
 
     /**
@@ -202,7 +228,13 @@ class App
      */
     public function map(array $methods, string $route, $handler, ...$handlers): void
     {
-        $this->router->map($methods, $route, $handler, ...$handlers);
+        if (!empty($this->currentGroupHandlers)) {
+            \array_unshift($handlers, $handler);
+            $currentGroupHandlers = $this->currentGroupHandlers;
+            $handler = array_pop($currentGroupHandlers);
+            \array_unshift($handlers, ...$currentGroupHandlers);
+        }
+        $this->router->map($methods, $this->currentGroupPrefix . $route, $handler, ...$handlers);
     }
 
     /**
