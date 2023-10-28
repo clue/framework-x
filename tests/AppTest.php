@@ -1649,6 +1649,210 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>null</code>.</p>\n", (string) $response->getBody());
     }
 
+    public function testInvokeWithMatchingGroupRouteReturnsResponseFromMatchingRouteHandler(): void
+    {
+        $app = $this->createAppWithoutLogger();
+        $app->addGroup('/users', [], function ($app) {
+            $app->get('', function () {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            });
+        });
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testInvokeWithMatchingChildGroupRouteReturnsResponseFromMatchingRouteHandler(): void
+    {
+        $app = $this->createAppWithoutLogger();
+        $app->addGroup('/users', [], function ($app) {
+            $app->addGroup('/{name}', [], function ($app) {
+                $app->get('/posts/{post}', function (ServerRequestInterface $request) {
+                    $name = $request->getAttribute('name');
+                    $post = $request->getAttribute('post');
+                    assert(is_string($name));
+                    assert(is_string($post));
+
+                    return new Response(
+                        200,
+                        [
+                            'Content-Type' => 'text/html'
+                        ],
+                        "OK $name $post\n"
+                    );
+                });
+            });
+        });
+        $request = new ServerRequest('GET', 'http://localhost/users/alice/posts/first');
+
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK alice first\n", (string) $response->getBody());
+    }
+
+    public function testConstractAndGroupRouteWithMiddlewareReturnContructMiddleware(): void
+    {
+
+        $middleware1 = function () {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK1\n"
+            );
+        };
+        $middleware2 = function () {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK2\n"
+            );
+        };
+
+        $app = $this->createAppWithoutLogger(
+            $middleware1
+        );
+        $app->addGroup('/users', [
+            $middleware2
+        ], function ($app) {
+            $app->get('', function () {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK3\n"
+                );
+            });
+        });
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK1\n", (string) $response->getBody());
+    }
+
+    public function testGroupRouteWithMiddlewareReturnGroupMiddleware(): void
+    {
+
+        $middleware2 = function () {
+            return new Response(
+                200,
+                [
+                    'Content-Type' => 'text/html'
+                ],
+                "OK2\n"
+            );
+        };
+
+        $app = $this->createAppWithoutLogger();
+        $app->addGroup('/users', [
+            $middleware2
+        ], function ($app) {
+            $app->get('', function () {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK3\n"
+                );
+            });
+        });
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK2\n", (string) $response->getBody());
+    }
+
+    public function testGroupRouteWithMiddlewareReturnRouteMiddleware(): void
+    {
+
+        $middleware2 = function ($request, $next) {
+            return $next($request);
+        };
+
+        $app = $this->createAppWithoutLogger();
+        $app->addGroup('/users', [
+            $middleware2
+        ], function ($app) {
+            $app->get('', function () {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK3\n"
+                );
+            });
+        });
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK3\n", (string) $response->getBody());
+    }
+
+    public function testSetRequestGroupRouteWithMiddlewareAndReturnRouteMiddleware(): void
+    {
+
+        $middleware2 = function ($request, $next) {
+            return $next($request->withAttribute('group', 'group'));
+        };
+
+        $app = $this->createAppWithoutLogger();
+        $app->addGroup('/users', [
+            $middleware2
+        ], function ($app) {
+            $app->get('', function ($request) {
+                $group = $request->getAttribute('group');
+                assert(is_string($group));
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK {$group}\n"
+                );
+            });
+        });
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK group\n", (string) $response->getBody());
+    }
+
     private function createAppWithoutLogger(callable ...$middleware): App
     {
         $app = new App(...$middleware);
