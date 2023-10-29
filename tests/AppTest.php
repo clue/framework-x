@@ -1853,6 +1853,121 @@ class AppTest extends TestCase
         $this->assertEquals("OK group\n", (string) $response->getBody());
     }
 
+    public function testGroupRouteMiddlewareSort(): void
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $fn1 = function ($request, $next) {
+            return $next($request->withAddedHeader('fn', 'fn1'));
+        };
+
+        $fn2 = function ($request, $next) {
+            return $next($request->withAddedHeader('fn', 'fn2'));
+        };
+
+        $fn3 = function ($request, $next) {
+            return $next($request->withAddedHeader('fn', 'fn3'));
+        };
+
+        $fn4 = function ($request, $next) {
+            return $next($request->withAddedHeader('fn', 'fn4'));
+        };
+
+        $fn5 = function ($request, $next) {
+            return $next($request->withAddedHeader('fn', 'fn5'));
+        };
+
+        $fn6 = function ($request, $next) {
+            return $next($request->withAddedHeader('fn', 'fn6'));
+        };
+
+
+        $app->addGroup('/sorts', [
+            $fn1
+        ], function ($app) use ($fn2, $fn3, $fn4, $fn5, $fn6) {
+            $app->get('/sort1', function ($request) {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK {$request->getHeaderLine('fn')}\n"
+                );
+            });
+            $app->addGroup('', [
+                $fn2,
+                $fn3,
+                $fn4,
+            ], function ($app) use ($fn5, $fn6) {
+                $app->get('/sort2', function ($request) {
+                    return new Response(
+                        200,
+                        [
+                            'Content-Type' => 'text/html'
+                        ],
+                        "OK {$request->getHeaderLine('fn')}\n"
+                    );
+                });
+
+                $app->addGroup('', [
+                    $fn5
+                ], function ($app) {
+                    $app->get('/sort3', function ($request) {
+                        return new Response(
+                            200,
+                            [
+                                'Content-Type' => 'text/html'
+                            ],
+                            "OK {$request->getHeaderLine('fn')}\n"
+                        );
+                    });
+                    
+                });
+                $app->addGroup('', [
+                    $fn6
+                ], function ($app) {
+                    $app->get('/sort4', function ($request) {
+                        return new Response(
+                            200,
+                            [
+                                'Content-Type' => 'text/html'
+                            ],
+                            "OK {$request->getHeaderLine('fn')}\n"
+                        );
+                    });
+                });
+            });
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/sorts/sort1');
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK fn1\n", (string) $response->getBody());
+
+        $request = new ServerRequest('GET', 'http://localhost/sorts/sort2');
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK fn1, fn2, fn3, fn4\n", (string) $response->getBody());
+
+        $request = new ServerRequest('GET', 'http://localhost/sorts/sort3');
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK fn1, fn2, fn3, fn4, fn5\n", (string) $response->getBody());
+
+        $request = new ServerRequest('GET', 'http://localhost/sorts/sort4');
+        $response = $app($request);
+        assert($response instanceof ResponseInterface);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK fn1, fn2, fn3, fn4, fn6\n", (string) $response->getBody());       
+    }
+
     private function createAppWithoutLogger(callable ...$middleware): App
     {
         $app = new App(...$middleware);
