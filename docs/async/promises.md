@@ -15,7 +15,7 @@ Let's take a look at the most basic promise usage by using an
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$credentials = 'alice:secret@localhost/bookstore?idle=0.001';
+$credentials = 'alice:secret@localhost/bookstore';
 $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
 $app = new FrameworkX\App();
@@ -58,7 +58,7 @@ order to "await" its fulfillment value. This is best shown in a simple example:
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$credentials = 'alice:secret@localhost/bookstore?idle=0.001';
+$credentials = 'alice:secret@localhost/bookstore';
 $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
 $app = new FrameworkX\App();

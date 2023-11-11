@@ -394,7 +394,7 @@ all uppercase in any factory function like this:
     $container = new FrameworkX\Container([
         React\MySQL\ConnectionInterface::class => function (string $DB_HOST = 'localhost', string $DB_USER = 'root', string $DB_PASS = '', string $DB_NAME = 'acme') {
             // connect to database defined in optional $DB_* environment variables
-            $uri = 'mysql://' . $DB_USER . ':' . rawurlencode($DB_PASS) . '@' . $DB_HOST . '/' . $DB_NAME . '?idle=0.001';
+            $uri = 'mysql://' . $DB_USER . ':' . rawurlencode($DB_PASS) . '@' . $DB_HOST . '/' . $DB_NAME;
             return (new React\MySQL\Factory())->createLazyConnection($uri);
         }
     ]);
