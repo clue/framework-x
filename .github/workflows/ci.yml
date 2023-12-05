@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.2
+          php-version: 8.3
       - run: composer install -d tests/install-as-dep/
       - run: docker build -f tests/${{ matrix.dockerfile }} tests/install-as-dep/
       - run: docker run -d -p 8080:8080 -v "$PWD/examples/index.php":/app/public/index.php -v "$PWD/composer.json":/app/composer.json -v "$PWD/LICENSE":/app/LICENSE -v "$PWD/tests/":/app/tests/ $(docker images -q | head -n1)
@@ -116,7 +116,7 @@ jobs:
     strategy:
       matrix:
         php:
-          - 8.3-rc
+          - 8.3
           - 8.2
           - 8.1
           - 8.0
@@ -141,7 +141,7 @@ jobs:
     strategy:
       matrix:
         php:
-          - 8.3-rc
+          - 8.3
           - 8.2
           - 8.1
           - 8.0
