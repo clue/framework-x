@@ -1323,7 +1323,7 @@ class AppTest extends TestCase
 
         $line = __LINE__ + 2;
         $app->get('/users', function () {
-            return await(reject(new \RuntimeException('Foo')));
+            await(reject(new \RuntimeException('Foo')));
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');

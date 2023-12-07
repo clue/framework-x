@@ -19,7 +19,7 @@
         "react/socket": "^1.13"
     },
     "require-dev": {
-        "phpstan/phpstan": "1.10.16 || 1.4.10",
+        "phpstan/phpstan": "1.10.47 || 1.4.10",
         "phpunit/phpunit": "^9.6 || ^7.5",
         "psr/container": "^2 || ^1",
         "react/promise-timer": "^1.10"
