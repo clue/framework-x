@@ -17,7 +17,7 @@ use function React\Async\await;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$credentials = 'alice:secret@localhost/bookstore?idle=0.001';
+$credentials = 'alice:secret@localhost/bookstore';
 $db = (new React\MySQL\Factory())->createLazyConnection($credentials);
 
 $app = new FrameworkX\App();
