@@ -189,7 +189,7 @@ you'll end up using promises one way or another no matter what.
 
 The major feature is that this means that anything that takes some time will
 no longer block the entire execution.
-These non-blocking operations are especially benefitial for anything that incurs
+These non-blocking operations are especially beneficial for anything that incurs
 some kind of <abbrev title="Input/Output">I/O</abbrev>, such as
 [database queries](../integrations/database.md), HTTP API requests,
 [filesystem access](../integrations/filesystem.md) and much more.

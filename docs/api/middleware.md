@@ -110,7 +110,7 @@ class DemoMiddleware
     $app->get('/user', DemoMiddleware::class, UserController::class);
     ```
 
-This highlights how middleware classes provide the exact same functionaly as using inline functions,
+This highlights how middleware classes provide the exact same functionality as using inline functions,
 yet provide a cleaner and more reusable structure.
 Accordingly, all examples below use middleware classes as the recommended style.
 
