@@ -1651,23 +1651,10 @@ class AppTest extends TestCase
 
     private function createAppWithoutLogger(callable ...$middleware): App
     {
-        $app = new App(...$middleware);
-
-        $ref = new \ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
-        $middleware = $ref->getValue($app);
-        assert($middleware instanceof MiddlewareHandler);
-
-        $ref = new \ReflectionProperty($middleware, 'handlers');
-        $ref->setAccessible(true);
-        $handlers = $ref->getValue($middleware);
-        assert(is_array($handlers));
-
-        $first = array_shift($handlers);
-        $this->assertInstanceOf(AccessLogHandler::class, $first);
-
-        $ref->setValue($middleware, $handlers);
-
-        return $app;
+        return new App(
+            new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul'),
+            new ErrorHandler(),
+            ...$middleware
+        );
     }
 }

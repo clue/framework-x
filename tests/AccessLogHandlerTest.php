@@ -12,6 +12,105 @@ use function React\Promise\resolve;
 
 class AccessLogHandlerTest extends TestCase
 {
+    public function testCtorWithRelativePathThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new AccessLogHandler('../access.log');
+    }
+
+    public function testCtorWithPathToDirectoryThrows(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        new AccessLogHandler(__DIR__);
+    }
+
+    public function testCtorWithPathToNewFileWillCreateNewFile(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'log');
+        assert(is_string($path));
+        unlink($path);
+
+        new AccessLogHandler($path);
+
+        $this->assertFileExists($path);
+        unlink($path);
+    }
+
+    public function testInvokeWithDefaultPathWillLogMessageToConsole(): void
+    {
+        $handler = new AccessLogHandler();
+
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], "Hello\n");
+
+        $this->expectOutputRegex('#^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d 127\.0\.0\.1 "GET /users HTTP/1\.1" 200 6 0\.0\d\d' . PHP_EOL . '$#');
+        $handler($request, function () use ($response) { return $response; });
+    }
+
+    public function testInvokeWithPathToNewFileWillCreateNewFileWithLogMessage(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'log');
+        assert(is_string($path));
+        unlink($path);
+
+        $handler = new AccessLogHandler($path);
+
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], "Hello\n");
+        $handler($request, function () use ($response) { return $response; });
+
+        $log = file_get_contents($path);
+        assert(is_string($log));
+
+        if (method_exists($this, 'assertMatchesRegularExpression')) {
+            $this->assertMatchesRegularExpression('#^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d 127\.0\.0\.1 "GET /users HTTP/1\.1" 200 6 0\.0\d\d' . PHP_EOL . '$#', $log);
+        } else {
+            // legacy PHPUnit < 9.1
+            $this->assertRegExp('#^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d 127\.0\.0\.1 "GET /users HTTP/1\.1" 200 6 0\.0\d\d' . PHP_EOL . '$#', $log);
+        }
+
+        unset($handler);
+        unlink($path);
+    }
+
+    public function testInvokeWithPathToExistingFileWillAppendLogMessage(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'log');
+        assert(is_string($path));
+        file_put_contents($path, 'first' . PHP_EOL);
+
+        $handler = new AccessLogHandler($path);
+
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], "Hello\n");
+        $handler($request, function () use ($response) { return $response; });
+
+        $log = file_get_contents($path);
+        assert(is_string($log));
+
+        if (method_exists($this, 'assertMatchesRegularExpression')) {
+            $this->assertMatchesRegularExpression('#^first' . PHP_EOL . '\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d 127\.0\.0\.1 "GET /users HTTP/1\.1" 200 6 0\.0\d\d' . PHP_EOL . '$#', $log);
+        } else {
+            // legacy PHPUnit < 9.1
+            $this->assertRegExp('#^first' . PHP_EOL . '\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d 127\.0\.0\.1 "GET /users HTTP/1\.1" 200 6 0\.0\d\d' . PHP_EOL . '$#', $log);
+        }
+
+        unset($handler);
+        unlink($path);
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testInvokeWithDevNullWritesNothing(): void
+    {
+        $handler = new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul');
+
+        $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
+        $response = new Response(200, [], "Hello\n");
+        $handler($request, function () use ($response) { return $response; });
+    }
+
     public function testInvokeLogsRequest(): void
     {
         $handler = new AccessLogHandler();
