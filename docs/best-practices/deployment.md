@@ -423,15 +423,24 @@ achieved by using an nginx configuration with the following contents:
 
 ```
 server {
-    root /home/alice/projects/acme/public;
-    index index.php index.html;
-
+    # Serve static files from `public/`, proxy dynamic requests to Framework X
     location / {
-        try_files $uri $uri/ @x;
+        location ~* \.php$ {
+            try_files /dev/null @x;
+        }
+        root /home/alice/projects/acme/public;
+        try_files $uri @x;
     }
 
     location @x {
         proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header Connection "";
+    }
+
+    # Optional: handle Apache config with Framework X if it exists in `public/`
+    location ~ \.htaccess$ {
+        try_files /dev/null @x;
     }
 }
 ```

@@ -110,7 +110,31 @@ jobs:
       - run: docker logs $(docker ps -qn1)
         if: ${{ always() }}
 
-  nginx-webserver:
+  nginx-reverse-proxy:
+    name: nginx reverse proxy + X
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        config:
+          - nginx-reverse-proxy-public.conf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+      - run: composer install -d tests/integration/
+      - run: docker build -f tests/integration/Dockerfile-basics tests/integration/
+      - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
+      - run: docker run -d --net=host -v "$PWD/tests/integration/":/home/framework-x/ -v "$PWD"/tests/integration/${{ matrix.config }}:/etc/nginx/conf.d/default.conf nginx:stable-alpine
+      - run: bash tests/await.sh http://localhost
+      - run: bash tests/integration.bash http://localhost
+      - run: docker stop $(docker ps -qn2)
+      - run: docker logs $(docker ps -qn1)
+        if: ${{ always() }}
+      - run: docker logs $(docker ps -qn2 | tail -n1)
+        if: ${{ always() }}
+
+  nginx-fpm:
     name: nginx + PHP-FPM (PHP ${{ matrix.php }})
     runs-on: ubuntu-22.04
     strategy:
