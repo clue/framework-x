@@ -111,12 +111,15 @@ jobs:
         if: ${{ always() }}
 
   nginx-reverse-proxy:
-    name: nginx reverse proxy + X
+    name: nginx (${{ matrix.config.name }})
     runs-on: ubuntu-22.04
     strategy:
       matrix:
         config:
-          - nginx-reverse-proxy-public.conf
+          - name: reverse proxy with files
+            path: nginx-reverse-proxy-public.conf
+          - name: minimal reverse proxy
+            path: nginx-reverse-proxy-minimal.conf
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -125,7 +128,7 @@ jobs:
       - run: composer install -d tests/integration/
       - run: docker build -f tests/integration/Dockerfile-basics tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
-      - run: docker run -d --net=host -v "$PWD/tests/integration/":/home/framework-x/ -v "$PWD"/tests/integration/${{ matrix.config }}:/etc/nginx/conf.d/default.conf nginx:stable-alpine
+      - run: docker run -d --net=host -v "$PWD/tests/integration/":/home/framework-x/ -v "$PWD"/tests/integration/${{ matrix.config.path }}:/etc/nginx/conf.d/default.conf nginx:stable-alpine
       - run: bash tests/await.sh http://localhost
       - run: bash tests/integration.bash http://localhost
       - run: docker stop $(docker ps -qn2)

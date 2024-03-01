@@ -421,29 +421,44 @@ all you need to do is to point the nginx' [`root`](http://nginx.org/en/docs/http
 to instruct nginx to process any dynamic requests through X. This can be
 achieved by using an nginx configuration with the following contents:
 
-```
-server {
-    # Serve static files from `public/`, proxy dynamic requests to Framework X
-    location / {
-        location ~* \.php$ {
+=== "nginx.conf (reverse proxy with static files)"
+
+    ```
+    server {
+        # Serve static files from `public/`, proxy dynamic requests to Framework X
+        location / {
+            location ~* \.php$ {
+                try_files /dev/null @x;
+            }
+            root /home/alice/projects/acme/public;
+            try_files $uri @x;
+        }
+
+        location @x {
+            proxy_pass http://localhost:8080;
+            proxy_set_header Host $host;
+            proxy_set_header Connection "";
+        }
+
+        # Optional: handle Apache config with Framework X if it exists in `public/`
+        location ~ \.htaccess$ {
             try_files /dev/null @x;
         }
-        root /home/alice/projects/acme/public;
-        try_files $uri @x;
     }
+    ```
 
-    location @x {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header Connection "";
-    }
+=== "nginx.conf (minimal reverse proxy)"
 
-    # Optional: handle Apache config with Framework X if it exists in `public/`
-    location ~ \.htaccess$ {
-        try_files /dev/null @x;
+    ```
+    server {
+        # Proxy all requests to Framework X
+        location / {
+            proxy_pass http://localhost:8080;
+            proxy_set_header Host $host;
+            proxy_set_header Connection "";
+        }
     }
-}
-```
+    ```
 
 > ℹ️ **New to nginx?**
 >
