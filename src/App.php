@@ -80,7 +80,12 @@ class App
                     if ($needsErrorHandler && ($handler instanceof ErrorHandler || $handler instanceof AccessLogHandler) && !$handlers) {
                         $needsErrorHandler = null;
                     }
-                    $handlers[] = $handler;
+
+                    // only add to list of handlers if this is not a NOOP
+                    if (!$handler instanceof AccessLogHandler || !$handler->isDevNull()) {
+                        $handlers[] = $handler;
+                    }
+
                     if ($handler instanceof AccessLogHandler) {
                         $needsAccessLog = null;
                         $needsErrorHandlerNext = true;
@@ -99,7 +104,10 @@ class App
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
         if ($needsAccessLog instanceof Container) {
-            \array_unshift($handlers, $needsAccessLog->getAccessLogHandler());
+            $handler = $needsAccessLog->getAccessLogHandler();
+            if (!$handler->isDevNull()) {
+                \array_unshift($handlers, $handler);
+            }
         }
 
         $this->router = new RouteHandler($container);

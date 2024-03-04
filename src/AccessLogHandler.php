@@ -14,7 +14,7 @@ use React\Stream\ReadableStreamInterface;
  */
 class AccessLogHandler
 {
-    /** @var LogStreamHandler */
+    /** @var ?LogStreamHandler */
     private $logger;
 
     /** @var bool */
@@ -31,8 +31,24 @@ class AccessLogHandler
             $path = \PHP_SAPI === 'cli' ? 'php://output' : 'php://stderr';
         }
 
-        $this->logger = new LogStreamHandler($path);
+        $logger = new LogStreamHandler($path);
+        if (!$logger->isDevNull()) {
+            // only assign logger if we're not logging to /dev/null (which would discard any logs)
+            $this->logger = $logger;
+        }
+
         $this->hasHighResolution = \function_exists('hrtime'); // PHP 7.3+
+    }
+
+    /**
+     * [Internal] Returns whether we're writing to /dev/null (which will discard any logs)
+     *
+     * @internal
+     * @return bool
+     */
+    public function isDevNull(): bool
+    {
+        return $this->logger === null;
     }
 
     /**
@@ -40,6 +56,13 @@ class AccessLogHandler
      */
     public function __invoke(ServerRequestInterface $request, callable $next)
     {
+        if ($this->logger === null) {
+            // Skip if we're logging to /dev/null (which will discard any logs).
+            // As an additional optimization, the `App` will automatically
+            // detect we no longer need to invoke this instance at all.
+            return $next($request); // @codeCoverageIgnore
+        }
+
         $now = $this->now();
         $response = $next($request);
 
@@ -95,6 +118,7 @@ class AccessLogHandler
             $responseSize = 0;
         }
 
+        \assert($this->logger instanceof LogStreamHandler);
         $this->logger->log(
             ($request->getAttribute('remote_addr') ?? $request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
             '"' . $this->escape($method) . ' ' . $this->escape($request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . '" ' .

@@ -36,6 +36,24 @@ class AccessLogHandlerTest extends TestCase
         unlink($path);
     }
 
+    public function testIsDevNullReturnsFalseForDefaultPath(): void
+    {
+        $handler = new AccessLogHandler();
+
+        $this->assertFalse($handler->isDevNull());
+    }
+
+    public function testIsDevNullReturnsTrueForDevNull(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
+        $handler = new AccessLogHandler('/dev/null');
+
+        $this->assertTrue($handler->isDevNull());
+    }
+
     public function testInvokeWithDefaultPathWillLogMessageToConsole(): void
     {
         $handler = new AccessLogHandler();

@@ -362,6 +362,31 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
     }
 
+    public function testConstructWithAccessLogHandlerToDevNullAndErrorHandlerWillRemoveAccessLogHandler(): void
+    {
+        $accessLogHandler = $this->createMock(AccessLogHandler::class);
+        $accessLogHandler->expects($this->once())->method('isDevNull')->willReturn(true);
+        assert(is_callable($accessLogHandler));
+
+        $errorHandler = new ErrorHandler();
+
+        $app = new App($accessLogHandler, $errorHandler);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
+
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
+
+        $this->assertCount(2, $handlers);
+        $this->assertSame($errorHandler, $handlers[0]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[1]);
+    }
+
     public function testConstructWithAccessLogHandlerClassAndErrorHandlerClassAssignsDefaultHandlers(): void
     {
         $app = new App(AccessLogHandler::class, ErrorHandler::class);
@@ -408,6 +433,35 @@ class AppTest extends TestCase
         $this->assertSame($accessLogHandler, $handlers[0]);
         $this->assertSame($errorHandler, $handlers[1]);
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
+    }
+
+    public function testConstructWithContainerAndAccessLogHandlerClassAndErrorHandlerClassWillUseContainerToGetAccessLogHandlerAndWillSkipAccessLogHandlerToDevNull(): void
+    {
+        $accessLogHandler = $this->createMock(AccessLogHandler::class);
+        $accessLogHandler->expects($this->once())->method('isDevNull')->willReturn(true);
+
+        $errorHandler = new ErrorHandler();
+
+        $container = $this->createMock(Container::class);
+        $container->expects($this->once())->method('getAccessLogHandler')->willReturn($accessLogHandler);
+        $container->expects($this->once())->method('getErrorHandler')->willReturn($errorHandler);
+
+        assert($container instanceof Container);
+        $app = new App($container, AccessLogHandler::class, ErrorHandler::class);
+
+        $ref = new ReflectionProperty($app, 'handler');
+        $ref->setAccessible(true);
+        $handler = $ref->getValue($app);
+        assert($handler instanceof MiddlewareHandler);
+
+        $ref = new ReflectionProperty($handler, 'handlers');
+        $ref->setAccessible(true);
+        $handlers = $ref->getValue($handler);
+        assert(is_array($handlers));
+
+        $this->assertCount(2, $handlers);
+        $this->assertSame($errorHandler, $handlers[0]);
+        $this->assertInstanceOf(RouteHandler::class, $handlers[1]);
     }
 
     public function testConstructWithMiddlewareBeforeAccessLogHandlerAndErrorHandlerAssignsDefaultErrorHandlerAsFirstHandlerFollowedByGivenHandlers(): void
