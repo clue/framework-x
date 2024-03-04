@@ -103,7 +103,7 @@ class FilesystemHandler
             }
 
             // Assign MIME type based on file extension (same as nginx/Apache) or fall back to given default otherwise.
-            // Browers are pretty good at figuring out the correct type if no charset attribute is given.
+            // Browsers are pretty good at figuring out the correct type if no charset attribute is given.
             $ext = \strtolower(\substr($path, \strrpos($path, '.') + 1));
             $headers = [
                 'Content-Type' => $this->mimetypes[$ext] ?? $this->defaultMimetype

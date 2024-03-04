@@ -362,6 +362,62 @@ $app = new FrameworkX\App($container);
 // …
 ```
 
+If you do not want to log to the console, you can configure an absolute log file
+path by passing an argument to the [`AccessLogHandler`](middleware.md#accessloghandler)
+like this:
+
+=== "Using DI container"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $container = new FrameworkX\Container([
+        'accesslog' => __DIR__ . '/../logs/access.log',
+        FrameworkX\AccessLogHandler::class => fn(string $accesslog) => new FrameworkX\AccessLogHandler($accesslog)
+    ]);
+
+    $app = new FrameworkX\App($container);
+
+    // …
+    ```
+
+=== "Using middleware instances"
+
+    ```php title="public/index.php"
+    <?php
+
+    require __DIR__ . '/../vendor/autoload.php';
+
+    $app = new FrameworkX\App(
+        new FrameworkX\AccessLogHandler(__DIR__ . '/../logs/access.log'),
+        new FrameworkX\ErrorHandler()
+    );
+
+
+
+    // …
+    ```
+
+Likewise, you can disable writing an access log by passing an absolute path to
+`/dev/null` (Unix) or `nul` (Windows) like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$container = new FrameworkX\Container([
+    'accesslog' => DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul'
+    FrameworkX\AccessLogHandler::class => fn(string $accesslog) => new FrameworkX\AccessLogHandler($accesslog),
+]);
+
+$app = new FrameworkX\App($container);
+
+// …
+```
+
 X supports running behind reverse proxies just fine. However, by default it will
 see the IP address of the last proxy server as the client IP address (this will
 often be `127.0.0.1`). You can get the original client IP address if you configure
@@ -385,8 +441,6 @@ it to the [`AccessLogHandler`](middleware.md#accessloghandler) like this:
         new FrameworkX\ErrorHandler()
     );
 
-    $app = new FrameworkX\App($container);
-
     // …
     ```
 
@@ -404,8 +458,6 @@ it to the [`AccessLogHandler`](middleware.md#accessloghandler) like this:
         FrameworkX\AccessLogHandler::class,
         FrameworkX\ErrorHandler::class
     );
-
-    $app = new FrameworkX\App($container);
 
     // …
     ```
