@@ -70,6 +70,12 @@ server {
         try_files $uri $uri/ /index.php$is_args$args;
     }
 
+    # Optional: handle Apache config with Framework X if it exists in `public/`
+    error_page 403 = /index.php;
+    location ~ \.htaccess$ {
+        deny all;
+    }
+
     location ~ \.php$ {
         fastcgi_pass localhost:9000;
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
@@ -185,6 +191,9 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule .* index.php
+
+# Optional: handle `.htaccess` with Framework X instead of `403 Forbidden`
+ErrorDocument 403 /%{REQUEST_URI}/../index.php
 
 # This adds support for authorization header
 SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
@@ -412,20 +421,44 @@ all you need to do is to point the nginx' [`root`](http://nginx.org/en/docs/http
 to instruct nginx to process any dynamic requests through X. This can be
 achieved by using an nginx configuration with the following contents:
 
-```
-server {
-    root /home/alice/projects/acme/public;
-    index index.php index.html;
+=== "nginx.conf (reverse proxy with static files)"
 
-    location / {
-        try_files $uri $uri/ @x;
-    }
+    ```
+    server {
+        # Serve static files from `public/`, proxy dynamic requests to Framework X
+        location / {
+            location ~* \.php$ {
+                try_files /dev/null @x;
+            }
+            root /home/alice/projects/acme/public;
+            try_files $uri @x;
+        }
 
-    location @x {
-        proxy_pass http://localhost:8080;
+        location @x {
+            proxy_pass http://localhost:8080;
+            proxy_set_header Host $host;
+            proxy_set_header Connection "";
+        }
+
+        # Optional: handle Apache config with Framework X if it exists in `public/`
+        location ~ \.htaccess$ {
+            try_files /dev/null @x;
+        }
     }
-}
-```
+    ```
+
+=== "nginx.conf (minimal reverse proxy)"
+
+    ```
+    server {
+        # Proxy all requests to Framework X
+        location / {
+            proxy_pass http://localhost:8080;
+            proxy_set_header Host $host;
+            proxy_set_header Connection "";
+        }
+    }
+    ```
 
 > ℹ️ **New to nginx?**
 >
