@@ -4,8 +4,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Stream\ThroughStream;
 
 // example uses `@include` for test suite only, real-world examples should use `require` instead
-// require __DIR__ . '/../vendor/autoload.php';
-@include __DIR__ . '/../vendor/autoload.php';
+if(!@include __DIR__ . '/../vendor/autoload.php') {
+    require __DIR__ . '/../../../vendor/autoload.php';
+}
 
 $app = new FrameworkX\App();
 
@@ -104,8 +105,8 @@ $app->get('/stream', function (ServerRequestInterface $request) {
     );
 });
 
-$app->get('/LICENSE', new FrameworkX\FilesystemHandler(dirname(__DIR__) . '/LICENSE'));
-$app->get('/source/{path:.*}', new FrameworkX\FilesystemHandler(dirname(__DIR__)));
+$app->get('/robots.txt', new FrameworkX\FilesystemHandler(__DIR__ . '/robots.txt'));
+$app->get('/source/{path:.*}', new FrameworkX\FilesystemHandler(__DIR__ . '/../'));
 $app->redirect('/source', '/source/');
 
 $app->any('/method', function (ServerRequestInterface $request) {

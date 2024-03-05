@@ -11,7 +11,7 @@
     <testsuites>
         <testsuite name="Framework X test suite">
             <directory>./tests/</directory>
-            <exclude>./tests/install-as-dep/</exclude>
+            <exclude>./tests/integration/</exclude>
         </testsuite>
     </testsuites>
     <coverage>

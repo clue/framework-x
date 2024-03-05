@@ -18,6 +18,9 @@ notmatch() {
 skipif() {
     echo "$out" | grep "$@" >/dev/null && echo -n S && return 1 || return 0
 }
+skipifnot() {
+    echo "$out" | grep "$@" >/dev/null && return 0 || echo -n S && return 1
+}
 
 out=$(curl -v $base/ 2>&1);         match "HTTP/.* 200" && match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
 out=$(curl -v $base/invalid 2>&1);  match "HTTP/.* 404" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
@@ -81,15 +84,15 @@ out=$(curl -v $base/users 2>&1);     match "HTTP/.* 404"
 out=$(curl -v $base/users/ 2>&1);    match "HTTP/.* 404"
 out=$(curl -v $base/users/a/b 2>&1); match "HTTP/.* 404"
 
-out=$(curl -v $base/LICENSE 2>&1);              match "HTTP/.* 200" && match -iP "Content-Type: text/plain[\r\n]"
+out=$(curl -v $base/robots.txt 2>&1);           match "HTTP/.* 200" && match -iP "Content-Type: text/plain[\r\n]"
 out=$(curl -v $base/source 2>&1);               match -i "Location: /source/" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 out=$(curl -v $base/source/ 2>&1);              match "HTTP/.* 200"
 out=$(curl -v $base/source/composer.json 2>&1); match "HTTP/.* 200" && match -iP "Content-Type: application/json[\r\n]"
-out=$(curl -v $base/source/LICENSE 2>&1);       match "HTTP/.* 200" && match -iP "Content-Type: text/plain[\r\n]"
-out=$(curl -v $base/source/LICENSE/ 2>&1);      match -i "Location: ../LICENSE" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
-out=$(curl -v $base/source/LICENSE// 2>&1);     match "HTTP/.* 404"
-out=$(curl -v $base/source//LICENSE 2>&1);      match "HTTP/.* 404"
-out=$(curl -v $base/source/tests 2>&1);         match -i "Location: tests/" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+out=$(curl -v $base/source/public/robots.txt 2>&1);     match "HTTP/.* 200" && match -iP "Content-Type: text/plain[\r\n]"
+out=$(curl -v $base/source/public/robots.txt/ 2>&1);    match -i "Location: ../robots.txt" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+out=$(curl -v $base/source/public/robots.txt// 2>&1);   match "HTTP/.* 404"
+out=$(curl -v $base/source//public/robots.txt 2>&1);    match "HTTP/.* 404"
+out=$(curl -v $base/source/public 2>&1);        match -i "Location: public/" && match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
 out=$(curl -v $base/source/invalid 2>&1);       match "HTTP/.* 404"
 out=$(curl -v $base/source/bin%00ary 2>&1);     match "HTTP/.* 40[40]" # expects 404, but not processed with nginx (400) and Apache (404)
 
@@ -121,7 +124,7 @@ out=$(curl -v $base/headers -H 'Content-Length: 0' 2>&1);   match "HTTP/.* 200" 
 out=$(curl -v $base/headers -H 'Empty;' 2>&1);              match "HTTP/.* 200" && match "\"Empty\": \"\""
 out=$(curl -v $base/headers -H 'Content-Type;' 2>&1);       skipif "Server: Apache" && match "HTTP/.* 200" && match "\"Content-Type\": \"\"" # skip Apache (discards empty Content-Type)
 out=$(curl -v $base/headers -H 'DNT: 1' 2>&1);              skipif "Server: nginx" && match "HTTP/.* 200" && match "\"DNT\"" && notmatch "\"Dnt\"" # skip nginx which doesn't report original case (DNT->Dnt)
-out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: nginx" && skipif -v "Server:" && match "HTTP/.* 200" && match "\"V\": \"a, b\"" # skip nginx (last only) and PHP webserver (first only)
+out=$(curl -v $base/headers -H 'V: a' -H 'V: b' 2>&1);      skipif "Server: nginx" && skipifnot "Server:" && match "HTTP/.* 200" && match "\"V\": \"a, b\"" # skip nginx (last only) and PHP webserver (first only)
 
 out=$(curl -v $base/set-cookie 2>&1);                       match "HTTP/.* 200" && match "Set-Cookie: 1=1" && match "Set-Cookie: 2=2"
 
