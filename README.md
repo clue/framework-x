@@ -55,8 +55,10 @@ Next, we need to install X and its dependencies to actually run this project.
 In your project directory, simply run the following command:
 
 ```bash
-$ composer require clue/framework-x:dev-main
+$ composer require clue/framework-x:^0.16
 ```
+
+> See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
 
 That's it already! The next step is now to serve this web application.
 One of the nice properties of this project is that is works both behind
