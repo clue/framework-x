@@ -205,7 +205,7 @@ class RouteHandlerTest extends TestCase
         $controller = new class {
             /** @var ?Response */
             public static $response;
-            public function __construct(int $value = null)
+            public function __construct(?int $value = null)
             {
                 assert($value === null);
             }
