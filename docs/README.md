@@ -17,7 +17,7 @@ If you want to contribute to the documentation, it's easiest to just run
 this in a Docker container in the project root directory like this:
 
 ```bash
-$ docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material:8.1.3
+docker compose -f docs/compose.yaml up
 ```
 
 You can access the documentation via `http://localhost:8000`.
@@ -29,14 +29,14 @@ If you want to generate a static HTML folder for deployment, you can again
 use a Docker container in the project root directory like this:
 
 ```bash
-$ docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material:8.1.3 build
+docker compose -f docs/compose.yaml run -u $(id -u) build
 ```
 
 The resulting `build/docs/` should then be deployed behind a web server.
 See also the [Framework X website repository](https://github.com/clue/framework-x-website)
 for more details about the website itself.
 
-If you want to add a new documentation file and/or change the page order, make sure the [`mkdocs.yml`](../mkdocs.yml)
-file in the project root directory contains an up-to-date list of all pages.
+If you want to add a new documentation file and/or change the page order, make sure the [`mkdocs.yml`](mkdocs.yml)
+file contains an up-to-date list of all pages.
 
 Happy hacking!
