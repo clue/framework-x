@@ -3,12 +3,14 @@
 namespace FrameworkX;
 
 use FrameworkX\Io\MiddlewareHandler;
+use FrameworkX\Io\PsrMiddlewareAdapter;
 use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RedirectHandler;
 use FrameworkX\Io\RouteHandler;
 use FrameworkX\Io\SapiHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use React\Http\Message\Response;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -37,7 +39,7 @@ class App
      * $app = new App($middleware1, $middleware2);
      * ```
      *
-     * @param callable|class-string ...$middleware
+     * @param callable|MiddlewareInterface|class-string ...$middleware
      */
     public function __construct(...$middleware)
     {
@@ -73,6 +75,8 @@ class App
                     if (!$handlers) {
                         $needsErrorHandler = $needsAccessLog = $container;
                     }
+                } elseif ($handler instanceof MiddlewareInterface) {
+                    $handlers[] = new PsrMiddlewareAdapter($handler);
                 } elseif (!\is_callable($handler)) {
                     $handlers[] = $container->callable($handler);
                 } else {
@@ -118,8 +122,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function get(string $route, $handler, ...$handlers): void
     {
@@ -128,8 +132,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function head(string $route, $handler, ...$handlers): void
     {
@@ -138,8 +142,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function post(string $route, $handler, ...$handlers): void
     {
@@ -148,8 +152,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function put(string $route, $handler, ...$handlers): void
     {
@@ -158,8 +162,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function patch(string $route, $handler, ...$handlers): void
     {
@@ -168,8 +172,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function delete(string $route, $handler, ...$handlers): void
     {
@@ -178,8 +182,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function options(string $route, $handler, ...$handlers): void
     {
@@ -193,8 +197,8 @@ class App
 
     /**
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function any(string $route, $handler, ...$handlers): void
     {
@@ -205,8 +209,8 @@ class App
      *
      * @param string[] $methods
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|MiddlewareInterface|class-string $handler
+     * @param callable|MiddlewareInterface|class-string ...$handlers
      */
     public function map(array $methods, string $route, $handler, ...$handlers): void
     {
