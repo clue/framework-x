@@ -188,8 +188,9 @@ class MiddlewareHandlerTest extends TestCase
         ]);
 
         $request = new ServerRequest('GET', 'http://localhost/');
-
-        $response = await($handler($request));
+        /** @var PromiseInterface<ResponseInterface> $responsePromise */
+        $responsePromise = $handler($request);
+        $response = await($responsePromise);
 
         /** @var ResponseInterface $response */
         $this->assertInstanceOf(ResponseInterface::class, $response);

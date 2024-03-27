@@ -13,6 +13,8 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Promise\PromiseInterface;
+use function React\Async\await;
 
 class RouteHandlerTest extends TestCase
 {
@@ -177,9 +179,10 @@ class RouteHandlerTest extends TestCase
             }
         });
 
-        $ret = $handler($request);
+        /** @var PromiseInterface<ResponseInterface> $responsePromise */
+        $responsePromise = $handler($request);
 
-        $this->assertSame($response, $ret);
+        $this->assertSame($response, await($responsePromise));
     }
 
     public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClass(): void
