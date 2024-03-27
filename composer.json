@@ -22,7 +22,8 @@
         "phpstan/phpstan": "1.10.47 || 1.4.10",
         "phpunit/phpunit": "^9.6 || ^7.5",
         "psr/container": "^2 || ^1",
-        "react/promise-timer": "^1.10"
+        "react/promise-timer": "^1.10",
+        "psr/http-server-middleware": "^1"
     },
     "autoload": {
         "psr-4": {

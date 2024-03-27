@@ -514,6 +514,42 @@ This is commonly used for cache handling and response body transformations (comp
 > [Generator-based coroutines](../async/coroutines.md) anymore.
 > See [fibers](../async/fibers.md) for more details.
 
+## PSR-15 middleware
+
+Middleware handlers can also be classes implementing the `MiddlewareInterface` from the [PSR-15](https://www.php-fig.org/psr/psr-15/) recommendation: 
+
+```php title="src/PsrMiddleware.php"
+<?php
+
+namespace Acme\Todo;
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use React\Http\Message\Response;
+
+class PsrMiddleware implements MiddlewareInterface
+{
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        return Response::plaintext('Hello from PSR-15');
+    }
+}
+```
+
+```php title="public/index.php"
+<?php
+
+use Acme\Todo\PsrMiddleware;
+
+// …
+
+$app->get('/user', new PsrMiddleware());
+```
+
+This is especially useful in order to integrate one of the many existing PSR-15 implementations as global middleware. 
+
 ## Global middleware
 
 Additionally, you can also add middleware to the [`App`](app.md) object itself

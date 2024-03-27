@@ -3,6 +3,7 @@
 namespace FrameworkX\Io;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 /**
  * @internal
@@ -12,12 +13,17 @@ class MiddlewareHandler
     /** @var list<callable> $handlers */
     private $handlers;
 
-    /** @param list<callable> $handlers */
+    /** @param list<callable|MiddlewareInterface> $handlers */
     public function __construct(array $handlers)
     {
         assert(count($handlers) >= 2);
 
-        $this->handlers = $handlers;
+        $this->handlers = array_map(function ($handler) {
+            if ($handler instanceof MiddlewareInterface) {
+                return new PsrMiddlewareAdapter($handler);
+            }
+            return $handler;
+         }, $handlers);
     }
 
     /** @return mixed */
