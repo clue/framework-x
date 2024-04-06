@@ -133,7 +133,7 @@ class SapiHandlerTest extends TestCase
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('CONNECT', $request->getMethod());
-        $this->assertEquals('example.com:443', (string) $request->getUri());
+        $this->assertEquals('//example.com:443', (string) $request->getUri());
         $this->assertEquals('example.com:443', $request->getRequestTarget());
         $this->assertEquals('1.1', $request->getProtocolVersion());
         $this->assertEquals('example.com:443', $request->getHeaderLine('Host'));
