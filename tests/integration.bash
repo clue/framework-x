@@ -1,6 +1,7 @@
 #!/bin/bash
 
-base=${1:-http://localhost:8080}
+base=${1:-http://localhost:8080/}
+base=${base%/}
 baseWithPort=$(php -r 'echo parse_url($argv[1],PHP_URL_PORT) ? $argv[1] : $argv[1] . ":80";' "$base")
 
 n=0

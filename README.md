@@ -136,7 +136,7 @@ your installation like this:
 
 ```bash
 $ php tests/integration/public/index.php
-$ tests/integration.bash http://localhost:8080
+$ tests/integration.bash http://localhost:8080/
 ```
 
 ## License
