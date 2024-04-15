@@ -133,7 +133,67 @@ class SapiHandlerTest extends TestCase
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('CONNECT', $request->getMethod());
-        $this->assertEquals('example.com:443', (string) $request->getUri());
+        $this->assertEquals('http://example.com:443', (string) $request->getUri());
+        $this->assertEquals('example.com:443', $request->getRequestTarget());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('example.com:443', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithConnectProxyWithDefaultHttpPort(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'CONNECT';
+        $_SERVER['REQUEST_URI'] = 'example.com:80';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('CONNECT', $request->getMethod());
+        $this->assertEquals('http://example.com', (string) $request->getUri());
+        $this->assertEquals('example.com:80', $request->getRequestTarget());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertEquals('example.com', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithConnectProxyWithoutHostHeader(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'CONNECT';
+        $_SERVER['REQUEST_URI'] = 'example.com:8080';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('CONNECT', $request->getMethod());
+        $this->assertEquals('http://example.com:8080', (string) $request->getUri());
+        $this->assertEquals('example.com:8080', $request->getRequestTarget());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
+        $this->assertFalse($request->hasHeader('Host'));
+    }
+
+    /**
+     * @backupGlobals enabled
+     */
+    public function testRequestFromGlobalsWithConnectProxyOverHttps(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'CONNECT';
+        $_SERVER['REQUEST_URI'] = 'example.com:443';
+        $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
+        $_SERVER['HTTP_HOST'] = 'example.com:443';
+        $_SERVER['HTTPS'] = 'on';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('CONNECT', $request->getMethod());
+        $this->assertEquals('https://example.com', (string) $request->getUri());
         $this->assertEquals('example.com:443', $request->getRequestTarget());
         $this->assertEquals('1.1', $request->getProtocolVersion());
         $this->assertEquals('example.com:443', $request->getHeaderLine('Host'));

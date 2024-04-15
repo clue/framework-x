@@ -69,6 +69,8 @@ class SapiHandler
         $url = $target;
         if (($target[0] ?? '/') === '/' || $target === '*') {
             $url = (($_SERVER['HTTPS'] ?? null) === 'on' ? 'https://' : 'http://') . ($host ?? 'localhost') . ($target === '*' ? '' : $target);
+        } elseif (($_SERVER['REQUEST_METHOD'] ?? null) === 'CONNECT') {
+            $url = (($_SERVER['HTTPS'] ?? null) === 'on' ? 'https://' : 'http://') . $target;
         }
 
         $body = file_get_contents('php://input');
