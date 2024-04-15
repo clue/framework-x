@@ -2,8 +2,10 @@
 
 namespace FrameworkX;
 
+use FrameworkX\Io\PsrMiddlewareAdapter;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 /**
  * @final
@@ -82,6 +84,9 @@ class Container
                     0,
                     $e
                 );
+            }
+            if ($handler instanceof MiddlewareInterface) {
+                $handler = new PsrMiddlewareAdapter($handler);
             }
 
             // Check `$handler` references a class name that is callable, i.e. has an `__invoke()` method.

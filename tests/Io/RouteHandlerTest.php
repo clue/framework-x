@@ -9,8 +9,12 @@ use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
+use React\Promise\PromiseInterface;
+use function React\Async\await;
 
 class RouteHandlerTest extends TestCase
 {
@@ -150,6 +154,35 @@ class RouteHandlerTest extends TestCase
         $ret = $handler($request);
 
         $this->assertSame($response, $ret);
+    }
+
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingPsr15MiddlewareHandler(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response(200, [], '');
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', new class ($response) implements MiddlewareInterface {
+
+            /**
+             * @var Response
+             */
+            private $response;
+
+            public function __construct(Response $response)
+            {
+                $this->response = $response;
+            }
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                return $this->response;
+            }
+        });
+
+        /** @var PromiseInterface<ResponseInterface> $responsePromise */
+        $responsePromise = $handler($request);
+
+        $this->assertSame($response, await($responsePromise));
     }
 
     public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClass(): void
