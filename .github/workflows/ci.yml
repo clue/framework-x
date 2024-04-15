@@ -85,7 +85,7 @@ jobs:
           php-version: ${{ matrix.php }}
       - run: composer install -d tests/integration/
       - run: php tests/integration/public/index.php &
-      - run: bash tests/await.sh
+      - run: bash tests/await.bash
       - run: bash tests/integration.bash
 
   Docker:
@@ -104,7 +104,7 @@ jobs:
       - run: composer install -d tests/integration/
       - run: docker build -f tests/integration/${{ matrix.dockerfile }} tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
-      - run: bash tests/await.sh
+      - run: bash tests/await.bash
       - run: bash tests/integration.bash
       - run: docker stop $(docker ps -qn1)
       - run: docker logs $(docker ps -qn1)
@@ -129,8 +129,8 @@ jobs:
       - run: docker build -f tests/integration/Dockerfile-basics tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
       - run: docker run -d --net=host -v "$PWD/tests/integration/":/home/framework-x/ -v "$PWD"/tests/integration/${{ matrix.config.path }}:/etc/nginx/conf.d/default.conf nginx:stable-alpine
-      - run: bash tests/await.sh http://localhost
-      - run: bash tests/integration.bash http://localhost
+      - run: bash tests/await.bash http://localhost/
+      - run: bash tests/integration.bash http://localhost/
       - run: docker stop $(docker ps -qn2)
       - run: docker logs $(docker ps -qn1)
         if: ${{ always() }}
@@ -159,8 +159,8 @@ jobs:
       - run: composer install -d tests/integration/
       - run: docker run -d -v "$PWD/tests/integration/":/home/framework-x/ php:${{ matrix.php }}-fpm
       - run: docker run -d -p 80:80 --link $(docker ps -qn1):php -v "$PWD/tests/integration/":/home/framework-x/ -v "$PWD"/tests/integration/nginx-fpm.conf:/etc/nginx/conf.d/default.conf nginx:stable-alpine
-      - run: bash tests/await.sh http://localhost
-      - run: bash tests/integration.bash http://localhost
+      - run: bash tests/await.bash http://localhost/
+      - run: bash tests/integration.bash http://localhost/
       - run: docker logs $(docker ps -qn1)
         if: ${{ always() }}
 
@@ -185,8 +185,8 @@ jobs:
           php-version: ${{ matrix.php }}
       - run: composer install -d tests/integration/
       - run: docker run -d -p 80:80 -v "$PWD/tests/integration/":/home/framework-x/ php:${{ matrix.php }}-apache sh -c "rmdir /var/www/html;ln -s /home/framework-x/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
-      - run: bash tests/await.sh http://localhost
-      - run: bash tests/integration.bash http://localhost
+      - run: bash tests/await.bash http://localhost/
+      - run: bash tests/integration.bash http://localhost/
       - run: docker logs $(docker ps -qn1)
         if: ${{ always() }}
 
@@ -211,5 +211,5 @@ jobs:
           php-version: ${{ matrix.php }}
       - run: composer install -d tests/integration/
       - run: php -S localhost:8080 tests/integration/public/index.php &
-      - run: bash tests/await.sh
+      - run: bash tests/await.bash
       - run: bash tests/integration.bash
