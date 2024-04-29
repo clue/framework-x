@@ -92,6 +92,12 @@ class SapiHandler
         }
         $request = $request->withParsedBody($_POST);
 
+        // Method override via POST _method "magic" parameter or X-HTTP-Method-Override header, only for POST requests
+        $method_override = strtoupper($_POST["_method"] ?? $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? "");
+        if ($request->getMethod() === "POST" && in_array($method_override, ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"], true)) {
+            $request = $request->withMethod($method_override);
+        }
+
         // Content-Length / Content-Type are special <3
         if ($request->getHeaderLine('Content-Length') === '') {
             $request = $request->withoutHeader('Content-Length');

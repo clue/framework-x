@@ -478,4 +478,40 @@ class SapiHandlerTest extends TestCase
 
         $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
     }
+
+    public function testRequestFromGlobalsObeysMagicMethodOverride(): void
+    {
+        header_remove();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST['_method'] = 'PUT';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('PUT', $request->getMethod());
+    }
+
+    public function testRequestFromGlobalsObeysXHttpMethodOverrideHeader(): void
+    {
+        header_remove();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] = 'PUT';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('PUT', $request->getMethod());
+    }
+
+    public function testRequestFromGlobalsIgnoresInvalidMethodOverride(): void
+    {
+        header_remove();
+        $_SERVER['REQUEST_METHOD'] = 'PUT';
+        $_POST['_method'] = 'POST';
+
+        $sapi = new SapiHandler();
+        $request = $sapi->requestFromGlobals();
+
+        $this->assertEquals('PUT', $request->getMethod());
+    }
 }
