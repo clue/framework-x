@@ -94,7 +94,7 @@ class SapiHandler
 
         // Method override via POST _method "magic" parameter or X-HTTP-Method-Override header, only for POST requests
         $method_override = strtoupper($_POST["_method"] ?? $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? "");
-        if ($request->getMethod() === "POST" && in_array($method_override, ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"], true)) {
+        if ($request->getMethod() === "POST" && in_array($method_override, ["PUT", "PATCH", "DELETE"], true)) {
             $request = $request->withMethod($method_override);
         }
 
