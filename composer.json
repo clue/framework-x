@@ -36,5 +36,12 @@
         "files": [
             "tests/FiberStub.php"
         ]
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-text",
+        "test:integration": "tests/integration.bash http://localhost:8080/",
+        "stan": "phpstan",
+        "integration:serve": "php tests/integration/public/index.php"
     }
 }
