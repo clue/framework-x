@@ -257,6 +257,7 @@ class LogStreamHandlerTest extends TestCase
         assert(is_resource($stream));
         fwrite($stream, 'First' . PHP_EOL);
 
+        /** @var array{uri:string} */
         $meta = stream_get_meta_data($stream);
         assert(is_string($meta['uri']));
 
