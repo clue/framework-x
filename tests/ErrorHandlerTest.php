@@ -271,33 +271,6 @@ class ErrorHandlerTest extends TestCase
         $this->assertEquals(500, $response->getStatusCode());
     }
 
-    public function testInvokeWithHandlerReturningPromiseRejectingWithNullReturnsPromiseResolvingWithError500Response(): void
-    {
-        if (method_exists(PromiseInterface::class, 'catch')) {
-            $this->markTestSkipped('Only supported for legacy Promise v2, Promise v3 always rejects with Throwable');
-        }
-
-        $handler = new ErrorHandler();
-
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $promise = $handler($request, function () {
-            return reject(null); // @phpstan-ignore-line
-        });
-
-        /** @var PromiseInterface<ResponseInterface> $promise */
-        $this->assertInstanceOf(PromiseInterface::class, $promise);
-
-        $response = null;
-        $promise->then(function ($value) use (&$response) {
-            $response = $value;
-        });
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(500, $response->getStatusCode());
-    }
-
     public function testInvokeWithHandlerReturningGeneratorYieldingNullReturnsGeneratorYieldingError500Response(): void
     {
         $handler = new ErrorHandler();
