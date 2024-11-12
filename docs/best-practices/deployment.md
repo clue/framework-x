@@ -130,7 +130,7 @@ Assuming you've followed the [quickstart guide](../getting-started/quickstart.md
 all you need to do is to point Caddy's [`root` directive](https://caddyserver.com/docs/caddyfile/directives/root)
 to the `public/` directory of your project. On top of this, you'll need
 to instruct Caddy to process any dynamic requests through X. This can be
-achieved by using an `Caddyfile` configuration with the following contents:
+achieved by using a `Caddyfile` configuration with the following contents:
 
 ```
 example.com {
