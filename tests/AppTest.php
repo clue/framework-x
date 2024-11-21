@@ -1272,32 +1272,6 @@ class AppTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsPromiseWhichRejectsWithNull(): void
-    {
-        if (method_exists(PromiseInterface::class, 'catch')) {
-            $this->markTestSkipped('Only supported for legacy Promise v2, Promise v3 always rejects with Throwable');
-        }
-
-        $app = $this->createAppWithoutLogger();
-
-        $app->get('/users', function () {
-            return reject(null); // @phpstan-ignore-line
-        });
-
-        $request = new ServerRequest('GET', 'http://localhost/users');
-
-        $response = $app($request);
-        assert($response instanceof ResponseInterface);
-
-        $this->assertEquals(500, $response->getStatusCode());
-        $this->assertEquals('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        $this->assertStringMatchesFormat("<!DOCTYPE html>\n<html>%a</html>\n", (string) $response->getBody());
-
-        $this->assertStringContainsString("<title>Error 500: Internal Server Error</title>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>The requested page failed to load, please try again later.</p>\n", (string) $response->getBody());
-        $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got <code>React\Promise\RejectedPromise</code>.</p>\n", (string) $response->getBody());
-    }
-
     public function testInvokeWithMatchingRouteReturnsInternalServerErrorResponseWhenHandlerReturnsCoroutineWhichYieldsRejectedPromise(): void
     {
         $app = $this->createAppWithoutLogger();

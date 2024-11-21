@@ -47,16 +47,8 @@ class ErrorHandler
                 } else {
                     return $this->errorInvalidResponse($response);
                 }
-            }, function ($e) {
-                // Promise rejected, always a `\Throwable` as of Promise v3
-                assert($e instanceof \Throwable || !\method_exists(PromiseInterface::class, 'catch')); // @phpstan-ignore-line
-
-                if ($e instanceof \Throwable) {
-                    return $this->errorInvalidException($e);
-                } else { // @phpstan-ignore-line
-                    // @phpstan-ignore-next-line
-                    return $this->errorInvalidResponse(\React\Promise\reject($e)); // @codeCoverageIgnore
-                }
+            }, function (\Throwable $e) {
+                return $this->errorInvalidException($e);
             });
         } elseif ($response instanceof \Generator) {
             return $this->coroutine($response);
