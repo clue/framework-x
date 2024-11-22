@@ -41,7 +41,7 @@ class Container
     }
 
     /** @return mixed */
-    public function __invoke(ServerRequestInterface $request, callable $next = null)
+    public function __invoke(ServerRequestInterface $request, ?callable $next = null)
     {
         if ($next === null) {
             // You don't want to end up here. This only happens if you use the
@@ -64,7 +64,7 @@ class Container
      */
     public function callable(string $class): callable
     {
-        return function (ServerRequestInterface $request, callable $next = null) use ($class) {
+        return function (ServerRequestInterface $request, ?callable $next = null) use ($class) {
             // Check `$class` references a valid class name that can be autoloaded
             if (\is_array($this->container) && !\class_exists($class, true) && !interface_exists($class, false) && !trait_exists($class, false)) {
                 throw new \BadMethodCallException('Request handler class ' . $class . ' not found');

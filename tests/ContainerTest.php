@@ -169,7 +169,7 @@ class ContainerTest extends TestCase
             /** @var \stdClass|null|false */
             private $data = false;
 
-            public function __construct(\stdClass $data = null)
+            public function __construct(?\stdClass $data = null)
             {
                 $this->data = $data;
             }
@@ -199,7 +199,7 @@ class ContainerTest extends TestCase
             /** @var \stdClass|null|false */
             private $data = false;
 
-            public function __construct(\stdClass $data = null)
+            public function __construct(?\stdClass $data = null)
             {
                 $this->data = $data;
             }
