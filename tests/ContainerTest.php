@@ -1284,7 +1284,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($username) of {closure}() is not defined');
+        $this->expectExceptionMessageMatches('/Argument 1 \(\$username\) of {closure(:[^{}]+)?}\(\) is not defined$/');
         $callable($request);
     }
 
@@ -1770,7 +1770,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure}() has no type');
+        $this->expectExceptionMessageMatches('/Argument 1 \(\$undefined\) of {closure(:[^{}]+)?}\(\) has no type$/');
         $callable($request);
     }
 
@@ -1788,7 +1788,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure}() is not defined');
+        $this->expectExceptionMessageMatches('/Argument 1 \(\$undefined\) of {closure(:[^{}]+)?}\(\) is not defined$/');
         $callable($request);
     }
 
@@ -1803,7 +1803,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($data) of {closure}() is recursive');
+        $this->expectExceptionMessageMatches('/Argument 1 \(\$data\) of {closure(:[^{}]+)?}\(\) is recursive$/');
         $callable($request);
     }
 
@@ -2232,5 +2232,17 @@ class ContainerTest extends TestCase
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, stdClass given');
         new Container((object) []); // @phpstan-ignore-line
+    }
+
+    public function expectExceptionMessageMatches(string $regularExpression): void
+    {
+        if (method_exists(parent::class, 'expectExceptionMessageMatches')) {
+            // @phpstan-ignore-next-line PHPUnit 8.4+
+            parent::expectExceptionMessageMatches($regularExpression);
+        } else {
+            // legacy PHPUnit
+            assert(method_exists($this, 'expectExceptionMessageRegExp'));
+            $this->expectExceptionMessageRegExp($regularExpression);
+        }
     }
 }

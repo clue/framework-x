@@ -11,9 +11,10 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2022
         php:
+          - 8.4
           - 8.3
           - 8.2
           - 8.1
@@ -43,10 +44,11 @@ jobs:
 
   PHPStan:
     name: PHPStan (PHP ${{ matrix.php }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         php:
+          - 8.4
           - 8.3
           - 8.2
           - 8.1
@@ -66,10 +68,11 @@ jobs:
 
   Built-in-webserver:
     name: Built-in webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         php:
+          - 8.4
           - 8.3
           - 8.2
           - 8.1
@@ -90,7 +93,7 @@ jobs:
 
   Docker:
     name: Docker (${{ matrix.dockerfile }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         dockerfile:
@@ -100,7 +103,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3
+          php-version: 8.4
       - run: composer install -d tests/integration/
       - run: docker build -f tests/integration/${{ matrix.dockerfile }} tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
@@ -112,7 +115,7 @@ jobs:
 
   nginx-reverse-proxy:
     name: nginx (${{ matrix.config.name }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         config:
@@ -124,7 +127,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3
+          php-version: 8.4
       - run: composer install -d tests/integration/
       - run: docker build -f tests/integration/Dockerfile-basics tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
@@ -139,10 +142,11 @@ jobs:
 
   nginx-fpm:
     name: nginx + PHP-FPM (PHP ${{ matrix.php }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         php:
+          - 8.4
           - 8.3
           - 8.2
           - 8.1
@@ -166,10 +170,11 @@ jobs:
 
   Apache-webserver:
     name: Apache webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         php:
+          - 8.4
           - 8.3
           - 8.2
           - 8.1
@@ -192,10 +197,11 @@ jobs:
 
   PHP-webserver:
     name: PHP webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         php:
+          - 8.4
           - 8.3
           - 8.2
           - 8.1
