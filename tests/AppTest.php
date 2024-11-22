@@ -1437,9 +1437,11 @@ class AppTest extends TestCase
     {
         $app = $this->createAppWithoutLogger();
 
-        $line = __LINE__ + 3;
+        // expect error on next line (should yield PromiseInterface)
+        // return on same line because PHP < 8.4 reports error on statement *after* invalid yield
+        $line = __LINE__ + 2;
         $app->get('/users', function () {
-            yield null;
+            return yield null;
         });
 
         $request = new ServerRequest('GET', 'http://localhost/users');
