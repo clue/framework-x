@@ -23,7 +23,7 @@ COPY public/ public/
 # COPY src/ src/
 COPY --from=build /app/vendor/ vendor/
 
-ENV X_LISTEN 0.0.0.0:8080
+ENV X_LISTEN=0.0.0.0:8080
 EXPOSE 8080
 
 USER nobody:nobody
