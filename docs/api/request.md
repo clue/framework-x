@@ -1,7 +1,7 @@
 # Request
 
 Whenever the client sends an HTTP request to our application,
-we receive this as an request object and need to react to it.
+we receive it as a request object and need to react to it.
 
 We love standards and want to make using X as simple as possible.
 That's why we build on top of the established [PSR-7 standard](https://www.php-fig.org/psr/psr-7/)
