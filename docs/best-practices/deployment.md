@@ -558,10 +558,10 @@ be achieved by using a `Dockerfile` with the following contents:
     COPY public/ public/
     COPY vendor/ vendor/
 
-    ENV X_LISTEN 0.0.0.0:8080
+    ENV X_LISTEN=0.0.0.0:8080
     EXPOSE 8080
 
-    ENTRYPOINT php public/index.php
+    ENTRYPOINT ["php", "public/index.php"]
     ```
 
 === "Dockerfile for minimal production image"
@@ -589,7 +589,7 @@ be achieved by using a `Dockerfile` with the following contents:
     # COPY src/ src/
     COPY --from=build /app/vendor/ vendor/
 
-    ENV X_LISTEN 0.0.0.0:8080
+    ENV X_LISTEN=0.0.0.0:8080
     EXPOSE 8080
 
     USER nobody:nobody

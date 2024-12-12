@@ -5,7 +5,7 @@ WORKDIR /app/
 COPY public/ public/
 COPY vendor/ vendor/
 
-ENV X_LISTEN 0.0.0.0:8080
+ENV X_LISTEN=0.0.0.0:8080
 EXPOSE 8080
 
-ENTRYPOINT php public/index.php
+ENTRYPOINT ["php", "public/index.php"]
