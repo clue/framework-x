@@ -1,7 +1,6 @@
 {
     "require": {
-        "clue/framework-x": "*@dev",
-        "react/promise-timer": "^1.10"
+        "clue/framework-x": "*@dev"
     },
     "repositories": [
         {
