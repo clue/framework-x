@@ -219,3 +219,11 @@ jobs:
       - run: php -S localhost:8080 tests/integration/public/index.php &
       - run: bash tests/await.bash
       - run: bash tests/integration.bash
+
+  Docs:
+    name: Docs
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f docs/compose.yaml run build
+      - run: ls -la build/docs/
