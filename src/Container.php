@@ -17,27 +17,31 @@ class Container
     private $useProcessEnv;
 
     /**
-     * @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader
-     * @throws \TypeError|\BadMethodCallException if given $loader is invalid
+     * @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $config
+     * @throws \TypeError if given $config is invalid
      */
-    public function __construct($loader = [])
+    public function __construct($config = [])
     {
-        /** @var mixed $loader explicit type check for mixed if user ignores parameter type */
-        if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
+        /** @var mixed $config explicit type check for mixed if user ignores parameter type */
+        if (!\is_array($config) && !$config instanceof ContainerInterface) {
             throw new \TypeError(
-                'Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . $this->gettype($loader) . ' given'
+                'Argument #1 ($config) must be of type array|Psr\Container\ContainerInterface, ' . $this->gettype($config) . ' given'
             );
         }
 
-        foreach (($loader instanceof ContainerInterface ? [] : $loader) as $name => $value) {
-            if (
-                (!\is_object($value) && !\is_scalar($value) && $value !== null) ||
-                (!$value instanceof $name && !$value instanceof \Closure && !\is_string($value) && \strpos($name, '\\') !== false)
-            ) {
-                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . $this->gettype($value));
+        foreach (($config instanceof ContainerInterface ? [] : $config) as $name => $value) {
+            if (!$value instanceof $name && !$value instanceof \Closure && !\is_string($value) && \strpos($name, '\\') !== false) {
+                throw new \TypeError(
+                    'Argument #1 ($config) for key "' . $name . '" must be of type ' . $name . '|Closure|string, ' . $this->gettype($value) . ' given'
+                );
+            }
+            if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
+                throw new \TypeError(
+                    'Argument #1 ($config) for key "' . $name . '" must be of type object|string|int|float|bool|null|Closure, ' . $this->gettype($value) . ' given'
+                );
             }
         }
-        $this->container = $loader;
+        $this->container = $config;
 
         // prefer reading environment from `$_ENV` and `$_SERVER`, only fall back to `getenv()` in thread-safe environments
         $this->useProcessEnv = \ZEND_THREAD_SAFE === false || \in_array(\PHP_SAPI, ['cli', 'cli-server', 'cgi-fcgi', 'fpm-fcgi'], true);
@@ -108,7 +112,7 @@ class Container
     }
 
     /**
-     * @throws \BadMethodCallException|\TypeError if container config or factory returns an unexpected type
+     * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \Throwable if container factory function throws unexpected exception
      * @internal
      */
@@ -125,14 +129,16 @@ class Container
         }
 
         if (!\is_string($value) && $value !== null) {
-            throw new \TypeError('Environment variable $' . $name . ' expected type string|null, but got ' . $this->gettype($value));
+            throw new \TypeError(
+                'Return value of ' . __METHOD__ . '() for $' . $name . ' must be of type string|null, ' . $this->gettype($value) . ' returned'
+            );
         }
 
         return $value;
     }
 
     /**
-     * @throws \BadMethodCallException|\TypeError if container config or factory returns an unexpected type
+     * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \Throwable if container factory function throws unexpected exception
      * @internal
      */
@@ -150,7 +156,7 @@ class Container
     }
 
     /**
-     * @throws \BadMethodCallException|\TypeError if container config or factory returns an unexpected type
+     * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \Throwable if container factory function throws unexpected exception
      * @internal
      */
@@ -171,6 +177,7 @@ class Container
      * @template T of object
      * @param class-string<T> $name
      * @return T
+     * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \BadMethodCallException if object of type $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
@@ -181,13 +188,15 @@ class Container
         if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
                 if ($depth < 1) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
+                    throw new \BadMethodCallException('Container config for ' . $name . ' is recursive');
                 }
 
                 // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                 $value = $this->loadObject($this->container[$name], $depth - 1);
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . $this->gettype($value));
+                    throw new \TypeError(
+                        'Return value of ' . __METHOD__ . '() for ' . $name . ' must be of type ' . $name . ', ' . $this->gettype($value) . ' returned'
+                    );
                 }
 
                 $this->container[$name] = $value;
@@ -201,19 +210,23 @@ class Container
 
                 if (\is_string($value)) {
                     if ($depth < 1) {
-                        throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
+                        throw new \BadMethodCallException('Container config for ' . $name . ' is recursive');
                     }
 
                     // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                     $value = $this->loadObject($value, $depth - 1);
                 }
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . $this->gettype($value));
+                    throw new \TypeError(
+                        'Return value of ' . self::functionName($closure) . ' for ' . $name . ' must be of type ' . $name . ', ' . $this->gettype($value) . ' returned'
+                    );
                 }
 
                 $this->container[$name] = $value;
             } elseif (!$this->container[$name] instanceof $name) {
-                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . $this->gettype($this->container[$name]));
+                throw new \TypeError(
+                    'Return value of ' . __METHOD__ . '() for ' . $name . ' must be of type ' . $name . ', ' . $this->gettype($this->container[$name]) . ' returned'
+                );
             }
 
             assert($this->container[$name] instanceof $name);
@@ -250,6 +263,7 @@ class Container
 
     /**
      * @return list<mixed>
+     * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \BadMethodCallException if either parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
@@ -265,6 +279,7 @@ class Container
 
     /**
      * @return mixed
+     * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \BadMethodCallException if $parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
@@ -330,7 +345,8 @@ class Container
 
     /**
      * @return object|string|int|float|bool|null
-     * @throws \BadMethodCallException if $name is not a valid container variable
+     * @throws \TypeError if container factory returns an unexpected type
+     * @throws \BadMethodCallException if $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
@@ -340,7 +356,7 @@ class Container
 
         if (\is_array($this->container) && ($this->container[$name] ?? null) instanceof \Closure) {
             if ($depth < 1) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' is recursive');
+                throw new \BadMethodCallException('Container config for $' . $name . ' is recursive');
             }
 
             // build list of factory parameters based on parameter types
@@ -353,7 +369,9 @@ class Container
             $value = $params === [] ? $factory() : $factory(...$params);
 
             if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar|null from factory, but got ' . $this->gettype($value));
+                throw new \TypeError(
+                    'Return value of ' . self::functionName($closure) . ' for $' . $name . ' must be of type object|string|int|float|bool|null, ' . $this->gettype($value) . ' returned'
+                );
             }
 
             $this->container[$name] = $value;
@@ -387,25 +405,31 @@ class Container
             (!\is_object($value) && !\in_array($type, ['string', 'int', 'float', 'bool'])) ||
             ($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))
         ) {
-            throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . $this->gettype($value));
+            throw new \TypeError(
+                'Return value of ' . __METHOD__ . '() for $' . $name . ' must be of type ' . $type . ', ' . $this->gettype($value) . ' returned'
+            );
         }
 
         return $value;
     }
 
     /** @throws void */
-    private static function parameterError(\ReflectionParameter $parameter): string
+    private static function functionName(\ReflectionFunctionAbstract $function): string
     {
-        $function = $parameter->getDeclaringFunction();
         $name = $function->getShortName();
         if ($name[0] === '{') { // $function->isAnonymous() (PHP 8.2+)
             // use PHP 8.4+ format including closure file and line on all PHP versions: https://3v4l.org/tAs7s
             $name = '{closure:' . $function->getFileName() . ':' . $function->getStartLine() . '}';
-        } elseif (($class = $parameter->getDeclaringClass()) !== null) {
+        } elseif ($function instanceof \ReflectionMethod && ($class = $function->getDeclaringClass()) !== null) {
             $name = explode("\0", $class->getName())[0] . '::' . $name;
         }
+        return $name . '()';
+    }
 
-        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . $name . '()';
+    /** @throws void */
+    private static function parameterError(\ReflectionParameter $parameter): string
+    {
+        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . self::functionName($parameter->getDeclaringFunction());
     }
 
     /**
