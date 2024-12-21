@@ -381,7 +381,7 @@ class Container
             $name = explode("\0", $class->getName())[0] . '::' . $name;
         }
 
-        return 'Argument ' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . $name . '()';
+        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . $name . '()';
     }
 
     /**

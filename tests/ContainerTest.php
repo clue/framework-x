@@ -1285,7 +1285,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
         $callable($request);
     }
 
@@ -1641,7 +1641,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($name) of class@anonymous::__construct() expects unsupported type string');
+        $this->expectExceptionMessage('Argument #1 ($name) of class@anonymous::__construct() expects unsupported type string');
         $callable($request);
     }
 
@@ -1772,7 +1772,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() has no type');
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() has no type');
         $callable($request);
     }
 
@@ -1791,7 +1791,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
         $callable($request);
     }
 
@@ -1807,7 +1807,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() is recursive');
+        $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() is recursive');
         $callable($request);
     }
 
@@ -2101,7 +2101,7 @@ class ContainerTest extends TestCase
         ]);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($extension) of extension_loaded() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($extension) of extension_loaded() is not defined');
         $container->getEnv('X_FOO');
     }
 
@@ -2119,7 +2119,7 @@ class ContainerTest extends TestCase
         ]);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument 1 ($bar) of class@anonymous::foo() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() is not defined');
         $container->getEnv('X_FOO');
     }
 

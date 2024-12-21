@@ -1529,25 +1529,25 @@ class AppTest extends TestCase
 
         yield [
             InvalidConstructorUntyped::class,
-            'Argument 1 ($value) of %s::__construct() has no type'
+            'Argument #1 ($value) of %s::__construct() has no type'
         ];
 
         yield [
             InvalidConstructorInt::class,
-            'Argument 1 ($value) of %s::__construct() expects unsupported type int'
+            'Argument #1 ($value) of %s::__construct() expects unsupported type int'
         ];
 
         if (PHP_VERSION_ID >= 80000) {
             yield [
                 InvalidConstructorUnion::class,
-                'Argument 1 ($value) of %s::__construct() expects unsupported type int|float'
+                'Argument #1 ($value) of %s::__construct() expects unsupported type int|float'
             ];
         }
 
         if (PHP_VERSION_ID >= 80100) {
             yield [
                 InvalidConstructorIntersection::class,
-                'Argument 1 ($value) of %s::__construct() expects unsupported type Traversable&amp;ArrayAccess'
+                'Argument #1 ($value) of %s::__construct() expects unsupported type Traversable&amp;ArrayAccess'
             ];
         }
 
@@ -1558,7 +1558,7 @@ class AppTest extends TestCase
 
         yield [
             InvalidConstructorSelf::class,
-            'Argument 1 ($value) of %s::__construct() is recursive'
+            'Argument #1 ($value) of %s::__construct() is recursive'
         ];
     }
 
