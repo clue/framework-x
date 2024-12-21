@@ -203,7 +203,7 @@ class Container
             } elseif ($this->container[$name] instanceof \Closure) {
                 // build list of factory parameters based on parameter types
                 $closure = new \ReflectionFunction($this->container[$name]);
-                $params = $this->loadFunctionParams($closure, $depth, true);
+                $params = $this->loadFunctionParams($closure, $depth, true, $name);
 
                 // invoke factory with list of parameters
                 $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
@@ -254,7 +254,7 @@ class Container
 
         // build list of constructor parameters based on parameter types
         $ctor = $class->getConstructor();
-        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false);
+        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false, '');
 
         // instantiate with list of parameters
         // @phpstan-ignore-next-line because `$class->newInstance()` is known to return `T`
@@ -267,11 +267,11 @@ class Container
      * @throws \BadMethodCallException if either parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
-    private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables): array
+    private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables, string $for): array
     {
         $params = [];
         foreach ($function->getParameters() as $parameter) {
-            $params[] = $this->loadParameter($parameter, $depth, $allowVariables);
+            $params[] = $this->loadParameter($parameter, $depth, $allowVariables, $for);
         }
 
         return $params;
@@ -283,7 +283,7 @@ class Container
      * @throws \BadMethodCallException if $parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
-    private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables) /*: mixed (PHP 8.0+) */
+    private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables, string $for) /*: mixed (PHP 8.0+) */
     {
         assert(\is_array($this->container));
 
@@ -296,7 +296,7 @@ class Container
             if ($hasDefault) {
                 return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
             }
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type);
+            throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' expects unsupported type ' . $type);
         } // @codeCoverageIgnoreEnd
 
         // load container variables if parameter name is known
@@ -311,7 +311,7 @@ class Container
             }
 
             throw new \TypeError(
-                self::parameterError($parameter) . ' must be of type ' . ($type->allowsNull() ? '?' : '') . $type->getName() . ', ' . $this->gettype($value) . ' given'
+                self::parameterError($parameter, $for) . ' must be of type ' . ($type->allowsNull() ? '?' : '') . $type->getName() . ', ' . $this->gettype($value) . ' given'
             );
         }
 
@@ -321,7 +321,7 @@ class Container
             if ($parameter->isDefaultValueAvailable()) {
                 return $parameter->getDefaultValue();
             }
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' has no type');
+            throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' has no type');
         }
 
         // use default/nullable argument if not loadable as container variable or by type
@@ -333,15 +333,15 @@ class Container
         // abort if required container variable is not defined or for any other primitive types (array etc.)
         if ($type->isBuiltin()) {
             if ($allowVariables) {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' is not defined');
+                throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' is not defined');
             } else {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
+                throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' expects unsupported type ' . $type->getName());
             }
         }
 
         // abort for unreasonably deep nesting or recursive types
         if ($depth < 1) {
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
+            throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' is recursive');
         }
 
         // @phpstan-ignore-next-line because `$type->getName()` is a `class-string` by definition
@@ -373,7 +373,7 @@ class Container
             $factory = $this->container[$name];
             assert($factory instanceof \Closure);
             $closure = new \ReflectionFunction($factory);
-            $params = $this->loadFunctionParams($closure, $depth - 1, true);
+            $params = $this->loadFunctionParams($closure, $depth - 1, true, '$' . $name);
 
             // invoke factory with list of parameters
             $value = $params === [] ? $factory() : $factory(...$params);
@@ -433,9 +433,9 @@ class Container
     }
 
     /** @throws void */
-    private static function parameterError(\ReflectionParameter $parameter): string
+    private static function parameterError(\ReflectionParameter $parameter, string $for): string
     {
-        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . self::functionName($parameter->getDeclaringFunction());
+        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . self::functionName($parameter->getDeclaringFunction()) . ($for !== '' ? ' for ' . $for : '');
     }
 
     /**

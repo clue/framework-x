@@ -1285,7 +1285,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is not defined');
         $callable($request);
     }
 
@@ -1336,7 +1336,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line . '}() must be of type string, stdClass given');
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line . '}() for ' . get_class($controller) . ' must be of type string, stdClass given');
         $callable($request);
     }
 
@@ -1390,7 +1390,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() must be of type stdClass, int given');
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type stdClass, int given');
         $callable($request);
     }
 
@@ -1416,7 +1416,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() must be of type string, int given');
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type string, int given');
         $callable($request);
     }
 
@@ -1442,7 +1442,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() must be of type int, string given');
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type int, string given');
         $callable($request);
     }
 
@@ -1468,7 +1468,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($percent) of {closure:' . __FILE__ . ':' . $line . '}() must be of type float, string given');
+        $this->expectExceptionMessage('Argument #1 ($percent) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type float, string given');
         $callable($request);
     }
 
@@ -1494,7 +1494,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($admin) of {closure:' . __FILE__ . ':' . $line . '}() must be of type bool, string given');
+        $this->expectExceptionMessage('Argument #1 ($admin) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type bool, string given');
         $callable($request);
     }
 
@@ -1791,7 +1791,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() has no type');
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass has no type');
         $callable($request);
     }
 
@@ -1810,7 +1810,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is not defined');
         $callable($request);
     }
 
@@ -1826,7 +1826,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() is recursive');
+        $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is recursive');
         $callable($request);
     }
 
@@ -2160,7 +2160,7 @@ class ContainerTest extends TestCase
         ]);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($extension) of extension_loaded() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($extension) of extension_loaded() for $X_FOO is not defined');
         $container->getEnv('X_FOO');
     }
 
@@ -2178,7 +2178,7 @@ class ContainerTest extends TestCase
         ]);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() is not defined');
+        $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() for $X_FOO is not defined');
         $container->getEnv('X_FOO');
     }
 
