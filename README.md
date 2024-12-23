@@ -56,7 +56,7 @@ Next, we need to install X and its dependencies to actually run this project.
 In your project directory, simply run the following command:
 
 ```bash
-$ composer require clue/framework-x:^0.16
+$ composer require clue/framework-x:^0.17
 ```
 
 > See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.

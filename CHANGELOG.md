@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.17.0 (2024-12-23)
+
+Just in time for the holidays, we are happy to announce the release of `v0.17.0`! 🎄🎉
+This release includes a number of compatibility improvements and some project
+structure improvements to lay the groundwork for upcoming developments.
+
+*   Feature: Improve PHP 8.4+ support by avoiding implicitly nullable types.
+    (#266 and #267 by @clue)
+
+*   Feature / BC break: Update to require Promise v3.
+    (#265 by @clue)
+
+*   Feature: Consistent parsing for HTTP `CONNECT` request method (PHP SAPI).
+    (#255 by @clue)
+
+*   Minor documentation improvements and update `Dockerfile` syntax.
+    (#261, #268 and #269 by @clue)
+
+*   Improve test suite and project structure by cleaning up tests and docs.
+    (#256, #267, #270 and #271 by @clue)
+
 ## 0.16.0 (2024-03-05)
 
 We are thrilled to announce the official release of `v0.16.0` to the public! 🎉🚀
@@ -8,7 +29,7 @@ In addition to the release of `v0.16.0`, this update includes all prior tagged r
 
 This release includes exciting new features such as improved performance, additional options
 for access logging, updates to our documentation and nginx + Apache configurations,
-as well as many more internal improvements to our test suite and integration tests. 
+as well as many more internal improvements to our test suite and integration tests.
 
 *   Feature: Improve performance by skipping `AccessLogHandler` if it writes to `/dev/null`.
     (#248 by @clue)

@@ -63,7 +63,7 @@ Thanks to [Composer](https://getcomposer.org/), this installation only requires 
 In your project directory, simply run the following command:
 
 ```bash
-$ composer require clue/framework-x:^0.16
+$ composer require clue/framework-x:^0.17
 ```
 
 X is carefully designed to be super lightweight, so this should only take a moment or two.
