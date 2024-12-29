@@ -55,6 +55,11 @@ class RouteHandler
         $last = \key($handlers);
         $container = $this->container;
         foreach ($handlers as $i => $handler) {
+            // unlikely: load container self-reference from container
+            if ($handler === Container::class) {
+                $handlers[$i] = $handler = $container->getObject($handler);
+            }
+
             if ($handler instanceof Container && $i !== $last) {
                 $container = $handler;
                 unset($handlers[$i]);
