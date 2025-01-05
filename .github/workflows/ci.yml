@@ -231,5 +231,5 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - run: docker compose -f docs/compose.yaml run build
+      - run: mkdir -p build/ && docker compose -f docs/compose.yaml run --rm -u $(id -u):$(id -g) build
       - run: ls -la build/docs/
