@@ -341,15 +341,21 @@ class Container
         \assert(\is_array($this->container) || !$this->container->has($name));
 
         if (\is_array($this->container) && ($this->container[$name] ?? null) instanceof \Closure) {
-            // build list of factory parameters based on parameter types
             $factory = $this->container[$name];
             \assert($factory instanceof \Closure);
             $closure = new \ReflectionFunction($factory);
-            $params = $this->loadFunctionParams($closure, $depth - 1, true, '$' . $name);
+
+            // build list of factory parameters based on parameter types
+            // temporarily unset factory reference to allow loading recursive variables from environment
+            try {
+                unset($this->container[$name]);
+                $params = $this->loadFunctionParams($closure, $depth - 1, true, '$' . $name);
+            } finally {
+                $this->container[$name] = $factory;
+            }
 
             // invoke factory with list of parameters
-            $value = $params === [] ? $factory() : $factory(...$params);
-
+            $value = $factory(...$params);
             if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
                 throw new \TypeError(
                     'Return value of ' . self::functionName($closure) . ' for $' . $name . ' must be of type object|string|int|float|bool|null, ' . $this->gettype($value) . ' returned'
