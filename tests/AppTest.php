@@ -7,8 +7,8 @@ use FrameworkX\App;
 use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
 use FrameworkX\Io\MiddlewareHandler;
-use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RouteHandler;
+use FrameworkX\Runner\HttpServerRunner;
 use FrameworkX\Tests\Fixtures\InvalidAbstract;
 use FrameworkX\Tests\Fixtures\InvalidConstructorInt;
 use FrameworkX\Tests\Fixtures\InvalidConstructorIntersection;
@@ -92,7 +92,7 @@ class AppTest extends TestCase
         $errorHandler = new ErrorHandler();
         $routeHandler = $this->createMock(RouteHandler::class);
 
-        $sapi = $this->createMock(ReactiveHandler::class);
+        $runner = $this->createMock(HttpServerRunner::class);
 
         $container = $this->createMock(Container::class);
         $container->expects($this->exactly(3))->method('getObject')->willReturnMap([
@@ -100,18 +100,18 @@ class AppTest extends TestCase
             [ErrorHandler::class, $errorHandler],
             [RouteHandler::class, $routeHandler],
         ]);
-        $container->expects($this->once())->method('getSapi')->willReturn($sapi);
+        $container->expects($this->once())->method('getRunner')->willReturn($runner);
         assert($container instanceof Container);
 
         $app = new App($container);
 
-        $ref = new \ReflectionProperty($app, 'sapi');
+        $ref = new \ReflectionProperty($app, 'runner');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
         }
         $ret = $ref->getValue($app);
 
-        $this->assertSame($sapi, $ret);
+        $this->assertSame($runner, $ret);
 
         $ref = new ReflectionProperty($app, 'handler');
         if (PHP_VERSION_ID < 80100) {
@@ -138,13 +138,13 @@ class AppTest extends TestCase
         $container = new Container([]);
         $app = new App($container);
 
-        $ref = new \ReflectionProperty($app, 'sapi');
+        $ref = new \ReflectionProperty($app, 'runner');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
         }
         $ret = $ref->getValue($app);
 
-        $this->assertSame($container->getSapi(), $ret);
+        $this->assertSame($container->getRunner(), $ret);
 
         $ref = new ReflectionProperty($app, 'handler');
         if (PHP_VERSION_ID < 80100) {
@@ -893,7 +893,7 @@ class AppTest extends TestCase
         new App(RouteHandler::class, $middleware);
     }
 
-    public function testConstructWithContainerWithListenAddressWillPassListenAddressToReactiveHandler(): void
+    public function testConstructWithContainerWithListenAddressWillPassListenAddressToHttpServerRunner(): void
     {
         $container = new Container([
             'X_LISTEN' => '0.0.0.0:8081'
@@ -901,31 +901,31 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
-        // $sapi = $app->sapi;
-        $ref = new \ReflectionProperty($app, 'sapi');
+        // $runner = $app->runner;
+        $ref = new \ReflectionProperty($app, 'runner');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
         }
-        $sapi = $ref->getValue($app);
-        assert($sapi instanceof ReactiveHandler);
+        $runner = $ref->getValue($app);
+        assert($runner instanceof HttpServerRunner);
 
-        // $listenAddress = $sapi->listenAddress;
-        $ref = new \ReflectionProperty($sapi, 'listenAddress');
+        // $listenAddress = $runner->listenAddress;
+        $ref = new \ReflectionProperty($runner, 'listenAddress');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
         }
-        $listenAddress = $ref->getValue($sapi);
+        $listenAddress = $ref->getValue($runner);
 
         $this->assertEquals('0.0.0.0:8081', $listenAddress);
     }
 
-    public function testRunWillExecuteRunOnSapiHandlerFromContainer(): void
+    public function testRunWillExecuteRunOnRunnerFromContainer(): void
     {
-        $sapi = $this->createMock(ReactiveHandler::class);
-        $sapi->expects($this->once())->method('run');
+        $runner = $this->createMock(HttpServerRunner::class);
+        $runner->expects($this->once())->method('run');
 
         $container = new Container([
-            ReactiveHandler::class => $sapi
+            HttpServerRunner::class => $runner
         ]);
 
         $app = new App($container);

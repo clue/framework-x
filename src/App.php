@@ -2,12 +2,11 @@
 
 namespace FrameworkX;
 
-use FrameworkX\Io\LogStreamHandler;
 use FrameworkX\Io\MiddlewareHandler;
-use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RedirectHandler;
 use FrameworkX\Io\RouteHandler;
-use FrameworkX\Io\SapiHandler;
+use FrameworkX\Runner\HttpServerRunner;
+use FrameworkX\Runner\SapiRunner;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -23,8 +22,8 @@ class App
     /** @var RouteHandler */
     private $router;
 
-    /** @var ReactiveHandler|SapiHandler */
-    private $sapi;
+    /** @var HttpServerRunner|SapiRunner */
+    private $runner;
 
     /**
      * Instantiate new X application
@@ -127,7 +126,7 @@ class App
 
         $this->router = $router;
         $this->handler = new MiddlewareHandler($handlers);
-        $this->sapi = $container->getSapi();
+        $this->runner = $container->getRunner();
     }
 
     /**
@@ -241,7 +240,7 @@ class App
      * Runs the app to handle HTTP requests according to any registered routes and middleware.
      *
      * This is where the magic happens: When executed on the command line (CLI),
-     * this will run the powerful reactive request handler built on top of
+     * this will run the powerful reactive application runner built on top of
      * ReactPHP. This works by running the efficient built-in HTTP web server to
      * handle incoming HTTP requests through ReactPHP's HTTP and socket server.
      * This async execution mode is usually recommended as it can efficiently
@@ -254,12 +253,12 @@ class App
      * This is particularly useful because it allows you to run the exact same
      * app in any environment.
      *
-     * @see ReactiveHandler::run()
-     * @see SapiHandler::run()
+     * @see HttpServerRunner::run()
+     * @see SapiRunner::run()
      */
     public function run(): void
     {
-        $this->sapi->run(\Closure::fromCallable([$this, 'handleRequest']));
+        $this->runner->run(\Closure::fromCallable([$this, 'handleRequest']));
     }
 
     /**

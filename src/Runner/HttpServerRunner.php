@@ -1,13 +1,15 @@
 <?php
 
-namespace FrameworkX\Io;
+namespace FrameworkX\Runner;
 
+use FrameworkX\Io\FiberHandler;
+use FrameworkX\Io\LogStreamHandler;
 use React\EventLoop\Loop;
 use React\Http\HttpServer;
 use React\Socket\SocketServer;
 
 /**
- * [Internal] Powerful reactive request handler built on top of ReactPHP.
+ * [Internal] Powerful reactive application runner built on top of ReactPHP.
  *
  * This is where the magic happens: The main `App` uses this class to run
  * ReactPHP's efficient HTTP server to handle incoming HTTP requests when
@@ -17,11 +19,11 @@ use React\Socket\SocketServer;
  * continue to run until it is interrupted by a signal.
  *
  * Note that this is an internal class only and nothing you should usually have
- * to care about. See also the `App` and `SapiHandler` for more details.
+ * to care about. See also the `App` and `SapiRunner` for more details.
  *
  * @internal
  */
-class ReactiveHandler
+class HttpServerRunner
 {
     /** @var LogStreamHandler */
     private $logger;

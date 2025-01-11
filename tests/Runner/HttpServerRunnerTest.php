@@ -1,9 +1,9 @@
 <?php
 
-namespace FrameworkX\Tests\Io;
+namespace FrameworkX\Tests\Runner;
 
 use FrameworkX\Io\LogStreamHandler;
-use FrameworkX\Io\ReactiveHandler;
+use FrameworkX\Runner\HttpServerRunner;
 use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
 use React\Http\Message\Response;
@@ -12,7 +12,7 @@ use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
 use function React\Async\await;
 
-class ReactiveHandlerTest extends TestCase
+class HttpServerRunnerTest extends TestCase
 {
     public function testRunWillReportDefaultListeningAddressAndRunLoop(): void
     {
@@ -27,7 +27,7 @@ class ReactiveHandlerTest extends TestCase
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://127.0.0.1:8080']);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, null);
+        $runner = new HttpServerRunner($logger, null);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -41,7 +41,7 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     public function testRunWillReportGivenListeningAddressAndRunLoop(): void
@@ -56,7 +56,7 @@ class ReactiveHandlerTest extends TestCase
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://' . $addr]);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -70,7 +70,7 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     public function testRunWillReportGivenListeningAddressWithRandomPortAndRunLoop(): void
@@ -79,7 +79,7 @@ class ReactiveHandlerTest extends TestCase
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive([$this->matches('Listening on http://127.0.0.1:%d')]);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -93,7 +93,7 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     public function testRunWillRestartLoopUntilSocketIsClosed(): void
@@ -101,7 +101,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () use ($logger) {
@@ -120,7 +120,7 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     public function testRunWillListenForHttpRequestAndSendBackHttpResponseOverSocket(): void
@@ -134,7 +134,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         Loop::futureTick(function () use ($addr): void {
             $connector = new Connector();
@@ -163,7 +163,7 @@ class ReactiveHandlerTest extends TestCase
             });
         });
 
-        $handler->run(function (): Response {
+        $runner->run(function (): Response {
             return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
         });
     }
@@ -179,7 +179,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
@@ -216,7 +216,7 @@ class ReactiveHandlerTest extends TestCase
         });
 
         $done = false;
-        $handler->run(function () use (&$done): Response {
+        $runner->run(function () use (&$done): Response {
             $promise = new Promise(function (callable $resolve) use (&$done): void {
                 Loop::futureTick(function () use ($resolve, &$done): void {
                     $resolve(null);
@@ -243,7 +243,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
@@ -269,7 +269,7 @@ class ReactiveHandlerTest extends TestCase
             });
         });
 
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     /**
@@ -282,7 +282,7 @@ class ReactiveHandlerTest extends TestCase
         $logger->expects($this->exactly(2))->method('log');
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         Loop::futureTick(function () use ($logger) {
             $logger->expects($this->once())->method('log')->with('Received SIGINT, stopping loop');
@@ -293,7 +293,7 @@ class ReactiveHandlerTest extends TestCase
         });
 
         $this->expectOutputRegex("#^\r?$#");
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     /**
@@ -305,7 +305,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         Loop::futureTick(function () use ($logger) {
             $logger->expects($this->once())->method('log')->with('Received SIGTERM, stopping loop');
@@ -315,7 +315,7 @@ class ReactiveHandlerTest extends TestCase
             posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
         });
 
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     public function testRunWithEmptyAddressThrows(): void
@@ -323,10 +323,10 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '');
+        $runner = new HttpServerRunner($logger, '');
 
         $this->expectException(\InvalidArgumentException::class);
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 
     public function testRunWithBusyPortThrows(): void
@@ -343,10 +343,10 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');
-        $handler->run(function (): void { });
+        $runner->run(function (): void { });
     }
 }
