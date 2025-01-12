@@ -321,6 +321,73 @@ $ sudoedit /etc/php/8.4/cli/php.ini
 + memory_limit = -1
 ```
 
+### FD limits
+
+By default, many systems limit the number of file descriptors (FDs) that a
+single process can have open at once to 1024, and following the Unix philosophy
+that "everything is a file", this also includes network connections. This limit
+is usually more than enough for most simple use cases, but if you're running a
+high-concurrency server, you may want to handle more connections simultaneously.
+No problem – Framework X has you covered.
+
+The `ulimit` command (or its equivalent in your system's service management tool,
+like [systemd](#systemd) or [Docker](#docker-containers) flags) allows you to
+set soft and hard limits for the maximum number of open files. Increasing these
+limits will enable your application to support more concurrent connections:
+
+```bash
+ulimit -n 100000
+```
+
+Additionally, the default [event loop implementation](https://github.com/reactphp/event-loop#loop-implementations)
+in Framework X uses the `select()` system call, which is also limited to 1024
+file descriptors on most systems (`PHP_FD_SETSIZE` constant). If you want to use a
+higher limit, you need to install one of the supported event loop extensions
+from PECL:
+
+* [`ext-ev`](https://pecl.php.net/package/ev) (recommended)
+* [`ext-event`](https://pecl.php.net/package/event)
+* [`ext-uv`](https://pecl.php.net/package/uv) (beta)
+
+Besides your `ulimit` setting, no further configuration is required – these
+extensions will automatically be loaded when available. So, whether your
+application needs to handle hundreds or even millions of connections
+([C10k problem](https://en.wikipedia.org/wiki/C10k_problem)), Framework X has
+you covered.
+
+> ✅ **Avoiding misconfigurations**
+>
+> Make sure to adjust the `ulimit` setting according to your specific needs. If
+> you create an outgoing connection for each request (think building a proxy
+> server or using isolated database connections), you may temporarily require
+> two FDs per request. On the other hand, simple applications may get pretty far
+> with just the defaults.
+>
+> As soon as a file or connection is closed, its FD will become available again
+> for future use. Accordingly, many lower-concurrency applications may never hit
+> the limit. If you do hit the limit, any operation that opens new files or
+> connections may fail with an error message like this:
+>
+> ```
+> Connection to tcp://127.0.0.1:3309 failed: Too many open files (EMFILE)
+> ```
+>
+> If you increase the `ulimit` setting, but fail to install one of the supported
+> event loop extensions, your server log may be flooded with the following
+> warning because the event loop would fail repeatedly:
+> 
+> ```
+> stream_select(): You MUST recompile PHP with a larger value of FD_SETSIZE.
+> It is set to 1024, but you have descriptors numbered at least as high as 2048.
+> --enable-fd-setsize=2048 is recommended, but you may want to set it
+> to equal the maximum number of open files supported by your system,
+> in order to avoid seeing this error again at a later date.
+> ```
+>
+> If your system is seeing 100% CPU usage for no apparent reasons, this may be
+> the reason why. Follow the instructions above or follow the best practices for
+> [Docker](#docker-containers) below.
+
 ### Systemd
 
 So far, we're manually executing the application server on the command line and
@@ -355,6 +422,7 @@ Description=ACME server
 [Service]
 ExecStart=/usr/bin/php /home/alice/projects/acme/public/index.php
 User=alice
+LimitNOFILE=100000
 
 [Install]
 WantedBy=multi-user.target
@@ -625,7 +693,7 @@ Once the Docker image is built, you can run a Docker container from this image:
 === "Detached container in background"
 
     ```bash
-    $ docker run -d -p 8080:8080 acme
+    $ docker run -d --ulimit nofile=100000 -p 8080:8080 acme
     ```
 
 Once running, you can check your web application responds as expected. Use your
