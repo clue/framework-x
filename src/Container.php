@@ -372,8 +372,12 @@ class Container
     /** @throws void */
     private static function parameterError(\ReflectionParameter $parameter): string
     {
-        $name = $parameter->getDeclaringFunction()->getShortName();
-        if (!$parameter->getDeclaringFunction()->isClosure() && ($class = $parameter->getDeclaringClass()) !== null) {
+        $function = $parameter->getDeclaringFunction();
+        $name = $function->getShortName();
+        if ($name[0] === '{') { // $function->isAnonymous() (PHP 8.2+)
+            // use PHP 8.4+ format including closure file and line on all PHP versions: https://3v4l.org/tAs7s
+            $name = '{closure:' . $function->getFileName() . ':' . $function->getStartLine() . '}';
+        } elseif (($class = $parameter->getDeclaringClass()) !== null) {
             $name = explode("\0", $class->getName())[0] . '::' . $name;
         }
 

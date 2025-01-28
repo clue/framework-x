@@ -1275,6 +1275,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (string $username) {
                 return (object) ['name' => $username];
@@ -1284,7 +1285,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageMatches('/Argument 1 \(\$username\) of {closure(:[^{}]+)?}\(\) is not defined$/');
+        $this->expectExceptionMessage('Argument 1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
         $callable($request);
     }
 
@@ -1763,6 +1764,7 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function ($undefined) { return $undefined; }
         ]);
@@ -1770,7 +1772,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageMatches('/Argument 1 \(\$undefined\) of {closure(:[^{}]+)?}\(\) has no type$/');
+        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() has no type');
         $callable($request);
     }
 
@@ -1781,6 +1783,7 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (mixed $undefined) { return $undefined; }
         ]);
@@ -1788,7 +1791,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageMatches('/Argument 1 \(\$undefined\) of {closure(:[^{}]+)?}\(\) is not defined$/');
+        $this->expectExceptionMessage('Argument 1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
         $callable($request);
     }
 
@@ -1796,6 +1799,7 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (\stdClass $data) { return $data; }
         ]);
@@ -1803,7 +1807,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageMatches('/Argument 1 \(\$data\) of {closure(:[^{}]+)?}\(\) is recursive$/');
+        $this->expectExceptionMessage('Argument 1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() is recursive');
         $callable($request);
     }
 
@@ -2087,6 +2091,38 @@ class ContainerTest extends TestCase
         $container->getEnv('X_FOO');
     }
 
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvThrowsWhenFactoryUsesBuiltInFunctionThatReferencesUnknownVariable(): void
+    {
+        $container = new Container([
+            'X_FOO' => \Closure::fromCallable('extension_loaded')
+        ]);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Argument 1 ($extension) of extension_loaded() is not defined');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenFactoryUsesClassMethodThatReferencesUnknownVariable(): void
+    {
+        $class = new class {
+            public function foo(string $bar): string
+            {
+                return $bar;
+            }
+        };
+
+        $container = new Container([
+            'X_FOO' => \Closure::fromCallable([$class, 'foo'])
+        ]);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Argument 1 ($bar) of class@anonymous::foo() is not defined');
+        $container->getEnv('X_FOO');
+    }
+
     public function testGetEnvThrowsIfMapPsrContainerReturnsInvalidType(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
@@ -2232,17 +2268,5 @@ class ContainerTest extends TestCase
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, stdClass given');
         new Container((object) []); // @phpstan-ignore-line
-    }
-
-    public function expectExceptionMessageMatches(string $regularExpression): void
-    {
-        if (method_exists(parent::class, 'expectExceptionMessageMatches')) {
-            // @phpstan-ignore-next-line PHPUnit 8.4+
-            parent::expectExceptionMessageMatches($regularExpression);
-        } else {
-            // legacy PHPUnit
-            assert(method_exists($this, 'expectExceptionMessageRegExp'));
-            $this->expectExceptionMessageRegExp($regularExpression);
-        }
     }
 }
