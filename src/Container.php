@@ -22,7 +22,7 @@ class Container
         /** @var mixed $loader explicit type check for mixed if user ignores parameter type */
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
             throw new \TypeError(
-                'Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . (\is_object($loader) ? get_class($loader) : gettype($loader)) . ' given'
+                'Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . $this->gettype($loader) . ' given'
             );
         }
 
@@ -31,7 +31,7 @@ class Container
                 (!\is_object($value) && !\is_scalar($value) && $value !== null) ||
                 (!$value instanceof $name && !$value instanceof \Closure && !\is_string($value) && \strpos($name, '\\') !== false)
             ) {
-                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
+                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . $this->gettype($value));
             }
         }
         $this->container = $loader;
@@ -113,7 +113,7 @@ class Container
         }
 
         if (!\is_string($value) && $value !== null) {
-            throw new \TypeError('Environment variable $' . $name . ' expected type string|null, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+            throw new \TypeError('Environment variable $' . $name . ' expected type string|null, but got ' . $this->gettype($value));
         }
 
         return $value;
@@ -166,7 +166,7 @@ class Container
                 // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                 $value = $this->loadObject($this->container[$name], $depth - 1);
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . \get_class($value));
+                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . $this->gettype($value));
                 }
 
                 $this->container[$name] = $value;
@@ -187,12 +187,12 @@ class Container
                     $value = $this->loadObject($value, $depth - 1);
                 }
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
+                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . $this->gettype($value));
                 }
 
                 $this->container[$name] = $value;
             } elseif (!$this->container[$name] instanceof $name) {
-                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . (\is_object($this->container[$name]) ? \get_class($this->container[$name]) : \gettype($this->container[$name])));
+                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . $this->gettype($this->container[$name]));
             }
 
             assert($this->container[$name] instanceof $name);
@@ -329,7 +329,7 @@ class Container
             $value = $params === [] ? $factory() : $factory(...$params);
 
             if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar|null from factory, but got ' . \gettype($value));
+                throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar|null from factory, but got ' . $this->gettype($value));
             }
 
             $this->container[$name] = $value;
@@ -363,7 +363,7 @@ class Container
             (!\is_object($value) && !\in_array($type, ['string', 'int', 'float', 'bool'])) ||
             ($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))
         ) {
-            throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
+            throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . $this->gettype($value));
         }
 
         return $value;
@@ -372,11 +372,35 @@ class Container
     /** @throws void */
     private static function parameterError(\ReflectionParameter $parameter): string
     {
-        $name = $parameter->getDeclaringFunction()->getShortName();
-        if (!$parameter->getDeclaringFunction()->isClosure() && ($class = $parameter->getDeclaringClass()) !== null) {
+        $function = $parameter->getDeclaringFunction();
+        $name = $function->getShortName();
+        if ($name[0] === '{') { // $function->isAnonymous() (PHP 8.2+)
+            // use PHP 8.4+ format including closure file and line on all PHP versions: https://3v4l.org/tAs7s
+            $name = '{closure:' . $function->getFileName() . ':' . $function->getStartLine() . '}';
+        } elseif (($class = $parameter->getDeclaringClass()) !== null) {
             $name = explode("\0", $class->getName())[0] . '::' . $name;
         }
 
-        return 'Argument ' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . $name . '()';
+        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . $name . '()';
+    }
+
+    /**
+     * @param mixed $value
+     * @return string
+     * @throws void
+     * @see https://www.php.net/manual/en/function.get-debug-type.php (PHP 8+)
+     */
+    private function gettype($value): string
+    {
+        if (\is_int($value)) {
+            return 'int';
+        } elseif (\is_float($value)) {
+            return 'float';
+        } elseif (\is_bool($value)) {
+            return \var_export($value, true);
+        } elseif ($value === null) {
+            return 'null';
+        }
+        return \is_object($value) ? \get_class($value) : \gettype($value);
     }
 }
