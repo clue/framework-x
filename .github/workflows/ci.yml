@@ -28,7 +28,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: xdebug
+          coverage: ${{ (matrix.os != 'windows-2022' || matrix.php < 8.2) && 'xdebug' || '' }} # temporarily skip Xdebug on Windows with PHP 8.2+ due to segfault with Xdebug 3.5.0-dev
           ini-file: development
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text --coverage-clover=clover.xml
@@ -36,6 +36,7 @@ jobs:
       - run: vendor/bin/phpunit --coverage-text --coverage-clover=clover.xml -c phpunit.xml.legacy
         if: ${{ matrix.php < 7.3 }}
       - name: Check 100% code coverage
+        if: ${{ matrix.os != 'windows-2022' || matrix.php < 8.2 }} # temporarily skip coverage on Windows with PHP 8.2+ due to segfault with Xdebug 3.5.0-dev
         shell: php {0}
         run: |
           <?php
