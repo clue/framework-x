@@ -2080,6 +2080,45 @@ class ContainerTest extends TestCase
         $this->assertEquals('foo', $ret);
     }
 
+    public function testGetEnvThrowsIfFactoryFunctionThrows(): void
+    {
+        $container = new Container([
+            'X_FOO' => function () {
+                throw new \RuntimeException('Demo');
+            }
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Demo');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsIfFactoryFunctionReturnsInvalidResource(): void
+    {
+        $container = new Container([
+            'X_FOO' => function () {
+                return tmpfile();
+            }
+        ]);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Container variable $X_FOO expected type object|scalar|null from factory, but got resource');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsIfFactoryFunctionReturnsInvalidInt(): void
+    {
+        $container = new Container([
+            'X_FOO' => function () {
+                return 0;
+            }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Environment variable $X_FOO expected type string|null, but got int');
+        $container->getEnv('X_FOO');
+    }
+
     public function testGetEnvThrowsIfMapContainsInvalidType(): void
     {
         $container = new Container([
@@ -2189,6 +2228,32 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
     }
 
+    public function testGetAccessLogHandlerThrowsIfFactoryFunctionThrows(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => function () {
+                throw new \RuntimeException('Demo');
+            }
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Demo');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfFactoryFunctionReturnsInvalidValue(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => function () {
+                return null;
+            }
+        ]);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Factory for FrameworkX\AccessLogHandler returned unexpected null');
+        $container->getAccessLogHandler();
+    }
+
     public function testGetErrorHandlerReturnsDefaultErrorHandlerInstance(): void
     {
         $container = new Container([]);
@@ -2239,6 +2304,32 @@ class ContainerTest extends TestCase
         $errorHandler = $container->getErrorHandler();
 
         $this->assertInstanceOf(ErrorHandler::class, $errorHandler);
+    }
+
+    public function testGetErrorHandlerThrowsIfFactoryFunctionThrows(): void
+    {
+        $container = new Container([
+            ErrorHandler::class => function () {
+                throw new \RuntimeException('Demo');
+            }
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Demo');
+        $container->getErrorHandler();
+    }
+
+    public function testGetErrorHandlerThrowsIfFactoryFunctionReturnsInvalidValue(): void
+    {
+        $container = new Container([
+            ErrorHandler::class => function () {
+                return null;
+            }
+        ]);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Factory for FrameworkX\ErrorHandler returned unexpected null');
+        $container->getErrorHandler();
     }
 
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler(): void

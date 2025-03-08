@@ -16,7 +16,10 @@ class Container
     /** @var bool */
     private $useProcessEnv;
 
-    /** @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
+    /**
+     * @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader
+     * @throws \TypeError|\BadMethodCallException if given $loader is invalid
+     */
     public function __construct($loader = [])
     {
         /** @var mixed $loader explicit type check for mixed if user ignores parameter type */
@@ -40,7 +43,11 @@ class Container
         $this->useProcessEnv = \ZEND_THREAD_SAFE === false || \in_array(\PHP_SAPI, ['cli', 'cli-server', 'cgi-fcgi', 'fpm-fcgi'], true);
     }
 
-    /** @return mixed */
+    /**
+     * @return mixed returns whatever the $next handler returns
+     * @throws \BadMethodCallException if used as a final request handler
+     * @throws \Throwable if $next handler throws unexpected exception
+     */
     public function __invoke(ServerRequestInterface $request, ?callable $next = null)
     {
         if ($next === null) {
@@ -60,6 +67,7 @@ class Container
     /**
      * @param class-string $class
      * @return callable(ServerRequestInterface,?callable=null)
+     * @throws void
      * @internal
      */
     public function callable(string $class): callable
@@ -99,7 +107,11 @@ class Container
         };
     }
 
-    /** @internal */
+    /**
+     * @throws \BadMethodCallException|\TypeError if container config or factory returns an unexpected type
+     * @throws \Throwable if container factory function throws unexpected exception
+     * @internal
+     */
     public function getEnv(string $name): ?string
     {
         assert(\preg_match('/^[A-Z][A-Z0-9_]+$/', $name) === 1);
@@ -119,7 +131,11 @@ class Container
         return $value;
     }
 
-    /** @internal */
+    /**
+     * @throws \BadMethodCallException|\TypeError if container config or factory returns an unexpected type
+     * @throws \Throwable if container factory function throws unexpected exception
+     * @internal
+     */
     public function getAccessLogHandler(): AccessLogHandler
     {
         if ($this->container instanceof ContainerInterface) {
@@ -133,7 +149,11 @@ class Container
         return $this->loadObject(AccessLogHandler::class);
     }
 
-    /** @internal */
+    /**
+     * @throws \BadMethodCallException|\TypeError if container config or factory returns an unexpected type
+     * @throws \Throwable if container factory function throws unexpected exception
+     * @internal
+     */
     public function getErrorHandler(): ErrorHandler
     {
         if ($this->container instanceof ContainerInterface) {
@@ -152,6 +172,7 @@ class Container
      * @param class-string<T> $name
      * @return T
      * @throws \BadMethodCallException if object of type $name can not be loaded
+     * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
@@ -230,6 +251,7 @@ class Container
     /**
      * @return list<mixed>
      * @throws \BadMethodCallException if either parameter can not be loaded
+     * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables): array
     {
@@ -244,6 +266,7 @@ class Container
     /**
      * @return mixed
      * @throws \BadMethodCallException if $parameter can not be loaded
+     * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables) /*: mixed (PHP 8.0+) */
     {
@@ -308,6 +331,7 @@ class Container
     /**
      * @return object|string|int|float|bool|null
      * @throws \BadMethodCallException if $name is not a valid container variable
+     * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
