@@ -290,26 +290,13 @@ class Container
         \assert(\is_array($this->container));
         $type = $parameter->getType();
 
-        // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
-        // @phpstan-ignore-next-line for PHP < 8
-        if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
-            if ($parameter->isDefaultValueAvailable()) {
-                return $parameter->getDefaultValue();
-            }
-
-            throw new \Error(
-                self::parameterError($parameter, $for) . ' expects unsupported type ' . $type
-            );
-        } // @codeCoverageIgnoreEnd
-
         // load container variables if parameter name is known
-        \assert($type === null || $type instanceof \ReflectionNamedType);
         if ($allowVariables && $this->hasVariable($parameter->getName())) {
             $value = $this->loadVariable($parameter->getName(), $depth);
 
             // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
             // allow null values if parameter is marked nullable or untyped or mixed
-            if ($type === null || ($value === null && $parameter->allowsNull()) || $type->getName() === 'mixed' || $this->validateType($value, $type)) {
+            if ($type === null || ($value === null && $parameter->allowsNull()) || ($type instanceof \ReflectionNamedType && $type->getName() === 'mixed') || $this->validateType($value, $type)) {
                 return $value;
             }
 
@@ -389,12 +376,31 @@ class Container
 
     /**
      * @param object|string|int|float|bool|null $value
-     * @param \ReflectionNamedType $type
+     * @param \ReflectionType $type
      * @throws void
      */
-    private function validateType($value, \ReflectionNamedType $type): bool
+    private function validateType($value, \ReflectionType $type): bool
     {
+        // check union types (PHP 8.0+) and intersection types (PHP 8.1+) and DNF types (PHP 8.2+)
+        if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
+            $early = $type instanceof \ReflectionUnionType;
+            foreach ($type->getTypes() as $type) {
+                // return early success if any union type matches
+                // return early failure if any intersection type doesn't match
+                if ($this->validateType($value, $type) === $early) {
+                    return $early;
+                }
+            }
+            return !$early;
+        } // @codeCoverageIgnoreEnd
+
+        // if we reach here, we handle only a single named type
+        \assert($type instanceof \ReflectionNamedType);
         $type = $type->getName();
+
+        // nullable types and mixed already handled before entering this check
+        \assert($type !== 'null' && $type !== 'mixed');
+
         return (
             (\is_object($value) && $value instanceof $type) ||
             (\is_string($value) && $type === 'string') ||
@@ -424,14 +430,14 @@ class Container
     }
 
     /**
-     * @param \ReflectionNamedType $type
+     * @param \ReflectionType $type
      * @return string
      * @throws void
      * @see https://www.php.net/manual/en/reflectiontype.tostring.php (PHP 8+)
      */
-    private static function typeName(\ReflectionNamedType $type): string
+    private static function typeName(\ReflectionType $type): string
     {
-        return ($type->allowsNull() && $type->getName() !== 'mixed' ? '?' : '') . $type->getName();
+        return $type instanceof \ReflectionNamedType ? ($type->allowsNull() && $type->getName() !== 'mixed' ? '?' : '') . $type->getName() : (string) $type;
     }
 
     /**
