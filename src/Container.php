@@ -180,7 +180,7 @@ class Container
      * @param class-string<T> $name
      * @return T
      * @throws \TypeError if container config or factory returns an unexpected type
-     * @throws \BadMethodCallException if object of type $name can not be loaded
+     * @throws \Error|\BadMethodCallException if object of type $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
@@ -266,7 +266,7 @@ class Container
     /**
      * @return list<mixed>
      * @throws \TypeError if container config or factory returns an unexpected type
-     * @throws \BadMethodCallException if either parameter can not be loaded
+     * @throws \Error|\BadMethodCallException if either parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables, string $for): array
@@ -282,23 +282,27 @@ class Container
     /**
      * @return mixed
      * @throws \TypeError if container config or factory returns an unexpected type
-     * @throws \BadMethodCallException if $parameter can not be loaded
+     * @throws \Error|\BadMethodCallException if $parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables, string $for) /*: mixed (PHP 8.0+) */
     {
         assert(\is_array($this->container));
-
         $type = $parameter->getType();
-        $hasDefault = $parameter->isDefaultValueAvailable() || ((!$type instanceof \ReflectionNamedType || $type->getName() !== 'mixed') && $parameter->allowsNull());
 
         // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
         // @phpstan-ignore-next-line for PHP < 8
         if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
-            if ($hasDefault) {
-                return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+            if ($parameter->isDefaultValueAvailable()) {
+                return $parameter->getDefaultValue();
             }
-            throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' expects unsupported type ' . $type);
+            if ($type->allowsNull()) {
+                return null;
+            }
+
+            throw new \Error(
+                self::parameterError($parameter, $for) . ' expects unsupported type ' . $type
+            );
         } // @codeCoverageIgnoreEnd
 
         // load container variables if parameter name is known
@@ -313,32 +317,25 @@ class Container
             }
 
             throw new \TypeError(
-                self::parameterError($parameter, $for) . ' must be of type ' . ($type->allowsNull() ? '?' : '') . $type->getName() . ', ' . $this->gettype($value) . ' given'
+                self::parameterError($parameter, $for) . ' must be of type ' . self::typeName($type) . ', ' . $this->gettype($value) . ' given'
             );
         }
 
-        // abort if parameter is untyped and not explicitly defined by container variable
-        if ($type === null) {
-            assert($parameter->allowsNull());
+        // use default/nullable argument if not loadable as container variable or by type
+        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin() || !\array_key_exists($type->getName(), $this->container)) {
             if ($parameter->isDefaultValueAvailable()) {
                 return $parameter->getDefaultValue();
             }
-            throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' has no type');
-        }
-
-        // use default/nullable argument if not loadable as container variable or by type
-        assert($type instanceof \ReflectionNamedType);
-        if ($hasDefault && ($type->isBuiltin() || !\array_key_exists($type->getName(), $this->container))) {
-            return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+            if ($type !== null && $type->allowsNull() && $type->getName() !== 'mixed') {
+                return null;
+            }
         }
 
         // abort if required container variable is not defined or for any other primitive types (array etc.)
-        if ($type->isBuiltin()) {
-            if ($allowVariables) {
-                throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' is not defined');
-            } else {
-                throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' expects unsupported type ' . $type->getName());
-            }
+        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+            throw new \Error(
+                self::parameterError($parameter, $for) . ' requires container config' . ($type !== null ? ' with type ' . self::typeName($type) : '') . ', none given'
+            );
         }
 
         // abort for unreasonably deep nesting or recursive types
@@ -358,7 +355,7 @@ class Container
     /**
      * @return object|string|int|float|bool|null
      * @throws \TypeError if container factory returns an unexpected type
-     * @throws \BadMethodCallException if $name can not be loaded
+     * @throws \Error|\BadMethodCallException if $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadVariable(string $name, int $depth = 64) /*: object|string|int|float|bool|null (PHP 8.0+) */
@@ -438,6 +435,17 @@ class Container
     private static function parameterError(\ReflectionParameter $parameter, string $for): string
     {
         return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . self::functionName($parameter->getDeclaringFunction()) . ($for !== '' ? ' for ' . $for : '');
+    }
+
+    /**
+     * @param \ReflectionNamedType $type
+     * @return string
+     * @throws void
+     * @see https://www.php.net/manual/en/reflectiontype.tostring.php (PHP 8+)
+     */
+    private static function typeName(\ReflectionNamedType $type): string
+    {
+        return ($type->allowsNull() && $type->getName() !== 'mixed' ? '?' : '') . $type->getName();
     }
 
     /**

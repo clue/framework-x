@@ -1637,12 +1637,12 @@ class AppTest extends TestCase
 
         yield [
             InvalidConstructorUntyped::class,
-            'Argument #1 ($value) of %s::__construct() has no type'
+            'Argument #1 ($value) of %s::__construct() requires container config, none given'
         ];
 
         yield [
             InvalidConstructorInt::class,
-            'Argument #1 ($value) of %s::__construct() expects unsupported type int'
+            'Argument #1 ($value) of %s::__construct() requires container config with type int, none given'
         ];
 
         if (PHP_VERSION_ID >= 80000) {

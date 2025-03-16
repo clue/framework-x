@@ -1300,7 +1300,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is not defined');
+        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type string, none given');
         $callable($request);
     }
 
@@ -1663,7 +1663,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($name) of class@anonymous::__construct() expects unsupported type string');
+        $this->expectExceptionMessage('Argument #1 ($name) of class@anonymous::__construct() requires container config with type string, none given');
         $callable($request);
     }
 
@@ -1816,7 +1816,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass has no type');
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config, none given');
         $callable($request);
     }
 
@@ -1835,7 +1835,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(\stdClass::class);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is not defined');
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type mixed, none given');
         $callable($request);
     }
 
@@ -2184,8 +2184,8 @@ class ContainerTest extends TestCase
             'X_FOO' => \Closure::fromCallable('extension_loaded')
         ]);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($extension) of extension_loaded() for $X_FOO is not defined');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($extension) of extension_loaded() for $X_FOO requires container config with type string, none given');
         $container->getEnv('X_FOO');
     }
 
@@ -2202,8 +2202,51 @@ class ContainerTest extends TestCase
             'X_FOO' => \Closure::fromCallable([$class, 'foo'])
         ]);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() for $X_FOO is not defined');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() for $X_FOO requires container config with type string, none given');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsRequiredEnvVariableButNoneGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (string $X_UNDEFINED) { return (string) $X_UNDEFINED; },
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO requires container config with type string, none given');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsNullableIntArgumentButGivenString(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (?int $bar) { return (string) $bar; },
+            'bar' => 'bar'
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($bar) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type ?int, string given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsUnsupportedUnionType(): void
+    {
+        $line = __LINE__ + 2;
+        $fn = null;
+        $fn = #[PHP8] function (string|int $X_UNION) { return (string) $X_UNION; };
+        $container = new Container([
+            'X_FOO' => $fn,
+            'X_UNION' => 42
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNION) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO expects unsupported type string|int');
         $container->getEnv('X_FOO');
     }
 
