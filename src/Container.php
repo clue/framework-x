@@ -190,7 +190,7 @@ class Container
         if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
                 if ($depth < 1) {
-                    throw new \BadMethodCallException('Container config for ' . $name . ' is recursive');
+                    throw new \Error('Container config for ' . $name . ' is recursive');
                 }
 
                 // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
@@ -212,7 +212,7 @@ class Container
 
                 if (\is_string($value)) {
                     if ($depth < 1) {
-                        throw new \BadMethodCallException('Container config for ' . $name . ' is recursive');
+                        throw new \Error('Container config for ' . $name . ' is recursive');
                     }
 
                     // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
@@ -287,6 +287,11 @@ class Container
      */
     private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables, string $for) /*: mixed (PHP 8.0+) */
     {
+        // abort for unreasonably deep nesting or recursive types
+        if ($depth < 1) {
+            throw new \Error(self::parameterError($parameter, $for) . ' is recursive');
+        }
+
         assert(\is_array($this->container));
         $type = $parameter->getType();
 
@@ -338,11 +343,6 @@ class Container
             );
         }
 
-        // abort for unreasonably deep nesting or recursive types
-        if ($depth < 1) {
-            throw new \BadMethodCallException(self::parameterError($parameter, $for) . ' is recursive');
-        }
-
         // @phpstan-ignore-next-line because `$type->getName()` is a `class-string` by definition
         return $this->loadObject($type->getName(), $depth - 1);
     }
@@ -364,10 +364,6 @@ class Container
         assert(\is_array($this->container) || !$this->container->has($name));
 
         if (\is_array($this->container) && ($this->container[$name] ?? null) instanceof \Closure) {
-            if ($depth < 1) {
-                throw new \BadMethodCallException('Container config for $' . $name . ' is recursive');
-            }
-
             // build list of factory parameters based on parameter types
             $factory = $this->container[$name];
             assert($factory instanceof \Closure);

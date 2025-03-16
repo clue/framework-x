@@ -1315,6 +1315,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (string $stdClass) {
                 return (object) ['name' => $stdClass];
@@ -1324,7 +1325,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container config for $stdClass is recursive');
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line .'}() for $stdClass is recursive');
         $callable($request);
     }
 
@@ -2354,6 +2355,30 @@ class ContainerTest extends TestCase
 
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for FrameworkX\AccessLogHandler must be of type FrameworkX\AccessLogHandler, null returned');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfConfigIsRecursive(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => AccessLogHandler::class
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfFactoryFunctionIsRecursive(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => function () {
+                return AccessLogHandler::class;
+            }
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
         $container->getAccessLogHandler();
     }
 
