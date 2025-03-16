@@ -100,7 +100,9 @@ class Container
             // This initial version is intentionally limited to checking the method name only.
             // A follow-up version will likely use reflection to check request handler argument types.
             if (!is_callable($handler)) {
-                throw new \BadMethodCallException('Request handler class "' . $class . '" has no public __invoke() method');
+                throw new \BadMethodCallException(
+                    'Request handler class ' . \explode("\0", $class)[0] . ' has no public __invoke() method'
+                );
             }
 
             // invoke request handler as middleware handler or final controller
@@ -203,7 +205,7 @@ class Container
             } elseif ($this->container[$name] instanceof \Closure) {
                 // build list of factory parameters based on parameter types
                 $closure = new \ReflectionFunction($this->container[$name]);
-                $params = $this->loadFunctionParams($closure, $depth, true, $name);
+                $params = $this->loadFunctionParams($closure, $depth, true, \explode("\0", $name)[0]);
 
                 // invoke factory with list of parameters
                 $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
@@ -427,7 +429,7 @@ class Container
             // use PHP 8.4+ format including closure file and line on all PHP versions: https://3v4l.org/tAs7s
             $name = '{closure:' . $function->getFileName() . ':' . $function->getStartLine() . '}';
         } elseif ($function instanceof \ReflectionMethod && ($class = $function->getDeclaringClass()) !== null) {
-            $name = explode("\0", $class->getName())[0] . '::' . $name;
+            $name = \explode("\0", $class->getName())[0] . '::' . $name;
         }
         return $name . '()';
     }
@@ -455,6 +457,6 @@ class Container
         } elseif ($value === null) {
             return 'null';
         }
-        return \is_object($value) ? \get_class($value) : \gettype($value);
+        return \is_object($value) ? \explode("\0", \get_class($value))[0] : \gettype($value);
     }
 }

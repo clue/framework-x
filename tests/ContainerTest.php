@@ -1264,6 +1264,21 @@ class ContainerTest extends TestCase
         $this->assertEquals('"bar"', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableThatThrowsForNonCallableClass(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class() { };
+
+        $container = new Container([]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Request handler class class@anonymous has no public __invoke() method');
+        $callable($request);
+    }
+
     public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesUnknownVariable(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -1336,7 +1351,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line . '}() for ' . get_class($controller) . ' must be of type string, stdClass given');
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line . '}() for class@anonymous must be of type string, stdClass given');
         $callable($request);
     }
 
@@ -1679,6 +1694,16 @@ class ContainerTest extends TestCase
 
         new Container([
             ResponseInterface::class => new \stdClass()
+        ]);
+    }
+
+    public function testCtorThrowsWhenConfigForClassContainsInvalidAnonymousClass(): void
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($config) for key "Psr\Http\Message\ResponseInterface" must be of type Psr\Http\Message\ResponseInterface|Closure|string, class@anonymous given');
+
+        new Container([
+            ResponseInterface::class => new class() { }
         ]);
     }
 
@@ -2179,6 +2204,20 @@ class ContainerTest extends TestCase
 
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() for $X_FOO is not defined');
+        $container->getEnv('X_FOO');
+    }
+
+    /** @link https://3v4l.org/VaFMd */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsIntArgumentButGivenAnonymousClass(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (int $bar) { return (string) $bar; },
+            'bar' => new class { }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($bar) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type int, class@anonymous given');
         $container->getEnv('X_FOO');
     }
 
