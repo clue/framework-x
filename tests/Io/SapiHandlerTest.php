@@ -199,12 +199,11 @@ class SapiHandlerTest extends TestCase
         $this->assertEquals('example.com:443', $request->getHeaderLine('Host'));
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsEmptyResponseWithNoHeadersAndEmptyBodyAndAssignsNoContentTypeAndEmptyContentLength(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -213,15 +212,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsJsonResponseWithGivenHeadersAndBodyAndAssignsMatchingContentLength(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -230,18 +232,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('{}');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type: application/json', 'Content-Length: 2'], xdebug_get_headers());
     }
 
     /**
-     * @backupGlobals enabled
+     * @runInSeparateProcess
      */
     public function testSendResponseSendsJsonResponseWithGivenHeadersAndMatchingContentLengthButEmptyBodyForHeadRequest(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
@@ -251,15 +253,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type: application/json', 'Content-Length: 2'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsNoContentLengthForNoContentResponse(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -268,15 +273,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type: application/json'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsEmptyBodyWithGivenHeadersButWithoutExplicitContentLengthForNoContentResponse(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -285,15 +293,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type: application/json'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndAssignsContentLengthForNotModifiedResponse(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -302,15 +313,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type: application/json', 'Content-Length: 4'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsEmptyBodyWithGivenHeadersAndExplicitContentLengthForNotModifiedResponse(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -319,15 +333,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type: application/json', 'Content-Length: 2'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamData(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -337,20 +354,20 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('test');
         $sapi->sendResponse($response);
 
-        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
-
         $body->end('test');
+
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
     }
 
     /**
-     * @backupGlobals enabled
+     * @runInSeparateProcess
      */
     public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForHeadRequest(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
@@ -361,16 +378,20 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
         $this->assertFalse($body->isReadable());
+
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNotModifiedResponse(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -380,16 +401,20 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
         $this->assertFalse($body->isReadable());
+
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseClosesStreamingResponseAndSendsResponseWithNoHeadersAndBodyForNoContentResponse(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -399,16 +424,20 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
-        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
         $this->assertFalse($body->isReadable());
+
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
+        $this->assertEquals(['Content-Type:'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSendsStreamingResponseWithNoHeadersAndBodyFromStreamDataAndNoBufferHeaderForNginxServer(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['SERVER_SOFTWARE'] = 'nginx/1';
@@ -419,17 +448,20 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('test');
         $sapi->sendResponse($response);
 
-        $this->assertEquals(['Content-Type:', 'X-Accel-Buffering: no'], xdebug_get_headers());
-
         $body->end('test');
+
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
+        $this->assertEquals(['Content-Type:', 'X-Accel-Buffering: no'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendResponseSetsMultipleCookieHeaders(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $sapi = new SapiHandler();
@@ -438,15 +470,18 @@ class SapiHandlerTest extends TestCase
         $this->expectOutputString('');
         $sapi->sendResponse($response);
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type:', 'Set-Cookie: 1=1', 'Set-Cookie: 2=2'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testRunWillSendResponseHeadersFromHandler(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         $sapi = new SapiHandler();
 
         header_remove();
@@ -457,15 +492,18 @@ class SapiHandlerTest extends TestCase
             return new Response();
         });
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testRunWillSendResponseHeadersFromDeferredHandler(): void
     {
-        if (headers_sent() || !function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('Test requires running PHPUnit with Xdebug enabled');
-        }
-
         $sapi = new SapiHandler();
 
         header_remove();
@@ -476,6 +514,10 @@ class SapiHandlerTest extends TestCase
             return resolve(new Response());
         });
 
+        if (!function_exists('xdebug_get_headers')) {
+            // $this->markTestIncomplete('Testing headers requires running PHPUnit with Xdebug enabled');
+            return;
+        }
         $this->assertEquals(['Content-Type:', 'Content-Length: 0'], xdebug_get_headers());
     }
 }
