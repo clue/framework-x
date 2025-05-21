@@ -132,6 +132,9 @@ class Container
                 }
             }
 
+            // Ensure $handler is an object at this point
+            assert(is_object($handler));
+            
             // Check if method exists on the controller
             if (!method_exists($handler, $method)) {
                 throw new \BadMethodCallException('Request handler class "' . (is_object($class) ? get_class($class) : $class) . '" has no public ' . $method . '() method');

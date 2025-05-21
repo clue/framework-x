@@ -2037,16 +2037,39 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
-    public function testCallableMethodThrowsWhenClassNotFound(): void
+
+    public function testCallableMethodThrowsWhenClassDoesNotExist(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
+
         $container = new Container();
 
-        $callable = $container->callableMethod('NonExistentClass', 'method');
+        $callable = $container->callableMethod('NonExistingClass', 'method'); // @phpstan-ignore-line
         $this->assertInstanceOf(\Closure::class, $callable);
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Request handler class NonExistentClass not found');
+        $this->expectExceptionMessage('Request handler class NonExistingClass not found');
+        $callable($request);
+    }
+
+    public function testCallableMethodThrowsWhenClassFailsToLoad(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $exception = new class('Unable to load class') extends \RuntimeException implements NotFoundExceptionInterface { };
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->never())->method('has');
+        $psr->expects($this->once())->method('get')->with('FooBar')->willThrowException($exception);
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $callable = $container->callableMethod('FooBar', 'method'); // @phpstan-ignore-line
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Request handler class FooBar failed to load: Unable to load class');
         $callable($request);
     }
 
