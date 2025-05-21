@@ -20,6 +20,7 @@ use FrameworkX\Tests\Fixtures\InvalidConstructorUnknown;
 use FrameworkX\Tests\Fixtures\InvalidConstructorUntyped;
 use FrameworkX\Tests\Fixtures\InvalidInterface;
 use FrameworkX\Tests\Fixtures\InvalidTrait;
+use FrameworkX\Tests\Fixtures\MethodController;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -1686,5 +1687,60 @@ class AppTest extends TestCase
             new ErrorHandler(),
             ...$middleware
         );
+    }
+
+    public function testControllerMethodPairAsRouteHandler(): void
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $app->get('/index', [MethodController::class, 'index']);
+        $app->get('/show/{id}', [MethodController::class, 'show']);
+
+        $request = new ServerRequest('GET', '/index');
+        $response = $app($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('index', (string)$response->getBody());
+
+        $request = new ServerRequest('GET', '/show/123');
+        $response = $app($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('show 123', (string)$response->getBody());
+    }
+
+    public function testControllerInstanceMethodPairAsRouteHandler(): void
+    {
+        $app = $this->createAppWithoutLogger();
+        $controller = new MethodController();
+        $app->get('/index', [$controller, 'index']);
+        $app->get('/show/{id}', [$controller, 'show']);
+
+        $request = new ServerRequest('GET', '/index');
+        $response = $app($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('index', (string)$response->getBody());
+
+        $request = new ServerRequest('GET', '/show/123');
+        $response = $app($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('show 123', (string)$response->getBody());
+    }
+
+    public function testControllerMethodPairAsMiddleware(): void
+    {
+        $app = $this->createAppWithoutLogger();
+        $app->get('/middleware', [MethodController::class, 'middleware'], function () {
+            return Response::plaintext('middleware');
+        });
+
+        $request = new ServerRequest('GET', '/middleware');
+        $response = $app($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('middleware', (string)$response->getBody());
+        $this->assertSame(['value'], $response->getHeader('X-Method-Controller'));
     }
 }

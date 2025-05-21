@@ -99,6 +99,52 @@ class Container
         };
     }
 
+    /**
+     * @param class-string|object $class
+     * @param string $method
+     * @return callable(ServerRequestInterface,?callable=null)
+     * @internal
+     */
+    public function callableMethod($class, string $method): callable
+    {
+        return function (ServerRequestInterface $request, ?callable $next = null) use ($class, $method) {
+            // Get a controller instance - either use the object directly or instantiate from class name
+            if (is_object($class)) {
+                $handler = $class;
+            } else {
+                // Check if class exists and is valid
+                if (\is_array($this->container) && !\class_exists($class, true) && !interface_exists($class, false) && !trait_exists($class, false)) {
+                    throw new \BadMethodCallException('Request handler class ' . $class . ' not found');
+                }
+
+                try {
+                    if ($this->container instanceof ContainerInterface) {
+                        $handler = $this->container->get($class);
+                    } else {
+                        $handler = $this->loadObject($class);
+                    }
+                } catch (\Throwable $e) {
+                    throw new \BadMethodCallException(
+                        'Request handler class ' . $class . ' failed to load: ' . $e->getMessage(),
+                        0,
+                        $e
+                    );
+                }
+            }
+
+            // Check if method exists on the controller
+            if (!method_exists($handler, $method)) {
+                throw new \BadMethodCallException('Request handler class "' . (is_object($class) ? get_class($class) : $class) . '" has no public ' . $method . '() method');
+            }
+
+            // invoke controller method as middleware handler or final controller
+            if ($next === null) {
+                return $handler->$method($request);
+            }
+            return $handler->$method($request, $next);
+        };
+    }
+
     /** @internal */
     public function getEnv(string $name): ?string
     {

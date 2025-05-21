@@ -107,6 +107,68 @@ class UserController
 }
 ```
 
+## Using controller methods
+
+In addition to invokable controllers, X also supports specifying a controller class and method pair like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$app = new FrameworkX\App();
+
+// Using controller-method pair syntax
+$app->get('/users', [Acme\Todo\UserController::class, 'index']);
+$app->get('/users/{name}', [Acme\Todo\UserController::class, 'show']);
+
+$app->run();
+```
+
+This allows you to group related actions into controller classes:
+
+```php title="src/UserController.php"
+<?php
+
+namespace Acme\Todo;
+
+use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
+
+class UserController
+{
+    public function index()
+    {
+        return Response::plaintext(
+            "List of all users\n"
+        );
+    }
+    
+    public function show(ServerRequestInterface $request)
+    {
+        return Response::plaintext(
+            "Hello " . $request->getAttribute('name') . "!\n"
+        );
+    }
+}
+```
+
+You can also use an instantiated controller if you need to:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$app = new FrameworkX\App();
+
+$userController = new Acme\Todo\UserController();
+$app->get('/users', [$userController, 'index']);
+$app->get('/users/{name}', [$userController, 'show']);
+
+$app->run();
+```
+
 ## Composer autoloading
 
 Doesn't look too complex, right? Now, we only need to tell Composer's autoloader

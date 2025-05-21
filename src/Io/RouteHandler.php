@@ -40,8 +40,8 @@ class RouteHandler
     /**
      * @param string[] $methods
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|class-string|array{0:class-string|object,1:string} $handler
+     * @param callable|class-string|array{0:class-string|object,1:string} ...$handlers
      */
     public function map(array $methods, string $route, $handler, ...$handlers): void
     {
@@ -60,6 +60,9 @@ class RouteHandler
                 unset($handlers[$i]);
             } elseif ($handler instanceof AccessLogHandler || $handler === AccessLogHandler::class) {
                 throw new \TypeError('AccessLogHandler may currently only be passed as a global middleware');
+            } elseif (\is_array($handler) && count($handler) === 2 && 
+                     (is_string($handler[0]) || is_object($handler[0])) && is_string($handler[1])) {
+                $handlers[$i] = $container->callableMethod($handler[0], $handler[1]);
             } elseif (!\is_callable($handler)) {
                 $handlers[$i] = $container->callable($handler);
             }
