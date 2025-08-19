@@ -111,7 +111,7 @@ class FilesystemHandler
 
             $stat = @\stat($path);
             if ($stat !== false) {
-                $headers['Last-Modified'] = \gmdate('D, d M Y H:i:s', $stat['mtime']) . ' GMT';
+                $headers['Last-Modified'] = \gmdate('D, d M Y H:i:s T', $stat['mtime']);
 
                 if ($request->getHeaderLine('If-Modified-Since') === $headers['Last-Modified']) {
                     return new Response(Response::STATUS_NOT_MODIFIED);

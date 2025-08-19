@@ -443,7 +443,7 @@ $app->get('/user', function (Psr\Http\Message\ServerRequestInterface $request) {
 <h1>Hello Alice</h1>
 HTML;
 
-    $modified = $date->setTimezone(new DateTimeZone('UTC'))->format(DATE_RFC7231);
+    $modified = gmdate('D, d M Y H:i:s T', $date->getTimestamp());
     if ($request->getHeaderLine('If-Modified-Since') === $modified) {
         return new React\Http\Message\Response(
             React\Http\Message\Response::STATUS_NOT_MODIFIED,
@@ -481,11 +481,19 @@ Last-Modified: Sat, 06 Nov 2021 12:31:04 GMT
 
 > ℹ️ **Working with dates**
 >
-> For use in HTTP, you may format any date in the GMT/UTC timezone using the
-> [`DATE_RFC7231`](https://www.php.net/manual/en/class.datetimeinterface.php#datetime.constants.rfc7231)
-> (PHP 7.1.5+) constant as given above. If you don't know the modification date
-> for your response or don't want to expose this information, you may want to
-> use [`ETag`](#etag) headers from the previous section instead.
+> For use in HTTP, you may format any date using the GMT time zone and the exact
+> format as given above. While UTC and GMT are often used interchangeably, the
+> HTTP specs require dates to be formatted in GMT.
+>
+> ```php
+> // convert date to GMT first, both forms are equivalent
+> $modified = gmdate('D, d M Y H:i:s T', $date->getTimestamp());
+> $modified = $date->setTimezone(new DateTimeZone('GMT'))->format('D, d M Y H:i:s T');
+> ```
+>
+> If you don't know the modification date for your response or don't want to
+> expose this information, you may want to use [`ETag`](#etag) headers from the
+> previous section instead.
 
 ## Output buffering
 
