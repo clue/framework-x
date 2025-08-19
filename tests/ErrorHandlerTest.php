@@ -422,7 +422,9 @@ class ErrorHandlerTest extends TestCase
 
         // $response = $handler->errorInvalidException($e);
         $ref = new \ReflectionMethod($handler, 'errorInvalidException');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $response = $ref->invoke($handler, $e);
         assert($response instanceof ResponseInterface);
 
@@ -480,7 +482,9 @@ class ErrorHandlerTest extends TestCase
 
         // $response = $handler->errorInvalidResponse($value);
         $ref = new \ReflectionMethod($handler, 'errorInvalidResponse');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $response = $ref->invoke($handler, $value);
         assert($response instanceof ResponseInterface);
 
@@ -502,7 +506,9 @@ class ErrorHandlerTest extends TestCase
 
         // $response = $handler->errorInvalidCoroutine($value, $file, $line);
         $ref = new \ReflectionMethod($handler, 'errorInvalidCoroutine');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $response = $ref->invoke($handler, $value, $file, $line);
         assert($response instanceof ResponseInterface);
 

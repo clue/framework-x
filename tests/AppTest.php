@@ -42,12 +42,16 @@ class AppTest extends TestCase
         $app = new App($middleware);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -71,12 +75,16 @@ class AppTest extends TestCase
         $app = new App($container);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -87,7 +95,9 @@ class AppTest extends TestCase
 
         $routeHandler = $handlers[2];
         $ref = new ReflectionProperty($routeHandler, 'container');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $this->assertSame($container, $ref->getValue($routeHandler));
     }
 
@@ -102,12 +112,16 @@ class AppTest extends TestCase
         $app = new App($container, \stdClass::class);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -119,7 +133,9 @@ class AppTest extends TestCase
 
         $routeHandler = $handlers[3];
         $ref = new ReflectionProperty($routeHandler, 'container');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $this->assertSame($container, $ref->getValue($routeHandler));
     }
 
@@ -130,12 +146,16 @@ class AppTest extends TestCase
         $app = new App($errorHandler);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -150,12 +170,16 @@ class AppTest extends TestCase
         $app = new App(ErrorHandler::class);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -172,12 +196,16 @@ class AppTest extends TestCase
         $app = new App(new Container(), $errorHandler);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -198,12 +226,16 @@ class AppTest extends TestCase
         $app = new App($container, ErrorHandler::class);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -228,12 +260,16 @@ class AppTest extends TestCase
         $app = new App($unused, $container, ErrorHandler::class, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -259,12 +295,16 @@ class AppTest extends TestCase
         $app = new App($unused, $container, $middleware, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -283,12 +323,16 @@ class AppTest extends TestCase
         $app = new App($middleware, $errorHandler);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -322,12 +366,16 @@ class AppTest extends TestCase
         $app = new App($unused, $container1, $middleware, $container2, ErrorHandler::class, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -347,12 +395,16 @@ class AppTest extends TestCase
         $app = new App($accessLogHandler, $errorHandler);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -373,12 +425,16 @@ class AppTest extends TestCase
         $app = new App($accessLogHandler, $errorHandler);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -392,12 +448,16 @@ class AppTest extends TestCase
         $app = new App(AccessLogHandler::class, ErrorHandler::class);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -420,12 +480,16 @@ class AppTest extends TestCase
         $app = new App($container, AccessLogHandler::class, ErrorHandler::class);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -450,12 +514,16 @@ class AppTest extends TestCase
         $app = new App($container, AccessLogHandler::class, ErrorHandler::class);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -473,12 +541,16 @@ class AppTest extends TestCase
         $app = new App($middleware, $accessLog, $errorHandler);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -508,12 +580,16 @@ class AppTest extends TestCase
         $app = new App($unused, $container, AccessLogHandler::class, ErrorHandler::class, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -544,12 +620,16 @@ class AppTest extends TestCase
         $app = new App($unused, $container, $middleware, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handler = $ref->getValue($app);
         assert($handler instanceof MiddlewareHandler);
 
         $ref = new ReflectionProperty($handler, 'handlers');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $handlers = $ref->getValue($handler);
         assert(is_array($handlers));
 
@@ -587,13 +667,17 @@ class AppTest extends TestCase
 
         // $sapi = $app->sapi;
         $ref = new \ReflectionProperty($app, 'sapi');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $sapi = $ref->getValue($app);
         assert($sapi instanceof ReactiveHandler);
 
         // $listenAddress = $sapi->listenAddress;
         $ref = new \ReflectionProperty($sapi, 'listenAddress');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $listenAddress = $ref->getValue($sapi);
 
         $this->assertEquals('0.0.0.0:8081', $listenAddress);
@@ -608,7 +692,9 @@ class AppTest extends TestCase
 
         // $app->sapi = $sapi;
         $ref = new \ReflectionProperty($app, 'sapi');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $sapi);
 
         $app->run();
@@ -622,7 +708,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['GET'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->get('/', function () { });
@@ -636,7 +724,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['HEAD'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->head('/', function () { });
@@ -650,7 +740,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['POST'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->post('/', function () { });
@@ -664,7 +756,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['PUT'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->put('/', function () { });
@@ -678,7 +772,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['PATCH'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->patch('/', function () { });
@@ -692,7 +788,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['DELETE'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->delete('/', function () { });
@@ -706,7 +804,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['OPTIONS'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->options('/', function () { });
@@ -720,7 +820,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->any('/', function () { });
@@ -734,7 +836,9 @@ class AppTest extends TestCase
         $router->expects($this->once())->method('map')->with(['GET', 'POST'], '/', $this->anything());
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->map(['GET', 'POST'], '/', function () { });
@@ -768,7 +872,9 @@ class AppTest extends TestCase
         }));
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->redirect('/', '/users');
@@ -800,7 +906,9 @@ class AppTest extends TestCase
         }));
 
         $ref = new ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->redirect('/', '/users', 307);

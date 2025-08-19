@@ -136,7 +136,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -154,7 +156,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/?a=1&b=hello wörld', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -172,7 +176,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GE"T', 'http://localhost:8080/wörld', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -191,7 +197,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('HEAD', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -209,7 +217,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -227,7 +237,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -245,7 +257,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -264,7 +278,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('CONNECT', 'example.com:8080', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -283,7 +299,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('OPTIONS', 'http://example.com:8080', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -302,7 +320,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -320,7 +340,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -348,7 +370,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $stream = new ThroughStream();
@@ -369,7 +393,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $stream = new ThroughStream();
@@ -391,7 +417,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $stream = new ThroughStream();
@@ -411,7 +439,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $stream = new ThroughStream();
@@ -430,7 +460,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
@@ -449,7 +481,9 @@ class AccessLogHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users');

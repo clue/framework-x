@@ -200,7 +200,9 @@ class LogStreamHandlerTest extends TestCase
         $logger->log('Hello');
 
         $ref = new \ReflectionProperty($logger, 'stream');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $stream = $ref->getValue($logger);
         assert(is_resource($stream));
 
