@@ -30,7 +30,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         // lovely: remove socket server on next tick to terminate loop
@@ -63,7 +65,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         // lovely: remove socket server on next tick to terminate loop
@@ -90,7 +94,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         // lovely: remove socket server on next tick to terminate loop
@@ -116,7 +122,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         // lovely: remove socket server on next tick to terminate loop
@@ -153,7 +161,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         Loop::futureTick(function () use ($addr): void {
@@ -202,7 +212,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         Loop::futureTick(function () use ($addr, $logger): void {
@@ -270,7 +282,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         Loop::futureTick(function () use ($addr, $logger): void {
@@ -313,7 +327,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         Loop::futureTick(function () use ($logger) {
@@ -340,7 +356,9 @@ class ReactiveHandlerTest extends TestCase
 
         // $handler->logger = $logger;
         $ref = new \ReflectionProperty($handler, 'logger');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $logger);
 
         Loop::futureTick(function () use ($logger) {

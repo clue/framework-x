@@ -24,7 +24,9 @@ class RouteHandlerTest extends TestCase
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
 
         $ref = new \ReflectionProperty($handler, 'routeCollector');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $router);
 
         $handler->map(['GET'], '/', $controller);
@@ -41,7 +43,9 @@ class RouteHandlerTest extends TestCase
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', new MiddlewareHandler([$middleware, $controller]));
 
         $ref = new \ReflectionProperty($handler, 'routeCollector');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $router);
 
         $handler->map(['GET'], '/', $middleware, $controller);
@@ -61,7 +65,9 @@ class RouteHandlerTest extends TestCase
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
 
         $ref = new \ReflectionProperty($handler, 'routeCollector');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $router);
 
         $handler->map(['GET'], '/', \stdClass::class);
@@ -77,7 +83,9 @@ class RouteHandlerTest extends TestCase
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
 
         $ref = new \ReflectionProperty($handler, 'routeCollector');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $router);
 
         $handler->map(['GET'], '/', new Container(), $controller);
@@ -96,7 +104,9 @@ class RouteHandlerTest extends TestCase
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
 
         $ref = new \ReflectionProperty($handler, 'routeCollector');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($handler, $router);
 
         assert($container instanceof Container);

@@ -27,7 +27,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['GET'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->get('/', $middleware, $controller);
@@ -44,7 +46,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['HEAD'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->head('/', $middleware, $controller);
@@ -61,7 +65,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['POST'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->post('/', $middleware, $controller);
@@ -78,7 +84,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['PUT'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->put('/', $middleware, $controller);
@@ -95,7 +103,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['PATCH'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->patch('/', $middleware, $controller);
@@ -112,7 +122,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['DELETE'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->delete('/', $middleware, $controller);
@@ -129,7 +141,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['OPTIONS'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->options('/', $middleware, $controller);
@@ -146,7 +160,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->any('/', $middleware, $controller);
@@ -163,7 +179,9 @@ class AppMiddlewareTest extends TestCase
         $router->expects($this->once())->method('map')->with(['GET', 'POST'], '/', $middleware, $controller);
 
         $ref = new \ReflectionProperty($app, 'router');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($app, $router);
 
         $app->map(['GET', 'POST'], '/', $middleware, $controller);
