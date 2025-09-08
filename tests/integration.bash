@@ -8,7 +8,7 @@ n=0
 skipping=false
 curl() {
     skipping=false
-    out=$($(which curl) "$@" 2>&1);
+    out=$($(which curl) "$@" 2>&1 | sed 's/\r$//');
 }
 match() {
     [[ $skipping == true ]] && return 0
@@ -34,54 +34,54 @@ skipifnot() {
 
 curl -v $base/
 match "HTTP/.* 200"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/plain; charset=utf-8$"
 
 curl -v $base/ -X POST
 match "HTTP/.* 405"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 # check unknown endpoints return `404 Not Found`
 
 curl -v $base/unknown
 match "HTTP/.* 404"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 curl -v $base/index.php
 match "HTTP/.* 404"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 curl -v $base/.htaccess
 match "HTTP/.* 404"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 curl -v $base//
 match "HTTP/.* 404"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 # check endpoints that intentionally return an error
 
 curl -v $base/error
 match "HTTP/.* 500"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 match "<code>Unable to load error</code>"
 
 curl -v $base/error/null
 match "HTTP/.* 500"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 # check async fibers + coroutines + promises
 
 curl -v $base/sleep/fiber
 match "HTTP/.* 200"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/plain; charset=utf-8$"
 
 curl -v $base/sleep/coroutine
 match "HTTP/.* 200"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/plain; charset=utf-8$"
 
 curl -v $base/sleep/promise
 match "HTTP/.* 200"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/plain; charset=utf-8$"
 
 # check URIs with special characters and encoding
 
@@ -238,7 +238,7 @@ match "{\"q\":[[]\"a\",\"b\"[]]}"
 curl -v $base/users/foo
 match "HTTP/.* 200"
 match "Hello foo!"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/plain; charset=utf-8$"
 
 curl -v $base/users/w%C3%B6rld
 match "HTTP/.* 200"
@@ -283,26 +283,26 @@ match "HTTP/.* 404"
 
 curl -v $base/robots.txt
 match "HTTP/.* 200"
-match -iP "Content-Type: text/plain[\r\n]"
+match -iE "Content-Type: text/plain$"
 
 curl -v $base/source
 match -i "Location: /source/"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 curl -v $base/source/
 match "HTTP/.* 200"
 
 curl -v $base/source/composer.json
 match "HTTP/.* 200"
-match -iP "Content-Type: application/json[\r\n]"
+match -iE "Content-Type: application/json$"
 
 curl -v $base/source/public/robots.txt
 match "HTTP/.* 200"
-match -iP "Content-Type: text/plain[\r\n]"
+match -iE "Content-Type: text/plain$"
 
 curl -v $base/source/public/robots.txt/
 match -i "Location: ../robots.txt"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 curl -v $base/source/public/robots.txt//
 match "HTTP/.* 404"
@@ -312,7 +312,7 @@ match "HTTP/.* 404"
 
 curl -v $base/source/public
 match -i "Location: public/"
-match -iP "Content-Type: text/html; charset=utf-8[\r\n]"
+match -iE "Content-Type: text/html; charset=utf-8$"
 
 curl -v $base/source/invalid
 match "HTTP/.* 404"
@@ -328,7 +328,7 @@ match "GET"
 
 curl -v $base/method -I
 match "HTTP/.* 200"
-match -iP "Content-Length: 5[\r\n]" # HEAD has no response body
+match -iE "Content-Length: 5$" # HEAD has no response body
 
 curl -v $base/method -X POST
 match "HTTP/.* 200"
@@ -356,52 +356,52 @@ match "HTTP/.* 200"
 
 curl -v $base/method/get
 match "HTTP/.* 200"
-match -iP "Content-Length: 4[\r\n]"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
-match -iP "X-Is-Head: false[\r\n]"
-match -P "GET$"
+match -iE "Content-Length: 4$"
+match -iE "Content-Type: text/plain; charset=utf-8$"
+match -iE "X-Is-Head: false$"
+match -E "GET$"
 
 curl -v $base/method/get -I
 match "HTTP/.* 200"
-match -iP "Content-Length: 4[\r\n]"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
-match -iP "X-Is-Head: true[\r\n]"
+match -iE "Content-Length: 4$"
+match -iE "Content-Type: text/plain; charset=utf-8$"
+match -iE "X-Is-Head: true$"
 
 curl -v $base/method/head
 match "HTTP/.* 200"
-match -iP "Content-Length: 5[\r\n]"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
-match -iP "X-Is-Head: false[\r\n]"
-match -P "HEAD$"
+match -iE "Content-Length: 5$"
+match -iE "Content-Type: text/plain; charset=utf-8$"
+match -iE "X-Is-Head: false$"
+match -E "HEAD$"
 
 curl -v $base/method/head -I
 match "HTTP/.* 200"
-match -iP "Content-Length: 5[\r\n]"
-match -iP "Content-Type: text/plain; charset=utf-8[\r\n]"
-match -iP "X-Is-Head: true[\r\n]"
+match -iE "Content-Length: 5$"
+match -iE "Content-Type: text/plain; charset=utf-8$"
+match -iE "X-Is-Head: true$"
 
 # check ETag caching headers
 
 curl -v $base/etag/
 match "HTTP/.* 200"
-match -iP "Content-Length: 0[\r\n]"
-match -iP "Etag: \"_\""
+match -iE "Content-Length: 0$"
+match -iE "Etag: \"_\""
 
 curl -v $base/etag/ -H 'If-None-Match: "_"'
 match "HTTP/.* 304"
 notmatch -i "Content-Length"
-match -iP "Etag: \"_\""
+match -iE "Etag: \"_\""
 
 curl -v $base/etag/a
 match "HTTP/.* 200"
-match -iP "Content-Length: 2[\r\n]"
-match -iP "Etag: \"a\""
+match -iE "Content-Length: 2$"
+match -iE "Etag: \"a\""
 
 curl -v $base/etag/a -H 'If-None-Match: "a"'
 skipif "Server: Apache" # skip Apache (no Content-Length)
 match "HTTP/.* 304"
-match -iP "Content-Length: 2[\r\n]"
-match -iP "Etag: \"a\""
+match -iE "Content-Length: 2$"
+match -iE "Etag: \"a\""
 
 # check HTTP request headers
 
