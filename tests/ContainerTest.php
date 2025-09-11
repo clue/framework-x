@@ -1889,6 +1889,190 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
+    public function testCallableMethodReturnsCallableForClassNameViaAutowiring(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class {
+            public function method(ServerRequestInterface $request): Response
+            {
+                return new Response(200);
+            }
+        };
+
+        $container = new Container();
+
+        $callable = $container->callableMethod(get_class($controller), 'method');
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testCallableMethodReturnsCallableForClassInstanceDirectly(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class {
+            public function method(ServerRequestInterface $request): Response
+            {
+                return new Response(200);
+            }
+        };
+
+        $container = new Container();
+
+        $callable = $container->callableMethod($controller, 'method');
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testCallableMethodReturnsCallableForClassNameViaAutowiringWithConfigurationForDependency(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            /** @var \stdClass */
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function method(ServerRequestInterface $request): Response
+            {
+                return new Response(200, [], (string) json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => (object)['name' => 'Alice']
+        ]);
+
+        $callable = $container->callableMethod(get_class($controller), 'method');
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
+    }
+
+    public function testCallableMethodReturnsCallableForClassNameViaPsrContainer(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class {
+            public function method(ServerRequestInterface $request): Response
+            {
+                return new Response(200);
+            }
+        };
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->never())->method('has');
+        $psr->expects($this->once())->method('get')->with(get_class($controller))->willReturn($controller);
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $callable = $container->callableMethod(get_class($controller), 'method');
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testCallableMethodReturnsCallableWithMiddlewareSupport(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class {
+            public function method(ServerRequestInterface $request, callable $next): Response
+            {
+                $response = $next($request);
+                return $response->withHeader('X-Controller', 'true');
+            }
+        };
+
+        $container = new Container();
+
+        $callable = $container->callableMethod(get_class($controller), 'method');
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $next = function (ServerRequestInterface $request) {
+            return new Response(200);
+        };
+
+        $response = $callable($request, $next);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(['true'], $response->getHeader('X-Controller'));
+    }
+
+    public function testCallableMethodThrowsWhenMethodDoesNotExist(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class {
+            public function method(ServerRequestInterface $request): Response
+            {
+                return new Response(200);
+            }
+        };
+
+        $container = new Container();
+
+        $callable = $container->callableMethod(get_class($controller), 'nonExistentMethod');
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('has no public nonExistentMethod() method');
+        $callable($request);
+    }
+
+
+    public function testCallableMethodThrowsWhenClassDoesNotExist(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container();
+
+        $callable = $container->callableMethod('NonExistingClass', 'method'); // @phpstan-ignore-line
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Request handler class NonExistingClass not found');
+        $callable($request);
+    }
+
+    public function testCallableMethodThrowsWhenClassFailsToLoad(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $exception = new class('Unable to load class') extends \RuntimeException implements NotFoundExceptionInterface { };
+
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->never())->method('has');
+        $psr->expects($this->once())->method('get')->with('FooBar')->willThrowException($exception);
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $callable = $container->callableMethod('FooBar', 'method'); // @phpstan-ignore-line
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Request handler class FooBar failed to load: Unable to load class');
+        $callable($request);
+    }
+
     public function testGetEnvReturnsNullWhenEnvironmentDoesNotExist(): void
     {
         $container = new Container([]);
