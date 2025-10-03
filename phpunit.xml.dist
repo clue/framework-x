@@ -11,7 +11,8 @@
     <testsuites>
         <testsuite name="Framework X test suite">
             <directory>./tests/</directory>
-            <exclude>./tests/integration/</exclude>
+            <directory suffix=".phpt">./tests/</directory>
+            <exclude>./tests/integration/vendor/</exclude>
         </testsuite>
     </testsuites>
     <coverage>

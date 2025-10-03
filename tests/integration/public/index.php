@@ -26,7 +26,14 @@ function asleep(float $s): PromiseInterface
     });
 }
 
-$app = new FrameworkX\App();
+$container = new FrameworkX\Container([
+    FrameworkX\AccessLogHandler::class => function (?string $X_EXPERIMENTAL_RUNNER = null) {
+        // log to /dev/null when running in experimental runner mode to avoid cluttering output
+        return new FrameworkX\AccessLogHandler($X_EXPERIMENTAL_RUNNER !== null ? (DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul') : null);
+    }
+]);
+
+$app = new FrameworkX\App($container);
 
 $app->get('/', function () {
     return React\Http\Message\Response::plaintext(

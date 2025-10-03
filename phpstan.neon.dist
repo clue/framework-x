@@ -5,4 +5,8 @@ parameters:
         - src/
         - tests/
 
+    fileExtensions:
+        - php
+        - phpt
+
     reportUnmatchedIgnoredErrors: false
