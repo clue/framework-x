@@ -5,8 +5,6 @@ namespace FrameworkX;
 use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\RedirectHandler;
 use FrameworkX\Io\RouteHandler;
-use FrameworkX\Runner\HttpServerRunner;
-use FrameworkX\Runner\SapiRunner;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -22,7 +20,7 @@ class App
     /** @var RouteHandler */
     private $router;
 
-    /** @var HttpServerRunner|SapiRunner|callable(callable(ServerRequestInterface):(ResponseInterface|PromiseInterface<ResponseInterface>)):void */
+    /** @var callable(callable(ServerRequestInterface):(ResponseInterface|PromiseInterface<ResponseInterface>)):void */
     private $runner;
 
     /**
@@ -257,8 +255,8 @@ class App
      * the `X_EXPERIMENTAL_RUNNER` environment variable to the desired runner
      * class name ({@see Container::getRunner()}).
      *
-     * @see HttpServerRunner::__invoke()
-     * @see SapiRunner::__invoke()
+     * @see \FrameworkX\Runner\HttpServerRunner::__invoke()
+     * @see \FrameworkX\Runner\SapiRunner::__invoke()
      * @see Container::getRunner()
      */
     public function run(): void
