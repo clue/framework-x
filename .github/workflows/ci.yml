@@ -14,6 +14,7 @@ jobs:
           - ubuntu-24.04
           - windows-2022
         php:
+          - 8.5
           - 8.4
           - 8.3
           - 8.2
@@ -24,7 +25,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -48,6 +49,7 @@ jobs:
     strategy:
       matrix:
         php:
+          - 8.5
           - 8.4
           - 8.3
           - 8.2
@@ -58,7 +60,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -72,6 +74,7 @@ jobs:
     strategy:
       matrix:
         php:
+          - 8.5
           - 8.4
           - 8.3
           - 8.2
@@ -82,7 +85,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -100,10 +103,10 @@ jobs:
           - "Dockerfile-basics"
           - "Dockerfile-production"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.4
+          php-version: 8.5
       - run: composer install -d tests/integration/
       - run: docker build -f tests/integration/${{ matrix.dockerfile }} tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
@@ -124,10 +127,10 @@ jobs:
           - name: minimal reverse proxy
             path: nginx-reverse-proxy-minimal.conf
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.4
+          php-version: 8.5
       - run: composer install -d tests/integration/
       - run: docker build -f tests/integration/Dockerfile-basics tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json $(docker images -q | head -n1)
@@ -146,6 +149,7 @@ jobs:
     strategy:
       matrix:
         php:
+          - 8.5
           - 8.4
           - 8.3
           - 8.2
@@ -156,7 +160,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -174,6 +178,7 @@ jobs:
     strategy:
       matrix:
         php:
+          - 8.5
           - 8.4
           - 8.3
           - 8.2
@@ -184,7 +189,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -201,6 +206,7 @@ jobs:
     strategy:
       matrix:
         php:
+          - 8.5
           - 8.4
           - 8.3
           - 8.2
@@ -211,7 +217,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -224,6 +230,6 @@ jobs:
     name: Docs
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: docker compose -f docs/compose.yaml run build
       - run: ls -la build/docs/
