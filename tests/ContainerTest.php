@@ -68,36 +68,6 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
     }
 
-    public function testCallableReturnsCallableForNullableClassViaAutowiringWillDefaultToNullValue(): void
-    {
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $controller = new class(new \stdClass()) {
-            /** @var ?\stdClass */
-            private $data;
-
-            public function __construct(?\stdClass $data)
-            {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
-            }
-        };
-
-        $container = new Container([]);
-
-        $callable = $container->callable(get_class($controller));
-        $this->assertInstanceOf(\Closure::class, $callable);
-
-        $response = $callable($request);
-        $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('null', (string) $response->getBody());
-    }
-
     public function testCallableReturnsCallableForNullableClassViaContainerConfiguration(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -128,37 +98,6 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('{}', (string) $response->getBody());
-    }
-
-    /**
-     * @requires PHP 8
-     */
-    public function testCallableReturnsCallableForUnionWithNullViaAutowiringWillDefaultToNullValue(): void
-    {
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        // @phpstan-ignore-next-line for PHP < 8
-        $controller = new class(null) {
-            /** @var mixed */
-            private $data = false;
-
-            #[PHP8] public function __construct(string|int|null $data) { $this->data = $data; } // @phpstan-ignore-line
-
-            public function __invoke(ServerRequestInterface $request): Response
-            {
-                return new Response(200, [], (string) json_encode($this->data));
-            }
-        };
-
-        $container = new Container([]);
-
-        $callable = $container->callable(get_class($controller));
-        $this->assertInstanceOf(\Closure::class, $callable);
-
-        $response = $callable($request);
-        $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('null', (string) $response->getBody());
     }
 
     public function testCallableReturnsCallableForClassWithNullDefaultViaAutowiringWillDefaultToNullValue(): void
@@ -843,7 +782,7 @@ class ContainerTest extends TestCase
             ResponseInterface::class => function (?\stdClass $user, ?\stdClass $data) {
                 return new Response(200, [], (string) json_encode(['user' => $user, 'data' => $data]));
             },
-            'user' => (object) []
+            'user' => (object) ['name' => 'Alice']
         ]);
 
         $callable = $container->callable(get_class($controller));
@@ -852,7 +791,7 @@ class ContainerTest extends TestCase
         $response = $callable($request);
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('{"user":{},"data":null}', (string) $response->getBody());
+        $this->assertEquals('{"user":{"name":"Alice"},"data":{}}', (string) $response->getBody());
     }
 
     public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresNullableContainerVariablesWithFactory(): void
@@ -879,7 +818,7 @@ class ContainerTest extends TestCase
                 return new Response(200, [], (string) json_encode(['user' => $user, 'data' => $data]));
             },
             'user' => function (): ?\stdClass { // @phpstan-ignore-line
-                return (object) [];
+                return (object) ['name' => 'Alice'];
             }
         ]);
 
@@ -889,7 +828,7 @@ class ContainerTest extends TestCase
         $response = $callable($request);
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('{"user":{},"data":null}', (string) $response->getBody());
+        $this->assertEquals('{"user":{"name":"Alice"},"data":{}}', (string) $response->getBody());
     }
 
     public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresContainerVariablesWithDefaultValues(): void
@@ -1153,40 +1092,6 @@ class ContainerTest extends TestCase
         $this->assertEquals('"bar"', (string) $response->getBody());
     }
 
-    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresNullableStringEnvironmentVariableAssignsNull(): void
-    {
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $controller = new class(new Response()) {
-            /** @var ResponseInterface */
-            private $response;
-
-            public function __construct(ResponseInterface $response)
-            {
-                $this->response = $response;
-            }
-
-            public function __invoke(): ResponseInterface
-            {
-                return $this->response;
-            }
-        };
-
-        $container = new Container([
-            ResponseInterface::class => function (?string $FOO) {
-                return new Response(200, [], (string) json_encode($FOO));
-            }
-        ]);
-
-        $callable = $container->callable(get_class($controller));
-        $this->assertInstanceOf(\Closure::class, $callable);
-
-        $response = $callable($request);
-        $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('null', (string) $response->getBody());
-    }
-
     public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresUntypedEnvironmentVariable(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -1314,6 +1219,31 @@ class ContainerTest extends TestCase
 
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type string, none given');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesUnknownNullableVariable(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            public function __construct(\stdClass $data)
+            {
+                assert($data instanceof \stdClass);
+            }
+        };
+
+        $line = __LINE__ + 2;
+        $container = new Container([
+            \stdClass::class => function (?string $username) {
+                return (object) ['name' => $username];
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type ?string, none given');
         $callable($request);
     }
 
@@ -1973,6 +1903,82 @@ class ContainerTest extends TestCase
         $this->assertEquals('bar', $container->getEnv('X_FOO'));
     }
 
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvReturnsNullFromFactoryForUnsupportedUnionVariableWithNullDefaultEvenForKnownVariable(): void
+    {
+        $fn = null;
+        $fn = #[PHP8] function (string|int|null $bar = null) { return $bar; };
+        $container = new Container([
+            'X_FOO' => $fn,
+            'bar' => 'ignored'
+        ]);
+
+        $this->assertNull($container->getEnv('X_FOO'));
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvReturnsStringFromFactoryForUnsupportedUnionVariableWithStringDefaultEvenForKnownVariable(): void
+    {
+        $fn = null;
+        $fn = #[PHP8] function (string|int|null $bar = 'default') { return $bar; };
+        $container = new Container([
+            'X_FOO' => $fn,
+            'bar' => 'ignored'
+        ]);
+
+        $this->assertEquals('default', $container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsNullFromFactoryForUnknownNullableVariableWithNullDefault(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (?string $X_UNDEFINED = null) { return $X_UNDEFINED; }
+        ]);
+
+        $this->assertNull($container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromFactoryForUnknownVariableWithStringDefault(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (string $X_UNDEFINED = 'foo') { return $X_UNDEFINED; }
+        ]);
+
+        $this->assertEquals('foo', $container->getEnv('X_FOO'));
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvReturnsNullFromFactoryForUnknownAndUnsupportedUnionVariableWithNullDefault(): void
+    {
+        $fn = null;
+        $fn = #[PHP8] function (string|int|null $X_UNDEFINED = null) { return $X_UNDEFINED; };
+        $container = new Container([
+            'X_FOO' => $fn
+        ]);
+
+        $this->assertNull($container->getEnv('X_FOO'));
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvReturnsStringFromFactoryForUnknownAndUnsupportedUnionVariableWithStringDefault(): void
+    {
+        $fn = null;
+        $fn = #[PHP8] function (string|int|null $X_UNDEFINED = 'default') { return $X_UNDEFINED; };
+        $container = new Container([
+            'X_FOO' => $fn
+        ]);
+
+        $this->assertEquals('default', $container->getEnv('X_FOO'));
+    }
+
     public function testGetEnvReturnsStringFromGlobalEnvIfNotSetInMap(): void
     {
         $container = new Container([]);
@@ -2233,6 +2239,33 @@ class ContainerTest extends TestCase
         $container->getEnv('X_FOO');
     }
 
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsRequiredNullableEnvVariableButNoneGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (?string $X_UNDEFINED) { return $X_UNDEFINED; }
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO requires container config with type ?string, none given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsRequiredMixedEnvVariableButNoneGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (mixed $X_UNDEFINED) { return $X_UNDEFINED; }
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO requires container config with type mixed, none given');
+        $container->getEnv('X_FOO');
+    }
+
     public function testGetEnvThrowsWhenFactoryFunctionExpectsNullableIntArgumentButGivenString(): void
     {
         $line = __LINE__ + 2;
@@ -2261,6 +2294,23 @@ class ContainerTest extends TestCase
 
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($X_UNION) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO expects unsupported type string|int');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsNullableUnionType(): void
+    {
+        $line = __LINE__ + 2;
+        $fn = null;
+        $fn = #[PHP8] function (string|int|null $X_UNDEFINED) { return $X_UNDEFINED; };
+        $container = new Container([
+            'X_FOO' => $fn
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO expects unsupported type string|int|null');
         $container->getEnv('X_FOO');
     }
 

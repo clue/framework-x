@@ -234,33 +234,6 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithNullableConstructor(): void
-    {
-        $request = new ServerRequest('GET', 'http://example.com/');
-        $response = new Response(200, [], '');
-
-        $controller = new class(null) {
-            /** @var ?Response */
-            public static $response;
-            public function __construct(?int $value)
-            {
-                assert($value === null);
-            }
-            public function __invoke(): ?Response
-            {
-                return self::$response;
-            }
-        };
-        $controller::$response = $response;
-
-        $handler = new RouteHandler();
-        $handler->map(['GET'], '/', get_class($controller));
-
-        $ret = $handler($request);
-
-        $this->assertSame($response, $ret);
-    }
-
     public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithRequiredResponseInConstructor(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
