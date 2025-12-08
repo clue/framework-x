@@ -77,11 +77,6 @@ class Container
     public function callable(string $class): callable
     {
         return function (ServerRequestInterface $request, ?callable $next = null) use ($class) {
-            // Check `$class` references a valid class name that can be autoloaded
-            if (\is_array($this->container) && !\class_exists($class, true) && !interface_exists($class, false) && !trait_exists($class, false)) {
-                throw new \BadMethodCallException('Request handler class ' . $class . ' not found');
-            }
-
             try {
                 if ($this->container instanceof ContainerInterface) {
                     $handler = $this->container->get($class);
@@ -89,7 +84,7 @@ class Container
                     $handler = $this->loadObject($class);
                 }
             } catch (\Throwable $e) {
-                throw new \BadMethodCallException(
+                throw new \Error(
                     'Request handler class ' . $class . ' failed to load: ' . $e->getMessage(),
                     0,
                     $e
@@ -100,8 +95,8 @@ class Container
             // This initial version is intentionally limited to checking the method name only.
             // A follow-up version will likely use reflection to check request handler argument types.
             if (!is_callable($handler)) {
-                throw new \BadMethodCallException(
-                    'Request handler class ' . \explode("\0", $class)[0] . ' has no public __invoke() method'
+                throw new \Error(
+                    'Request handler ' . \explode("\0", $class)[0] . ' has no public __invoke() method'
                 );
             }
 
@@ -180,7 +175,7 @@ class Container
      * @param class-string<T> $name
      * @return T
      * @throws \TypeError if container config or factory returns an unexpected type
-     * @throws \Error|\BadMethodCallException if object of type $name can not be loaded
+     * @throws \Error if object of type $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
@@ -238,7 +233,7 @@ class Container
 
         // Check `$name` references a valid class name that can be autoloaded
         if (!\class_exists($name, true) && !interface_exists($name, false) && !trait_exists($name, false)) {
-            throw new \BadMethodCallException('Class ' . $name . ' not found');
+            throw new \Error('Class ' . $name . ' not found');
         }
 
         $class = new \ReflectionClass($name);
@@ -251,7 +246,7 @@ class Container
             } elseif ($class->isTrait()) {
                 $modifier = 'trait';
             }
-            throw new \BadMethodCallException('Cannot instantiate ' . $modifier . ' '. $name);
+            throw new \Error('Cannot instantiate ' . $modifier . ' '. $name);
         }
 
         // build list of constructor parameters based on parameter types
@@ -266,7 +261,7 @@ class Container
     /**
      * @return list<mixed>
      * @throws \TypeError if container config or factory returns an unexpected type
-     * @throws \Error|\BadMethodCallException if either parameter can not be loaded
+     * @throws \Error if either parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables, string $for): array
@@ -282,7 +277,7 @@ class Container
     /**
      * @return mixed
      * @throws \TypeError if container config or factory returns an unexpected type
-     * @throws \Error|\BadMethodCallException if $parameter can not be loaded
+     * @throws \Error if $parameter can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables, string $for) /*: mixed (PHP 8.0+) */
@@ -355,7 +350,7 @@ class Container
     /**
      * @return object|string|int|float|bool|null
      * @throws \TypeError if container factory returns an unexpected type
-     * @throws \Error|\BadMethodCallException if $name can not be loaded
+     * @throws \Error if $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadVariable(string $name, int $depth = 64) /*: object|string|int|float|bool|null (PHP 8.0+) */

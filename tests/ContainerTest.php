@@ -1264,6 +1264,19 @@ class ContainerTest extends TestCase
         $this->assertEquals('"bar"', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableThatThrowsForUnknownClass(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([]);
+
+        $callable = $container->callable('UnknownClass'); // @phpstan-ignore-line
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Request handler class UnknownClass failed to load: Class UnknownClass not found');
+        $callable($request);
+    }
+
     public function testCallableReturnsCallableThatThrowsForNonCallableClass(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -1274,8 +1287,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Request handler class class@anonymous has no public __invoke() method');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Request handler class@anonymous has no public __invoke() method');
         $callable($request);
     }
 
@@ -1299,7 +1312,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type string, none given');
         $callable($request);
     }
@@ -1324,7 +1337,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line .'}() for $stdClass is recursive');
         $callable($request);
     }
@@ -1351,7 +1364,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line . '}() for class@anonymous must be of type string, stdClass given');
         $callable($request);
     }
@@ -1379,7 +1392,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for $http must be of type object|string|int|float|bool|null, resource returned');
         $callable($request);
     }
@@ -1405,7 +1418,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type stdClass, int given');
         $callable($request);
     }
@@ -1431,7 +1444,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type string, int given');
         $callable($request);
     }
@@ -1457,7 +1470,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type int, string given');
         $callable($request);
     }
@@ -1483,7 +1496,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($percent) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type float, string given');
         $callable($request);
     }
@@ -1509,7 +1522,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($admin) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type bool, string given');
         $callable($request);
     }
@@ -1531,7 +1544,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class Yes not found');
         $callable($request);
     }
@@ -1553,7 +1566,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class Yes not found');
         $callable($request);
     }
@@ -1575,7 +1588,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, int returned');
         $callable($request);
     }
@@ -1597,7 +1610,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, null returned');
         $callable($request);
     }
@@ -1619,7 +1632,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, null returned');
         $callable($request);
     }
@@ -1641,7 +1654,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, React\Http\Message\Response returned');
         $callable($request);
     }
@@ -1663,7 +1676,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($name) of class@anonymous::__construct() requires container config with type string, none given');
         $callable($request);
     }
@@ -1738,7 +1751,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class invalid not found');
         $callable($request);
     }
@@ -1754,7 +1767,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type stdClass, int returned');
         $callable($request);
     }
@@ -1769,7 +1782,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, React\Http\Message\Response returned');
         $callable($request);
     }
@@ -1785,7 +1798,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type stdClass, React\Http\Message\Response returned');
         $callable($request);
     }
@@ -1800,7 +1813,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class self not found');
         $callable($request);
     }
@@ -1816,7 +1829,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config, none given');
         $callable($request);
     }
@@ -1835,7 +1848,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type mixed, none given');
         $callable($request);
     }
@@ -1851,7 +1864,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is recursive');
         $callable($request);
     }
@@ -1866,7 +1879,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Container config for stdClass is recursive');
         $callable($request);
     }
@@ -1883,7 +1896,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Container config for stdClass is recursive');
         $callable($request);
     }
@@ -1929,7 +1942,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable('FooBar'); // @phpstan-ignore-line
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Request handler class FooBar failed to load: Unable to load class');
         $callable($request);
     }
@@ -2379,6 +2392,17 @@ class ContainerTest extends TestCase
 
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfConfigReferencesInterface(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => \Iterator::class
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Cannot instantiate interface Iterator');
         $container->getAccessLogHandler();
     }
 
