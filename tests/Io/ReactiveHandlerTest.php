@@ -186,7 +186,7 @@ class ReactiveHandlerTest extends TestCase
             $promise = $connector->connect($addr);
 
             // the loop will only need to be restarted if fibers are not available (PHP < 8.1)
-            if (PHP_VERSION_ID < 80100) {
+            if (!function_exists('React\Async\async')) {
                 $logger->expects($this->once())->method('log')->with('Warning: Loop restarted. Upgrade to react/async v4 recommended for production use.');
             } else {
                 $logger->expects($this->never())->method('log');
