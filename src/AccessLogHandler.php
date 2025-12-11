@@ -94,14 +94,14 @@ class AccessLogHandler
         if ($body instanceof ReadableStreamInterface && $body->isReadable()) {
             $size = 0;
             $body->on('data', function (string $chunk) use (&$size) {
-                $size += strlen($chunk);
+                $size += \strlen($chunk);
             });
 
             $body->on('close', function () use (&$size, $request, $response, $start) {
                 $this->log($request, $response, $size, $this->now() - $start);
             });
         } else {
-            $this->log($request, $response, $body->getSize() ?? strlen((string) $body), $this->now() - $start);
+            $this->log($request, $response, $body->getSize() ?? \strlen((string) $body), $this->now() - $start);
         }
     }
 
@@ -122,19 +122,19 @@ class AccessLogHandler
         $this->logger->log(
             ($request->getAttribute('remote_addr') ?? $request->getServerParams()['REMOTE_ADDR'] ?? '-') . ' ' .
             '"' . $this->escape($method) . ' ' . $this->escape($request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . '" ' .
-            $status . ' ' . $responseSize . ' ' . sprintf('%.3F', $time < 0 ? 0 : $time)
+            $status . ' ' . $responseSize . ' ' . \sprintf('%.3F', $time < 0 ? 0 : $time)
         );
     }
 
     private function escape(string $s): string
     {
-        return (string) preg_replace_callback('/[\x00-\x1F\x7F-\xFF"\\\\]+/', function (array $m) {
-            return str_replace('%', '\x', rawurlencode($m[0]));
+        return (string) \preg_replace_callback('/[\x00-\x1F\x7F-\xFF"\\\\]+/', function (array $m) {
+            return \str_replace('%', '\x', \rawurlencode($m[0]));
         }, $s);
     }
 
     private function now(): float
     {
-        return $this->hasHighResolution ? hrtime(true) * 1e-9 : microtime(true);
+        return $this->hasHighResolution ? \hrtime(true) * 1e-9 : \microtime(true);
     }
 }
