@@ -1264,6 +1264,34 @@ class ContainerTest extends TestCase
         $this->assertEquals('"bar"', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableThatThrowsForUnknownClass(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $container = new Container([]);
+
+        $callable = $container->callable('UnknownClass'); // @phpstan-ignore-line
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Request handler class UnknownClass failed to load: Class UnknownClass not found');
+        $callable($request);
+    }
+
+    public function testCallableReturnsCallableThatThrowsForNonCallableClass(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class() { };
+
+        $container = new Container([]);
+
+        $callable = $container->callable(get_class($controller));
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Request handler class@anonymous has no public __invoke() method');
+        $callable($request);
+    }
+
     public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesUnknownVariable(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -1284,8 +1312,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($username) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type string, none given');
         $callable($request);
     }
 
@@ -1300,6 +1328,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (string $stdClass) {
                 return (object) ['name' => $stdClass];
@@ -1308,8 +1337,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $stdClass is recursive');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line .'}() for $stdClass is recursive');
         $callable($request);
     }
 
@@ -1324,6 +1353,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             get_class($controller) => function (string $stdClass) use ($controller) {
                 $class = get_class($controller);
@@ -1334,8 +1364,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $stdClass expected type string, but got stdClass');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line . '}() for class@anonymous must be of type string, stdClass given');
         $callable($request);
     }
 
@@ -1350,6 +1380,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 5;
         $container = new Container([
             \stdClass::class => function (string $http) {
                 return (object) ['name' => $http];
@@ -1361,8 +1392,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $http expected type object|scalar|null from factory, but got resource');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for $http must be of type object|string|int|float|bool|null, resource returned');
         $callable($request);
     }
 
@@ -1377,6 +1408,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (\stdClass $http) {
                 return (object) ['name' => $http];
@@ -1386,8 +1418,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $http expected type stdClass, but got int');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type stdClass, int given');
         $callable($request);
     }
 
@@ -1402,6 +1434,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (string $http) {
                 return (object) ['name' => $http];
@@ -1411,8 +1444,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $http expected type string, but got int');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type string, int given');
         $callable($request);
     }
 
@@ -1427,6 +1460,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (int $http) {
                 return (object) ['name' => $http];
@@ -1436,8 +1470,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $http expected type int, but got string');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($http) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type int, string given');
         $callable($request);
     }
 
@@ -1452,6 +1486,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (float $percent) {
                 return (object) ['percent' => $percent];
@@ -1461,8 +1496,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $percent expected type float, but got string');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($percent) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type float, string given');
         $callable($request);
     }
 
@@ -1477,6 +1512,7 @@ class ContainerTest extends TestCase
             }
         };
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function (bool $admin) {
                 return (object) ['admin' => $admin];
@@ -1486,8 +1522,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $admin expected type bool, but got string');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($admin) of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type bool, string given');
         $callable($request);
     }
 
@@ -1508,7 +1544,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class Yes not found');
         $callable($request);
     }
@@ -1530,7 +1566,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class Yes not found');
         $callable($request);
     }
@@ -1552,8 +1588,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for stdClass contains unexpected int');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, int returned');
         $callable($request);
     }
 
@@ -1574,8 +1610,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for stdClass contains unexpected null');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, null returned');
         $callable($request);
     }
 
@@ -1596,8 +1632,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for stdClass contains unexpected null');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, null returned');
         $callable($request);
     }
 
@@ -1618,8 +1654,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for stdClass contains unexpected React\Http\Message\Response');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, React\Http\Message\Response returned');
         $callable($request);
     }
 
@@ -1640,48 +1676,68 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(get_class($controller));
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($name) of class@anonymous::__construct() expects unsupported type string');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($name) of class@anonymous::__construct() requires container config with type string, none given');
         $callable($request);
     }
 
-    public function testCtorThrowsWhenMapContainsInvalidArray(): void
+    public function testCtorThrowsWhenConfigContainsInvalidArray(): void
     {
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for all contains unexpected array');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($config) for key "all" must be of type object|string|int|float|bool|null|Closure, array given');
 
         new Container([ // @phpstan-ignore-line
             'all' => []
         ]);
     }
 
-    public function testCtorThrowsWhenMapContainsInvalidResource(): void
+    public function testCtorThrowsWhenConfigContainsInvalidResource(): void
     {
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for file contains unexpected resource');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($config) for key "file" must be of type object|string|int|float|bool|null|Closure, resource given');
 
         new Container([ // @phpstan-ignore-line
             'file' => tmpfile()
         ]);
     }
 
-    public function testCtorThrowsWhenMapForClassContainsInvalidObject(): void
+    public function testCtorThrowsWhenConfigForClassContainsInvalidObject(): void
     {
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for Psr\Http\Message\ResponseInterface contains unexpected stdClass');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($config) for key "Psr\Http\Message\ResponseInterface" must be of type Psr\Http\Message\ResponseInterface|Closure|string, stdClass given');
 
         new Container([
             ResponseInterface::class => new \stdClass()
         ]);
     }
 
-    public function testCtorThrowsWhenMapForClassContainsInvalidNull(): void
+    public function testCtorThrowsWhenConfigForClassContainsInvalidAnonymousClass(): void
     {
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Map for Psr\Http\Message\ResponseInterface contains unexpected null');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($config) for key "Psr\Http\Message\ResponseInterface" must be of type Psr\Http\Message\ResponseInterface|Closure|string, class@anonymous given');
+
+        new Container([
+            ResponseInterface::class => new class() { }
+        ]);
+    }
+
+    public function testCtorThrowsWhenConfigForClassContainsInvalidNull(): void
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($config) for key "Psr\Http\Message\ResponseInterface" must be of type Psr\Http\Message\ResponseInterface|Closure|string, null given');
 
         new Container([
             ResponseInterface::class => null
+        ]);
+    }
+
+    public function testCtorThrowsWhenConfigForClassContainsInvalidResource(): void
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($config) for key "Psr\Http\Message\ResponseInterface" must be of type Psr\Http\Message\ResponseInterface|Closure|string, resource given');
+
+        new Container([ // @phpstan-ignore-line
+            ResponseInterface::class => tmpfile()
         ]);
     }
 
@@ -1695,7 +1751,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class invalid not found');
         $callable($request);
     }
@@ -1704,14 +1760,15 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function () { return 42; }
         ]);
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Factory for stdClass returned unexpected int');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type stdClass, int returned');
         $callable($request);
     }
 
@@ -1725,8 +1782,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Factory for stdClass returned unexpected React\Http\Message\Response');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::loadObject() for stdClass must be of type stdClass, React\Http\Message\Response returned');
         $callable($request);
     }
 
@@ -1734,14 +1791,15 @@ class ContainerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
+        $line = __LINE__ + 2;
         $container = new Container([
             \stdClass::class => function () { return Response::class; }
         ]);
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Factory for stdClass returned unexpected React\Http\Message\Response');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for stdClass must be of type stdClass, React\Http\Message\Response returned');
         $callable($request);
     }
 
@@ -1755,7 +1813,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Class self not found');
         $callable($request);
     }
@@ -1771,8 +1829,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() has no type');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config, none given');
         $callable($request);
     }
 
@@ -1790,8 +1848,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() is not defined');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type mixed, none given');
         $callable($request);
     }
 
@@ -1806,8 +1864,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() is recursive');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is recursive');
         $callable($request);
     }
 
@@ -1821,8 +1879,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Factory for stdClass is recursive');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Container config for stdClass is recursive');
         $callable($request);
     }
 
@@ -1838,8 +1896,8 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable(\stdClass::class);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Factory for stdClass is recursive');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Container config for stdClass is recursive');
         $callable($request);
     }
 
@@ -1884,7 +1942,7 @@ class ContainerTest extends TestCase
 
         $callable = $container->callable('FooBar'); // @phpstan-ignore-line
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage('Request handler class FooBar failed to load: Unable to load class');
         $callable($request);
     }
@@ -2080,6 +2138,46 @@ class ContainerTest extends TestCase
         $this->assertEquals('foo', $ret);
     }
 
+    public function testGetEnvThrowsIfFactoryFunctionThrows(): void
+    {
+        $container = new Container([
+            'X_FOO' => function () {
+                throw new \RuntimeException('Demo');
+            }
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Demo');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsIfFactoryFunctionReturnsInvalidResource(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function () {
+                return tmpfile();
+            }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type object|string|int|float|bool|null, resource returned');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsIfFactoryFunctionReturnsInvalidInt(): void
+    {
+        $container = new Container([
+            'X_FOO' => function () {
+                return 0;
+            }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of FrameworkX\Container::getEnv() for $X_FOO must be of type string|null, int returned');
+        $container->getEnv('X_FOO');
+    }
+
     public function testGetEnvThrowsIfMapContainsInvalidType(): void
     {
         $container = new Container([
@@ -2087,7 +2185,7 @@ class ContainerTest extends TestCase
         ]);
 
         $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Environment variable $X_FOO expected type string|null, but got false');
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::getEnv() for $X_FOO must be of type string|null, false returned');
         $container->getEnv('X_FOO');
     }
 
@@ -2100,8 +2198,8 @@ class ContainerTest extends TestCase
             'X_FOO' => \Closure::fromCallable('extension_loaded')
         ]);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($extension) of extension_loaded() is not defined');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($extension) of extension_loaded() for $X_FOO requires container config with type string, none given');
         $container->getEnv('X_FOO');
     }
 
@@ -2118,8 +2216,65 @@ class ContainerTest extends TestCase
             'X_FOO' => \Closure::fromCallable([$class, 'foo'])
         ]);
 
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() is not defined');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($bar) of class@anonymous::foo() for $X_FOO requires container config with type string, none given');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsRequiredEnvVariableButNoneGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (string $X_UNDEFINED) { return (string) $X_UNDEFINED; },
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO requires container config with type string, none given');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsNullableIntArgumentButGivenString(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (?int $bar) { return (string) $bar; },
+            'bar' => 'bar'
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($bar) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type ?int, string given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsUnsupportedUnionType(): void
+    {
+        $line = __LINE__ + 2;
+        $fn = null;
+        $fn = #[PHP8] function (string|int $X_UNION) { return (string) $X_UNION; };
+        $container = new Container([
+            'X_FOO' => $fn,
+            'X_UNION' => 42
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNION) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO expects unsupported type string|int');
+        $container->getEnv('X_FOO');
+    }
+
+    /** @link https://3v4l.org/VaFMd */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsIntArgumentButGivenAnonymousClass(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (int $bar) { return (string) $bar; },
+            'bar' => new class { }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($bar) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type int, class@anonymous given');
         $container->getEnv('X_FOO');
     }
 
@@ -2133,7 +2288,7 @@ class ContainerTest extends TestCase
         $container = new Container($psr);
 
         $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Environment variable $X_FOO expected type string|null, but got int');
+        $this->expectExceptionMessage('Return value of ' . Container::class .'::getEnv() for $X_FOO must be of type string|null, int returned');
         $container->getEnv('X_FOO');
     }
 
@@ -2189,6 +2344,68 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
     }
 
+    public function testGetAccessLogHandlerThrowsIfFactoryFunctionThrows(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => function () {
+                throw new \RuntimeException('Demo');
+            }
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Demo');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfFactoryFunctionReturnsInvalidValue(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            AccessLogHandler::class => function () {
+                return null;
+            }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for FrameworkX\AccessLogHandler must be of type FrameworkX\AccessLogHandler, null returned');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfConfigIsRecursive(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => AccessLogHandler::class
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfFactoryFunctionIsRecursive(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => function () {
+                return AccessLogHandler::class;
+            }
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
+        $container->getAccessLogHandler();
+    }
+
+    public function testGetAccessLogHandlerThrowsIfConfigReferencesInterface(): void
+    {
+        $container = new Container([
+            AccessLogHandler::class => \Iterator::class
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Cannot instantiate interface Iterator');
+        $container->getAccessLogHandler();
+    }
+
     public function testGetErrorHandlerReturnsDefaultErrorHandlerInstance(): void
     {
         $container = new Container([]);
@@ -2239,6 +2456,33 @@ class ContainerTest extends TestCase
         $errorHandler = $container->getErrorHandler();
 
         $this->assertInstanceOf(ErrorHandler::class, $errorHandler);
+    }
+
+    public function testGetErrorHandlerThrowsIfFactoryFunctionThrows(): void
+    {
+        $container = new Container([
+            ErrorHandler::class => function () {
+                throw new \RuntimeException('Demo');
+            }
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Demo');
+        $container->getErrorHandler();
+    }
+
+    public function testGetErrorHandlerThrowsIfFactoryFunctionReturnsInvalidValue(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            ErrorHandler::class => function () {
+                return null;
+            }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for FrameworkX\ErrorHandler must be of type FrameworkX\ErrorHandler, null returned');
+        $container->getErrorHandler();
     }
 
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler(): void
@@ -2295,7 +2539,7 @@ class ContainerTest extends TestCase
     public function testCtorWithInvalidValueThrows($value, string $type): void
     {
         $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . $type . ' given');
+        $this->expectExceptionMessage('Argument #1 ($config) must be of type array|Psr\Container\ContainerInterface, ' . $type . ' given');
         new Container($value); // @phpstan-ignore-line
     }
 }

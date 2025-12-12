@@ -16,31 +16,42 @@ class Container
     /** @var bool */
     private $useProcessEnv;
 
-    /** @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
-    public function __construct($loader = [])
+    /**
+     * @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $config
+     * @throws \TypeError if given $config is invalid
+     */
+    public function __construct($config = [])
     {
-        /** @var mixed $loader explicit type check for mixed if user ignores parameter type */
-        if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
+        /** @var mixed $config explicit type check for mixed if user ignores parameter type */
+        if (!\is_array($config) && !$config instanceof ContainerInterface) {
             throw new \TypeError(
-                'Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . $this->gettype($loader) . ' given'
+                'Argument #1 ($config) must be of type array|Psr\Container\ContainerInterface, ' . $this->gettype($config) . ' given'
             );
         }
 
-        foreach (($loader instanceof ContainerInterface ? [] : $loader) as $name => $value) {
-            if (
-                (!\is_object($value) && !\is_scalar($value) && $value !== null) ||
-                (!$value instanceof $name && !$value instanceof \Closure && !\is_string($value) && \strpos($name, '\\') !== false)
-            ) {
-                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . $this->gettype($value));
+        foreach (($config instanceof ContainerInterface ? [] : $config) as $name => $value) {
+            if (!$value instanceof $name && !$value instanceof \Closure && !\is_string($value) && \strpos($name, '\\') !== false) {
+                throw new \TypeError(
+                    'Argument #1 ($config) for key "' . $name . '" must be of type ' . $name . '|Closure|string, ' . $this->gettype($value) . ' given'
+                );
+            }
+            if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
+                throw new \TypeError(
+                    'Argument #1 ($config) for key "' . $name . '" must be of type object|string|int|float|bool|null|Closure, ' . $this->gettype($value) . ' given'
+                );
             }
         }
-        $this->container = $loader;
+        $this->container = $config;
 
         // prefer reading environment from `$_ENV` and `$_SERVER`, only fall back to `getenv()` in thread-safe environments
         $this->useProcessEnv = \ZEND_THREAD_SAFE === false || \in_array(\PHP_SAPI, ['cli', 'cli-server', 'cgi-fcgi', 'fpm-fcgi'], true);
     }
 
-    /** @return mixed */
+    /**
+     * @return mixed returns whatever the $next handler returns
+     * @throws \BadMethodCallException if used as a final request handler
+     * @throws \Throwable if $next handler throws unexpected exception
+     */
     public function __invoke(ServerRequestInterface $request, ?callable $next = null)
     {
         if ($next === null) {
@@ -60,16 +71,12 @@ class Container
     /**
      * @param class-string $class
      * @return callable(ServerRequestInterface,?callable=null)
+     * @throws void
      * @internal
      */
     public function callable(string $class): callable
     {
         return function (ServerRequestInterface $request, ?callable $next = null) use ($class) {
-            // Check `$class` references a valid class name that can be autoloaded
-            if (\is_array($this->container) && !\class_exists($class, true) && !interface_exists($class, false) && !trait_exists($class, false)) {
-                throw new \BadMethodCallException('Request handler class ' . $class . ' not found');
-            }
-
             try {
                 if ($this->container instanceof ContainerInterface) {
                     $handler = $this->container->get($class);
@@ -77,7 +84,7 @@ class Container
                     $handler = $this->loadObject($class);
                 }
             } catch (\Throwable $e) {
-                throw new \BadMethodCallException(
+                throw new \Error(
                     'Request handler class ' . $class . ' failed to load: ' . $e->getMessage(),
                     0,
                     $e
@@ -88,7 +95,9 @@ class Container
             // This initial version is intentionally limited to checking the method name only.
             // A follow-up version will likely use reflection to check request handler argument types.
             if (!is_callable($handler)) {
-                throw new \BadMethodCallException('Request handler class "' . $class . '" has no public __invoke() method');
+                throw new \Error(
+                    'Request handler ' . \explode("\0", $class)[0] . ' has no public __invoke() method'
+                );
             }
 
             // invoke request handler as middleware handler or final controller
@@ -99,7 +108,11 @@ class Container
         };
     }
 
-    /** @internal */
+    /**
+     * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Throwable if container factory function throws unexpected exception
+     * @internal
+     */
     public function getEnv(string $name): ?string
     {
         assert(\preg_match('/^[A-Z][A-Z0-9_]+$/', $name) === 1);
@@ -107,19 +120,25 @@ class Container
         if ($this->container instanceof ContainerInterface && $this->container->has($name)) {
             $value = $this->container->get($name);
         } elseif ($this->hasVariable($name)) {
-            $value = $this->loadVariable($name, 'mixed', true, 64);
+            $value = $this->loadVariable($name);
         } else {
             return null;
         }
 
         if (!\is_string($value) && $value !== null) {
-            throw new \TypeError('Environment variable $' . $name . ' expected type string|null, but got ' . $this->gettype($value));
+            throw new \TypeError(
+                'Return value of ' . __METHOD__ . '() for $' . $name . ' must be of type string|null, ' . $this->gettype($value) . ' returned'
+            );
         }
 
         return $value;
     }
 
-    /** @internal */
+    /**
+     * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Throwable if container factory function throws unexpected exception
+     * @internal
+     */
     public function getAccessLogHandler(): AccessLogHandler
     {
         if ($this->container instanceof ContainerInterface) {
@@ -133,7 +152,11 @@ class Container
         return $this->loadObject(AccessLogHandler::class);
     }
 
-    /** @internal */
+    /**
+     * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Throwable if container factory function throws unexpected exception
+     * @internal
+     */
     public function getErrorHandler(): ErrorHandler
     {
         if ($this->container instanceof ContainerInterface) {
@@ -151,7 +174,9 @@ class Container
      * @template T of object
      * @param class-string<T> $name
      * @return T
-     * @throws \BadMethodCallException if object of type $name can not be loaded
+     * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Error if object of type $name can not be loaded
+     * @throws \Throwable if container factory function throws unexpected exception
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
@@ -160,39 +185,45 @@ class Container
         if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
                 if ($depth < 1) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
+                    throw new \Error('Container config for ' . $name . ' is recursive');
                 }
 
                 // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                 $value = $this->loadObject($this->container[$name], $depth - 1);
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . $this->gettype($value));
+                    throw new \TypeError(
+                        'Return value of ' . __METHOD__ . '() for ' . $name . ' must be of type ' . $name . ', ' . $this->gettype($value) . ' returned'
+                    );
                 }
 
                 $this->container[$name] = $value;
             } elseif ($this->container[$name] instanceof \Closure) {
                 // build list of factory parameters based on parameter types
                 $closure = new \ReflectionFunction($this->container[$name]);
-                $params = $this->loadFunctionParams($closure, $depth, true);
+                $params = $this->loadFunctionParams($closure, $depth, true, \explode("\0", $name)[0]);
 
                 // invoke factory with list of parameters
                 $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
 
                 if (\is_string($value)) {
                     if ($depth < 1) {
-                        throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
+                        throw new \Error('Container config for ' . $name . ' is recursive');
                     }
 
                     // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                     $value = $this->loadObject($value, $depth - 1);
                 }
                 if (!$value instanceof $name) {
-                    throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . $this->gettype($value));
+                    throw new \TypeError(
+                        'Return value of ' . self::functionName($closure) . ' for ' . $name . ' must be of type ' . $name . ', ' . $this->gettype($value) . ' returned'
+                    );
                 }
 
                 $this->container[$name] = $value;
             } elseif (!$this->container[$name] instanceof $name) {
-                throw new \BadMethodCallException('Map for ' . $name . ' contains unexpected ' . $this->gettype($this->container[$name]));
+                throw new \TypeError(
+                    'Return value of ' . __METHOD__ . '() for ' . $name . ' must be of type ' . $name . ', ' . $this->gettype($this->container[$name]) . ' returned'
+                );
             }
 
             assert($this->container[$name] instanceof $name);
@@ -202,7 +233,7 @@ class Container
 
         // Check `$name` references a valid class name that can be autoloaded
         if (!\class_exists($name, true) && !interface_exists($name, false) && !trait_exists($name, false)) {
-            throw new \BadMethodCallException('Class ' . $name . ' not found');
+            throw new \Error('Class ' . $name . ' not found');
         }
 
         $class = new \ReflectionClass($name);
@@ -215,12 +246,12 @@ class Container
             } elseif ($class->isTrait()) {
                 $modifier = 'trait';
             }
-            throw new \BadMethodCallException('Cannot instantiate ' . $modifier . ' '. $name);
+            throw new \Error('Cannot instantiate ' . $modifier . ' '. $name);
         }
 
         // build list of constructor parameters based on parameter types
         $ctor = $class->getConstructor();
-        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false);
+        $params = $ctor === null ? [] : $this->loadFunctionParams($ctor, $depth, false, '');
 
         // instantiate with list of parameters
         // @phpstan-ignore-next-line because `$class->newInstance()` is known to return `T`
@@ -229,13 +260,15 @@ class Container
 
     /**
      * @return list<mixed>
-     * @throws \BadMethodCallException if either parameter can not be loaded
+     * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Error if either parameter can not be loaded
+     * @throws \Throwable if container factory function throws unexpected exception
      */
-    private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables): array
+    private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables, string $for): array
     {
         $params = [];
         foreach ($function->getParameters() as $parameter) {
-            $params[] = $this->loadParameter($parameter, $depth, $allowVariables);
+            $params[] = $this->loadParameter($parameter, $depth, $allowVariables, $for);
         }
 
         return $params;
@@ -243,57 +276,66 @@ class Container
 
     /**
      * @return mixed
-     * @throws \BadMethodCallException if $parameter can not be loaded
+     * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Error if $parameter can not be loaded
+     * @throws \Throwable if container factory function throws unexpected exception
      */
-    private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables) /*: mixed (PHP 8.0+) */
+    private function loadParameter(\ReflectionParameter $parameter, int $depth, bool $allowVariables, string $for) /*: mixed (PHP 8.0+) */
     {
-        assert(\is_array($this->container));
+        // abort for unreasonably deep nesting or recursive types
+        if ($depth < 1) {
+            throw new \Error(self::parameterError($parameter, $for) . ' is recursive');
+        }
 
+        assert(\is_array($this->container));
         $type = $parameter->getType();
-        $hasDefault = $parameter->isDefaultValueAvailable() || ((!$type instanceof \ReflectionNamedType || $type->getName() !== 'mixed') && $parameter->allowsNull());
 
         // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
         // @phpstan-ignore-next-line for PHP < 8
         if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
-            if ($hasDefault) {
-                return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+            if ($parameter->isDefaultValueAvailable()) {
+                return $parameter->getDefaultValue();
             }
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type);
+            if ($type->allowsNull()) {
+                return null;
+            }
+
+            throw new \Error(
+                self::parameterError($parameter, $for) . ' expects unsupported type ' . $type
+            );
         } // @codeCoverageIgnoreEnd
 
         // load container variables if parameter name is known
         assert($type === null || $type instanceof \ReflectionNamedType);
         if ($allowVariables && $this->hasVariable($parameter->getName())) {
-            return $this->loadVariable($parameter->getName(), $type === null ? 'mixed' : $type->getName(), $parameter->allowsNull(), $depth);
-        }
+            $value = $this->loadVariable($parameter->getName(), $depth);
 
-        // abort if parameter is untyped and not explicitly defined by container variable
-        if ($type === null) {
-            assert($parameter->allowsNull());
-            if ($parameter->isDefaultValueAvailable()) {
-                return $parameter->getDefaultValue();
+            // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
+            // allow null values if parameter is marked nullable or untyped or mixed
+            if ($type === null || ($value === null && $parameter->allowsNull()) || $type->getName() === 'mixed' || $this->validateType($value, $type)) {
+                return $value;
             }
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' has no type');
+
+            throw new \TypeError(
+                self::parameterError($parameter, $for) . ' must be of type ' . self::typeName($type) . ', ' . $this->gettype($value) . ' given'
+            );
         }
 
         // use default/nullable argument if not loadable as container variable or by type
-        assert($type instanceof \ReflectionNamedType);
-        if ($hasDefault && ($type->isBuiltin() || !\array_key_exists($type->getName(), $this->container))) {
-            return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
-        }
-
-        // abort if required container variable is not defined or for any other primitive types (array etc.)
-        if ($type->isBuiltin()) {
-            if ($allowVariables) {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' is not defined');
-            } else {
-                throw new \BadMethodCallException(self::parameterError($parameter) . ' expects unsupported type ' . $type->getName());
+        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin() || !\array_key_exists($type->getName(), $this->container)) {
+            if ($parameter->isDefaultValueAvailable()) {
+                return $parameter->getDefaultValue();
+            }
+            if ($type !== null && $type->allowsNull() && $type->getName() !== 'mixed') {
+                return null;
             }
         }
 
-        // abort for unreasonably deep nesting or recursive types
-        if ($depth < 1) {
-            throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
+        // abort if required container variable is not defined or for any other primitive types (array etc.)
+        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+            throw new \Error(
+                self::parameterError($parameter, $for) . ' requires container config' . ($type !== null ? ' with type ' . self::typeName($type) : '') . ', none given'
+            );
         }
 
         // @phpstan-ignore-next-line because `$type->getName()` is a `class-string` by definition
@@ -307,29 +349,29 @@ class Container
 
     /**
      * @return object|string|int|float|bool|null
-     * @throws \BadMethodCallException if $name is not a valid container variable
+     * @throws \TypeError if container factory returns an unexpected type
+     * @throws \Error if $name can not be loaded
+     * @throws \Throwable if container factory function throws unexpected exception
      */
-    private function loadVariable(string $name, string $type, bool $nullable, int $depth) /*: object|string|int|float|bool|null (PHP 8.0+) */
+    private function loadVariable(string $name, int $depth = 64) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
         assert($this->hasVariable($name));
         assert(\is_array($this->container) || !$this->container->has($name));
 
         if (\is_array($this->container) && ($this->container[$name] ?? null) instanceof \Closure) {
-            if ($depth < 1) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' is recursive');
-            }
-
             // build list of factory parameters based on parameter types
             $factory = $this->container[$name];
             assert($factory instanceof \Closure);
             $closure = new \ReflectionFunction($factory);
-            $params = $this->loadFunctionParams($closure, $depth - 1, true);
+            $params = $this->loadFunctionParams($closure, $depth - 1, true, '$' . $name);
 
             // invoke factory with list of parameters
             $value = $params === [] ? $factory() : $factory(...$params);
 
             if (!\is_object($value) && !\is_scalar($value) && $value !== null) {
-                throw new \BadMethodCallException('Container variable $' . $name . ' expected type object|scalar|null from factory, but got ' . $this->gettype($value));
+                throw new \TypeError(
+                    'Return value of ' . self::functionName($closure) . ' for $' . $name . ' must be of type object|string|int|float|bool|null, ' . $this->gettype($value) . ' returned'
+                );
             }
 
             $this->container[$name] = $value;
@@ -347,41 +389,54 @@ class Container
         }
 
         assert(\is_object($value) || \is_scalar($value) || $value === null);
-
-        // allow null values if parameter is marked nullable or untyped or mixed
-        if ($nullable && $value === null) {
-            return null;
-        }
-
-        // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
-        if ($type === 'mixed') {
-            return $value;
-        }
-
-        if (
-            (\is_object($value) && !$value instanceof $type) ||
-            (!\is_object($value) && !\in_array($type, ['string', 'int', 'float', 'bool'])) ||
-            ($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))
-        ) {
-            throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . $this->gettype($value));
-        }
-
         return $value;
     }
 
-    /** @throws void */
-    private static function parameterError(\ReflectionParameter $parameter): string
+    /**
+     * @param object|string|int|float|bool|null $value
+     * @param \ReflectionNamedType $type
+     * @throws void
+     */
+    private function validateType($value, \ReflectionNamedType $type): bool
     {
-        $function = $parameter->getDeclaringFunction();
+        $type = $type->getName();
+        return (
+            (\is_object($value) && $value instanceof $type) ||
+            (\is_string($value) && $type === 'string') ||
+            (\is_int($value) && $type === 'int') ||
+            (\is_float($value) && $type === 'float') ||
+            (\is_bool($value) && $type === 'bool')
+        );
+    }
+
+    /** @throws void */
+    private static function functionName(\ReflectionFunctionAbstract $function): string
+    {
         $name = $function->getShortName();
         if ($name[0] === '{') { // $function->isAnonymous() (PHP 8.2+)
             // use PHP 8.4+ format including closure file and line on all PHP versions: https://3v4l.org/tAs7s
             $name = '{closure:' . $function->getFileName() . ':' . $function->getStartLine() . '}';
-        } elseif (($class = $parameter->getDeclaringClass()) !== null) {
-            $name = explode("\0", $class->getName())[0] . '::' . $name;
+        } elseif ($function instanceof \ReflectionMethod && ($class = $function->getDeclaringClass()) !== null) {
+            $name = \explode("\0", $class->getName())[0] . '::' . $name;
         }
+        return $name . '()';
+    }
 
-        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . $name . '()';
+    /** @throws void */
+    private static function parameterError(\ReflectionParameter $parameter, string $for): string
+    {
+        return 'Argument #' . ($parameter->getPosition() + 1) . ' ($' . $parameter->getName() . ') of ' . self::functionName($parameter->getDeclaringFunction()) . ($for !== '' ? ' for ' . $for : '');
+    }
+
+    /**
+     * @param \ReflectionNamedType $type
+     * @return string
+     * @throws void
+     * @see https://www.php.net/manual/en/reflectiontype.tostring.php (PHP 8+)
+     */
+    private static function typeName(\ReflectionNamedType $type): string
+    {
+        return ($type->allowsNull() && $type->getName() !== 'mixed' ? '?' : '') . $type->getName();
     }
 
     /**
@@ -401,6 +456,6 @@ class Container
         } elseif ($value === null) {
             return 'null';
         }
-        return \is_object($value) ? \get_class($value) : \gettype($value);
+        return \is_object($value) ? \explode("\0", \get_class($value))[0] : \gettype($value);
     }
 }
