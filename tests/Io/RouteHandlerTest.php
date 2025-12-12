@@ -18,7 +18,10 @@ class RouteHandlerTest extends TestCase
     {
         $controller = function () { };
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
@@ -37,7 +40,10 @@ class RouteHandlerTest extends TestCase
         $middleware = function () { };
         $controller = function () { };
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', new MiddlewareHandler([$middleware, $controller]));
@@ -57,8 +63,8 @@ class RouteHandlerTest extends TestCase
 
         $container = $this->createMock(Container::class);
         $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($controller);
-
         assert($container instanceof Container);
+
         $handler = new RouteHandler($container);
 
         $router = $this->createMock(RouteCollector::class);
@@ -77,7 +83,10 @@ class RouteHandlerTest extends TestCase
     {
         $controller = function () { };
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
@@ -96,9 +105,13 @@ class RouteHandlerTest extends TestCase
         $controller = function () { };
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($controller);
+        $container->expects($this->never())->method('callable');
+        assert($container instanceof Container);
 
-        $handler = new RouteHandler();
+        $handler = new RouteHandler($container);
+
+        $container = $this->createMock(Container::class);
+        $container->expects($this->once())->method('callable')->with('stdClass')->willReturn($controller);
 
         $router = $this->createMock(RouteCollector::class);
         $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
@@ -143,7 +156,11 @@ class RouteHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
         $request = $request->withRequestTarget('http://example.com/');
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
         $response = $handler($request);
 
         /** @var ResponseInterface $response */
@@ -161,7 +178,11 @@ class RouteHandlerTest extends TestCase
         $request = new ServerRequest('CONNECT', 'example.com:80');
         $request = $request->withRequestTarget('example.com:80');
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
         $response = $handler($request);
 
         /** @var ResponseInterface $response */
@@ -179,7 +200,11 @@ class RouteHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
         $handler->map(['GET'], '/', function () use ($response) { return $response; });
 
         $ret = $handler($request);
@@ -201,7 +226,11 @@ class RouteHandlerTest extends TestCase
         };
         $controller::$response = $response;
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
         $handler->map(['GET'], '/', $controller);
 
         $ret = $handler($request);
@@ -224,7 +253,8 @@ class RouteHandlerTest extends TestCase
         };
         $controller::$response = $response;
 
-        $handler = new RouteHandler();
+        $handler = new RouteHandler(new Container([]));
+
         $handler->map(['GET'], '/', get_class($controller));
 
         $ret = $handler($request);
@@ -251,7 +281,8 @@ class RouteHandlerTest extends TestCase
         };
         $controller::$response = $response;
 
-        $handler = new RouteHandler();
+        $handler = new RouteHandler(new Container([]));
+
         $handler->map(['GET'], '/', get_class($controller));
 
         $ret = $handler($request);
@@ -276,7 +307,8 @@ class RouteHandlerTest extends TestCase
             }
         };
 
-        $handler = new RouteHandler();
+        $handler = new RouteHandler(new Container([]));
+
         $handler->map(['GET'], '/', get_class($controller));
 
         $ret = $handler($request);
@@ -296,7 +328,8 @@ class RouteHandlerTest extends TestCase
             }
         };
 
-        $handler = new RouteHandler();
+        $handler = new RouteHandler(new Container([]));
+
         $handler->map(['GET'], '/', get_class($middleware), function () use ($response) { return $response; });
 
         $ret = $handler($request);
@@ -317,7 +350,8 @@ class RouteHandlerTest extends TestCase
             }
         };
 
-        $handler = new RouteHandler();
+        $handler = new RouteHandler(new Container([]));
+
         $handler->map(['GET'], '/', get_class($controller));
 
         $ret = $handler($request);
@@ -332,7 +366,11 @@ class RouteHandlerTest extends TestCase
         $request = new ServerRequest('GET', 'http://example.com/http://localhost/');
         $response = new Response(200, [], '');
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
         $handler->map(['GET'], '/http://localhost/', function () use ($response) { return $response; });
 
         $ret = $handler($request);
@@ -346,7 +384,11 @@ class RouteHandlerTest extends TestCase
         $request = $request->withRequestTarget('*');
         $response = new Response(200, [], '');
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
         $handler->map(['OPTIONS'], '*', function () use ($response) { return $response; });
 
         $ret = $handler($request);
@@ -358,7 +400,11 @@ class RouteHandlerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
-        $handler = new RouteHandler();
+        $container = $this->createMock(Container::class);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
         $handler->map(['GET'], '/', new Container());
 
         $this->expectException(\BadMethodCallException::class);
@@ -370,7 +416,8 @@ class RouteHandlerTest extends TestCase
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
-        $handler = new RouteHandler();
+        $handler = new RouteHandler(new Container([]));
+
         $handler->map(['GET'], '/', Container::class);
 
         $this->expectException(\BadMethodCallException::class);
