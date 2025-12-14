@@ -54,7 +54,7 @@ class SapiHandler
         } else {
             foreach ($_SERVER as $key => $value) {
                 if (\strpos($key, 'HTTP_') === 0) {
-                    $key = str_replace(' ', '-', \ucwords(\strtolower(\str_replace('_', ' ', \substr($key, 5)))));
+                    $key = \str_replace(' ', '-', \ucwords(\strtolower(\str_replace('_', ' ', \substr($key, 5)))));
                     $headers[$key] = $value;
 
                     if ($host === null && $key === 'Host') {
@@ -73,15 +73,15 @@ class SapiHandler
             $url = (($_SERVER['HTTPS'] ?? null) === 'on' ? 'https://' : 'http://') . $target;
         }
 
-        $body = file_get_contents('php://input');
-        assert(\is_string($body));
+        $body = \file_get_contents('php://input');
+        \assert(\is_string($body));
 
         $request = new ServerRequest(
             $_SERVER['REQUEST_METHOD'] ?? 'GET',
             $url,
             $headers,
             $body,
-            substr($_SERVER['SERVER_PROTOCOL'] ?? 'http/1.1', 5),
+            \substr($_SERVER['SERVER_PROTOCOL'] ?? 'http/1.1', 5),
             $_SERVER
         );
         if ($host === null) {
@@ -121,22 +121,22 @@ class SapiHandler
 
         // remove default "Content-Type" header set by PHP (default_mimetype)
         if (!$response->hasHeader('Content-Type')) {
-            header('Content-Type:');
-            header_remove('Content-Type');
+            \header('Content-Type:');
+            \header_remove('Content-Type');
         }
 
         // send all headers without applying default "; charset=utf-8" set by PHP (default_charset)
-        $old = ini_get('default_charset');
-        assert(\is_string($old));
-        ini_set('default_charset', '');
+        $old = \ini_get('default_charset');
+        \assert(\is_string($old));
+        \ini_set('default_charset', '');
         foreach ($response->getHeaders() as $name => $values) {
             foreach ($values as $value) {
-                header($name . ': ' . $value, false);
+                \header($name . ': ' . $value, false);
             }
         }
-        ini_set('default_charset', $old);
+        \ini_set('default_charset', $old);
 
-        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $status . ' ' . $response->getReasonPhrase());
+        \header($_SERVER['SERVER_PROTOCOL'] . ' ' . $status . ' ' . $response->getReasonPhrase());
 
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' || $status === Response::STATUS_NO_CONTENT || $status === Response::STATUS_NOT_MODIFIED) {
             $body->close();
@@ -145,8 +145,8 @@ class SapiHandler
 
         if ($body instanceof ReadableStreamInterface) {
             // try to disable nginx buffering (http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering)
-            if (isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'nginx') === 0) {
-                header('X-Accel-Buffering: no');
+            if (isset($_SERVER['SERVER_SOFTWARE']) && \strpos($_SERVER['SERVER_SOFTWARE'], 'nginx') === 0) {
+                \header('X-Accel-Buffering: no');
             }
 
             // clear output buffer to show streaming output (default in cli-server)
@@ -157,7 +157,7 @@ class SapiHandler
             // flush data whenever stream reports one data chunk
             $body->on('data', function ($chunk) {
                 echo $chunk;
-                flush();
+                \flush();
             });
         } else {
             echo $body;

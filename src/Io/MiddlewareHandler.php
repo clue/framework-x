@@ -15,7 +15,7 @@ class MiddlewareHandler
     /** @param list<callable> $handlers */
     public function __construct(array $handlers)
     {
-        assert(count($handlers) >= 2);
+        \assert(\count($handlers) >= 2);
 
         $this->handlers = $handlers;
     }

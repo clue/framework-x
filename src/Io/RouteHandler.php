@@ -52,7 +52,7 @@ class RouteHandler
             $handlers = [$handler];
         }
 
-        $last = key($handlers);
+        $last = \key($handlers);
         $container = $this->container;
         foreach ($handlers as $i => $handler) {
             if ($handler instanceof Container && $i !== $last) {
@@ -66,7 +66,7 @@ class RouteHandler
         }
 
         /** @var non-empty-array<callable> $handlers */
-        $handler = \count($handlers) > 1 ? new MiddlewareHandler(array_values($handlers)) : \reset($handlers);
+        $handler = \count($handlers) > 1 ? new MiddlewareHandler(\array_values($handlers)) : \reset($handlers);
         $this->routeDispatcher = null;
         $this->routeCollector->addRoute($methods, $route, $handler);
     }
@@ -88,7 +88,7 @@ class RouteHandler
         }
 
         $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $target);
-        assert(\is_array($routeInfo) && isset($routeInfo[0]));
+        \assert(\is_array($routeInfo) && isset($routeInfo[0]));
 
         // happy path: matching route found, assign route attributes and invoke request handler
         if ($routeInfo[0] === \FastRoute\Dispatcher::FOUND) {
@@ -96,7 +96,7 @@ class RouteHandler
             $vars = $routeInfo[2];
 
             foreach ($vars as $key => $value) {
-                $request = $request->withAttribute($key, rawurldecode($value));
+                $request = $request->withAttribute($key, \rawurldecode($value));
             }
 
             return $handler($request);
@@ -108,8 +108,8 @@ class RouteHandler
         }
 
         // unexpected request method for route: report error `405 Method Not Allowed`
-        assert($routeInfo[0] === \FastRoute\Dispatcher::METHOD_NOT_ALLOWED);
-        assert(\is_array($routeInfo[1]) && \count($routeInfo[1]) > 0);
+        \assert($routeInfo[0] === \FastRoute\Dispatcher::METHOD_NOT_ALLOWED);
+        \assert(\is_array($routeInfo[1]) && \count($routeInfo[1]) > 0);
 
         return $this->errorHandler->requestMethodNotAllowed($routeInfo[1]);
     }

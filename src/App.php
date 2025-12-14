@@ -290,7 +290,7 @@ class App
         if ($response instanceof PromiseInterface) {
             /** @throws void */
             $response = await($response);
-            assert($response instanceof ResponseInterface);
+            \assert($response instanceof ResponseInterface);
         }
 
         return $response;
@@ -308,14 +308,14 @@ class App
     private function handleRequest(ServerRequestInterface $request)
     {
         $response = ($this->handler)($request);
-        assert($response instanceof ResponseInterface || $response instanceof PromiseInterface || $response instanceof \Generator);
+        \assert($response instanceof ResponseInterface || $response instanceof PromiseInterface || $response instanceof \Generator);
 
         if ($response instanceof \Generator) {
             if ($response->valid()) {
                 $response = $this->coroutine($response);
             } else {
                 $response = $response->getReturn();
-                assert($response instanceof ResponseInterface);
+                \assert($response instanceof ResponseInterface);
             }
         }
 
@@ -336,7 +336,7 @@ class App
             }
 
             $promise = $generator->current();
-            assert($promise instanceof PromiseInterface);
+            \assert($promise instanceof PromiseInterface);
 
             $promise->then(function ($value) use ($generator, $next) {
                 $generator->send($value);

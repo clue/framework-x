@@ -85,7 +85,7 @@ class LogStreamHandler
         $prefix = \date('Y-m-d H:i:s', (int) $time) . \sprintf('.%03d ', (int) (($time - (int) $time) * 1e3));
 
         $ret = \fwrite($this->stream, $prefix . $message . \PHP_EOL);
-        assert(\is_int($ret));
+        \assert(\is_int($ret));
     }
 
     private function isAbsolutePath(string $path): bool

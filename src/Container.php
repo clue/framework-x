@@ -94,7 +94,7 @@ class Container
             // Check `$handler` references a class name that is callable, i.e. has an `__invoke()` method.
             // This initial version is intentionally limited to checking the method name only.
             // A follow-up version will likely use reflection to check request handler argument types.
-            if (!is_callable($handler)) {
+            if (!\is_callable($handler)) {
                 throw new \Error(
                     'Request handler ' . \explode("\0", $class)[0] . ' has no public __invoke() method'
                 );
@@ -115,7 +115,7 @@ class Container
      */
     public function getEnv(string $name): ?string
     {
-        assert(\preg_match('/^[A-Z][A-Z0-9_]+$/', $name) === 1);
+        \assert(\preg_match('/^[A-Z][A-Z0-9_]+$/', $name) === 1);
 
         if ($this->container instanceof ContainerInterface && $this->container->has($name)) {
             $value = $this->container->get($name);
@@ -180,7 +180,7 @@ class Container
      */
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
-        assert(\is_array($this->container));
+        \assert(\is_array($this->container));
 
         if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
@@ -226,13 +226,13 @@ class Container
                 );
             }
 
-            assert($this->container[$name] instanceof $name);
+            \assert($this->container[$name] instanceof $name);
 
             return $this->container[$name];
         }
 
         // Check `$name` references a valid class name that can be autoloaded
-        if (!\class_exists($name, true) && !interface_exists($name, false) && !trait_exists($name, false)) {
+        if (!\class_exists($name, true) && !\interface_exists($name, false) && !\trait_exists($name, false)) {
             throw new \Error('Class ' . $name . ' not found');
         }
 
@@ -287,7 +287,7 @@ class Container
             throw new \Error(self::parameterError($parameter, $for) . ' is recursive');
         }
 
-        assert(\is_array($this->container));
+        \assert(\is_array($this->container));
         $type = $parameter->getType();
 
         // abort for union types (PHP 8.0+) and intersection types (PHP 8.1+)
@@ -306,7 +306,7 @@ class Container
         } // @codeCoverageIgnoreEnd
 
         // load container variables if parameter name is known
-        assert($type === null || $type instanceof \ReflectionNamedType);
+        \assert($type === null || $type instanceof \ReflectionNamedType);
         if ($allowVariables && $this->hasVariable($parameter->getName())) {
             $value = $this->loadVariable($parameter->getName(), $depth);
 
@@ -355,13 +355,13 @@ class Container
      */
     private function loadVariable(string $name, int $depth = 64) /*: object|string|int|float|bool|null (PHP 8.0+) */
     {
-        assert($this->hasVariable($name));
-        assert(\is_array($this->container) || !$this->container->has($name));
+        \assert($this->hasVariable($name));
+        \assert(\is_array($this->container) || !$this->container->has($name));
 
         if (\is_array($this->container) && ($this->container[$name] ?? null) instanceof \Closure) {
             // build list of factory parameters based on parameter types
             $factory = $this->container[$name];
-            assert($factory instanceof \Closure);
+            \assert($factory instanceof \Closure);
             $closure = new \ReflectionFunction($factory);
             $params = $this->loadFunctionParams($closure, $depth - 1, true, '$' . $name);
 
@@ -378,17 +378,17 @@ class Container
         } elseif (\is_array($this->container) && \array_key_exists($name, $this->container)) {
             $value = $this->container[$name];
         } elseif (isset($_ENV[$name])) {
-            assert(\is_string($_ENV[$name]));
+            \assert(\is_string($_ENV[$name]));
             $value = $_ENV[$name];
         } elseif (isset($_SERVER[$name])) {
-            assert(\is_string($_SERVER[$name]));
+            \assert(\is_string($_SERVER[$name]));
             $value = $_SERVER[$name];
         } else {
             $value = \getenv($name);
-            assert($this->useProcessEnv && $value !== false);
+            \assert($this->useProcessEnv && $value !== false);
         }
 
-        assert(\is_object($value) || \is_scalar($value) || $value === null);
+        \assert(\is_object($value) || \is_scalar($value) || $value === null);
         return $value;
     }
 
