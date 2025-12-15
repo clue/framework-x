@@ -296,9 +296,6 @@ class Container
             if ($parameter->isDefaultValueAvailable()) {
                 return $parameter->getDefaultValue();
             }
-            if ($type->allowsNull()) {
-                return null;
-            }
 
             throw new \Error(
                 self::parameterError($parameter, $for) . ' expects unsupported type ' . $type
@@ -321,14 +318,12 @@ class Container
             );
         }
 
-        // use default/nullable argument if not loadable as container variable or by type
-        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin() || !\array_key_exists($type->getName(), $this->container)) {
-            if ($parameter->isDefaultValueAvailable()) {
-                return $parameter->getDefaultValue();
-            }
-            if ($type !== null && $type->allowsNull() && $type->getName() !== 'mixed') {
-                return null;
-            }
+        // use default argument if not loadable as container variable or by type
+        if (
+            $parameter->isDefaultValueAvailable() &&
+            (!$type instanceof \ReflectionNamedType || $type->isBuiltin() || !\array_key_exists($type->getName(), $this->container))
+        ) {
+            return $parameter->getDefaultValue();
         }
 
         // abort if required container variable is not defined or for any other primitive types (array etc.)

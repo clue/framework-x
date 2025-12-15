@@ -190,8 +190,6 @@ covers most common use cases:
 * Each class may or may not have a constructor.
 * If the constructor has an optional argument, it will be omitted unless an
   explicit [container configuration](#container-configuration) is used.
-* If the constructor has a nullable argument, it will be given a `null` value
-  unless an explicit [container configuration](#container-configuration) is used.
 * If the constructor references another class, it will load this class next.
 
 This covers most common use cases where the request handler class uses a
@@ -330,27 +328,6 @@ some manual configuration like this:
     // …
     ```
 
-=== "Nullable values"
-
-    ```php title="public/index.php"
-    <?php
-
-    require __DIR__ . '/../vendor/autoload.php';
-
-    $container = new FrameworkX\Container([
-        Acme\Todo\UserController::class => function (?string $name) {
-            // example UserController class uses $name, defaults to null if not set
-            return new Acme\Todo\UserController($name ?? 'ACME');
-        },
-        'name' => 'Demo'
-    ]);
-
-
-    $app = new FrameworkX\App($container);
-
-    // …
-    ```
-
 > ℹ️ **Avoiding name collisions**
 >
 > Note that class names and container variables share the same container
@@ -415,7 +392,7 @@ all uppercase in any factory function like this:
         // Framework X also uses environment variables internally.
         // You may explicitly configure this built-in functionality like this:
         // 'X_LISTEN' => '0.0.0.0:8081'
-        // 'X_LISTEN' => fn(?string $PORT = '8080') => '0.0.0.0:' . $PORT
+        // 'X_LISTEN' => fn(string $PORT = '8080') => '0.0.0.0:' . $PORT
         'X_LISTEN' => '127.0.0.1:8080'
     ]);
 
