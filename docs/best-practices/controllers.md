@@ -392,7 +392,7 @@ all uppercase in any factory function like this:
         // Framework X also uses environment variables internally.
         // You may explicitly configure this built-in functionality like this:
         // 'X_LISTEN' => '0.0.0.0:8081'
-        // 'X_LISTEN' => fn(string $PORT = '8080') => '0.0.0.0:' . $PORT
+        // 'X_LISTEN' => fn(int|string $PORT = 8080) => '0.0.0.0:' . $PORT
         'X_LISTEN' => '127.0.0.1:8080'
     ]);
 
@@ -404,7 +404,10 @@ all uppercase in any factory function like this:
 > ℹ️ **Passing environment variables**
 >
 > All environment variables defined on the process level will be made available
-> automatically. For temporary testing purposes, you may explicitly `export` or
+> automatically. Note that all environment variables are of type string by
+> definition, so may have to cast values or accept unions as required.
+>
+> For temporary testing purposes, you may explicitly `export` or
 > prefix environment variables to the command line. As a more permanent
 > solution, you may want to save your environment variables in your
 > [systemd configuration](deployment.md#systemd), [Docker settings](deployment.md#docker-containers),

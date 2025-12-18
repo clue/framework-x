@@ -743,7 +743,7 @@ class ContainerTest extends TestCase
             }
         };
 
-        $fn = $data = null;
+        $fn = null;
         $fn = #[PHP8] fn(mixed $data = 42) => new Response(200, [], (string) json_encode($data)); // @phpstan-ignore-line
         $container = new Container([
             ResponseInterface::class => $fn,
@@ -1906,31 +1906,52 @@ class ContainerTest extends TestCase
     /**
      * @requires PHP 8
      */
-    public function testGetEnvReturnsNullFromFactoryForUnsupportedUnionVariableWithNullDefaultEvenForKnownVariable(): void
+    public function testGetEnvReturnsStringFromFactoryFunctionWithUnionType(): void
     {
         $fn = null;
-        $fn = #[PHP8] function (string|int|null $bar = null) { return $bar; };
+        $fn = #[PHP8] function (string|int $X_UNION) { return (string) $X_UNION; };
         $container = new Container([
             'X_FOO' => $fn,
-            'bar' => 'ignored'
+            'X_UNION' => 42
         ]);
 
-        $this->assertNull($container->getEnv('X_FOO'));
+        $this->assertEquals('42', $container->getEnv('X_FOO'));
     }
 
     /**
-     * @requires PHP 8
+     * @requires PHP 8.1
      */
-    public function testGetEnvReturnsStringFromFactoryForUnsupportedUnionVariableWithStringDefaultEvenForKnownVariable(): void
+    public function testGetEnvReturnsStringFromFactoryFunctionWithIntersectionType(): void
     {
-        $fn = null;
-        $fn = #[PHP8] function (string|int|null $bar = 'default') { return $bar; };
+        // eval to avoid syntax error on PHP < 8.1
+        $fn = eval('return function (\Traversable&\Stringable $X_UNION) { return (string) $X_UNION; };');
         $container = new Container([
             'X_FOO' => $fn,
-            'bar' => 'ignored'
+            'X_UNION' => new class implements \IteratorAggregate, \Stringable {
+                public function __toString(): string { return '42'; }
+                public function getIterator(): \Traversable { yield from []; }
+            }
         ]);
 
-        $this->assertEquals('default', $container->getEnv('X_FOO'));
+        $this->assertEquals('42', $container->getEnv('X_FOO'));
+    }
+
+    /**
+     * @requires PHP 8.2
+     */
+    public function testGetEnvReturnsStringFromFactoryFunctionWithDnfType(): void
+    {
+        // eval to avoid syntax error on PHP < 8.2
+        $fn = eval('return function (float|(\Traversable&\Stringable)|string $X_UNION) { return (string) $X_UNION; };');
+        $container = new Container([
+            'X_FOO' => $fn,
+            'X_UNION' => new class implements \IteratorAggregate, \Stringable {
+                public function __toString(): string { return '42'; }
+                public function getIterator(): \Traversable { yield from []; }
+            }
+        ]);
+
+        $this->assertEquals('42', $container->getEnv('X_FOO'));
     }
 
     public function testGetEnvReturnsNullFromFactoryForUnknownNullableVariableWithNullDefault(): void
@@ -1954,7 +1975,7 @@ class ContainerTest extends TestCase
     /**
      * @requires PHP 8
      */
-    public function testGetEnvReturnsNullFromFactoryForUnknownAndUnsupportedUnionVariableWithNullDefault(): void
+    public function testGetEnvReturnsNullFromFactoryForUnknownUnionVariableWithNullDefault(): void
     {
         $fn = null;
         $fn = #[PHP8] function (string|int|null $X_UNDEFINED = null) { return $X_UNDEFINED; };
@@ -1968,7 +1989,7 @@ class ContainerTest extends TestCase
     /**
      * @requires PHP 8
      */
-    public function testGetEnvReturnsStringFromFactoryForUnknownAndUnsupportedUnionVariableWithStringDefault(): void
+    public function testGetEnvReturnsStringFromFactoryForUnknownUnionVariableWithStringDefault(): void
     {
         $fn = null;
         $fn = #[PHP8] function (string|int|null $X_UNDEFINED = 'default') { return $X_UNDEFINED; };
@@ -2266,6 +2287,57 @@ class ContainerTest extends TestCase
         $container->getEnv('X_FOO');
     }
 
+    /**
+     * @requires PHP 8
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsUnionTypeButNoneGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $fn = null;
+        $fn = #[PHP8] function (string|int|null $X_UNDEFINED) { return $X_UNDEFINED; };
+        $container = new Container([
+            'X_FOO' => $fn
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO requires container config with type string|int|null, none given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8.1
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsIntersectionTypeButNoneGiven(): void
+    {
+        $line = __LINE__ + 2;
+        // eval to avoid syntax error on PHP < 8.1
+        $fn = eval('return function (\Traversable&\Stringable $X_UNDEFINED) { return (string) $X_UNDEFINED; };');
+        $container = new Container([
+            'X_FOO' => $fn
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . '(' . $line . ') : eval()\'d code:1}() for $X_FOO requires container config with type Traversable&Stringable, none given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8.2
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsDnfTypeButNoneGiven(): void
+    {
+        $line = __LINE__ + 2;
+        // eval to avoid syntax error on PHP < 8.2
+        $fn = eval('return function (float|(\Traversable&\Stringable)|string $X_UNDEFINED) { return (string) $X_UNDEFINED; };');
+        $container = new Container([
+            'X_FOO' => $fn
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . '(' . $line . ') : eval()\'d code:1}() for $X_FOO requires container config with type (Traversable&Stringable)|string|float, none given');
+        $container->getEnv('X_FOO');
+    }
+
     public function testGetEnvThrowsWhenFactoryFunctionExpectsNullableIntArgumentButGivenString(): void
     {
         $line = __LINE__ + 2;
@@ -2282,35 +2354,54 @@ class ContainerTest extends TestCase
     /**
      * @requires PHP 8
      */
-    public function testGetEnvThrowsWhenFactoryFunctionExpectsUnsupportedUnionType(): void
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsUnionTypeButWrongTypeGiven(): void
     {
         $line = __LINE__ + 2;
         $fn = null;
         $fn = #[PHP8] function (string|int $X_UNION) { return (string) $X_UNION; };
         $container = new Container([
             'X_FOO' => $fn,
-            'X_UNION' => 42
+            'X_UNION' => false
         ]);
 
-        $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Argument #1 ($X_UNION) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO expects unsupported type string|int');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNION) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type string|int, false given');
         $container->getEnv('X_FOO');
     }
 
     /**
-     * @requires PHP 8
+     * @requires PHP 8.1
      */
-    public function testGetEnvThrowsWhenFactoryFunctionExpectsNullableUnionType(): void
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsIntersectionTypeButWrongTypeGiven(): void
     {
         $line = __LINE__ + 2;
-        $fn = null;
-        $fn = #[PHP8] function (string|int|null $X_UNDEFINED) { return $X_UNDEFINED; };
+        // eval to avoid syntax error on PHP < 8.1
+        $fn = eval('return function (\Traversable&\ArrayAccess $X_INTERSECTION) { return var_export($X_INTERSECTION); };');
         $container = new Container([
-            'X_FOO' => $fn
+            'X_FOO' => $fn,
+            'X_INTERSECTION' => false
         ]);
 
-        $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO expects unsupported type string|int|null');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($X_INTERSECTION) of {closure:' . __FILE__ . '(' . $line . ') : eval()\'d code:1}() for $X_FOO must be of type Traversable&ArrayAccess, false given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8.2
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsDnfTypeButWrongTypeGiven(): void
+    {
+        $line = __LINE__ + 2;
+        // eval to avoid syntax error on PHP < 8.2
+        $fn = eval('return function (float|(\Traversable&\Stringable)|string $X_UNION) { return (string) $X_UNION; };');
+        $container = new Container([
+            'X_FOO' => $fn,
+            'X_UNION' => null
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNION) of {closure:' . __FILE__ . '(' . $line . ') : eval()\'d code:1}() for $X_FOO must be of type (Traversable&Stringable)|string|float, null given');
         $container->getEnv('X_FOO');
     }
 

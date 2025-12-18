@@ -1648,14 +1648,14 @@ class AppTest extends TestCase
         if (PHP_VERSION_ID >= 80000) {
             yield [
                 InvalidConstructorUnion::class,
-                'Argument #1 ($value) of %s::__construct() expects unsupported type int|float'
+                'Argument #1 ($value) of %s::__construct() requires container config with type int|float, none given'
             ];
         }
 
         if (PHP_VERSION_ID >= 80100) {
             yield [
                 InvalidConstructorIntersection::class,
-                'Argument #1 ($value) of %s::__construct() expects unsupported type Traversable&amp;ArrayAccess'
+                'Argument #1 ($value) of %s::__construct() requires container config with type Traversable&amp;ArrayAccess, none given'
             ];
         }
 
