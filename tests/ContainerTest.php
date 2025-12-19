@@ -1305,7 +1305,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line .'}() for $stdClass requires container config with type string, none given');
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type string, none given');
         $callable($request);
     }
 
@@ -1817,22 +1817,6 @@ class ContainerTest extends TestCase
 
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($undefined) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass requires container config with type mixed, none given');
-        $callable($request);
-    }
-
-    public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresRecursiveClass(): void
-    {
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $line = __LINE__ + 2;
-        $container = new Container([
-            \stdClass::class => function (\stdClass $data) { return $data; }
-        ]);
-
-        $callable = $container->callable(\stdClass::class);
-
-        $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line .'}() for stdClass is recursive');
         $callable($request);
     }
 
@@ -2614,9 +2598,74 @@ class ContainerTest extends TestCase
         $this->assertSame($accessLogHandler, $ret);
     }
 
+    public function testGetObjectReturnsAccessLogHandlerInstanceFromFactoryFunction(): void
+    {
+        $accessLogHandler = new AccessLogHandler();
+
+        $container = new Container([
+            AccessLogHandler::class => function () use ($accessLogHandler) {
+                return $accessLogHandler;
+            }
+        ]);
+
+        $ret = $container->getObject(AccessLogHandler::class);
+
+        $this->assertSame($accessLogHandler, $ret);
+    }
+
+    public function testGetObjectReturnsDefaultStdclassInstanceWhenFactoryFunctionHasRecursiveArgument(): void
+    {
+        $container = new Container([
+            \stdClass::class => function (\stdClass $object) { return $object; }
+        ]);
+
+        $ret = $container->getObject(\stdClass::class);
+
+        $this->assertInstanceOf(\stdClass::class, $ret);
+    }
+
+    public function testGetObjectReturnsDefaultStdclassInstanceWhenFactoryFunctionUsesRecursiveGetObject(): void
+    {
+        $container = new Container([
+            \stdClass::class => function (Container $container) {
+                return $container->getObject(\stdClass::class);
+            }
+        ]);
+
+        $ret = $container->getObject(\stdClass::class);
+
+        $this->assertInstanceOf(\stdClass::class, $ret);
+    }
+
     public function testGetObjectReturnsSelfContainerByDefault(): void
     {
         $container = new Container([]);
+
+        $ret = $container->getObject(Container::class);
+
+        $this->assertSame($container, $ret);
+    }
+
+    public function testGetObjectReturnsSelfContainerIfFactoryFunctionHasRecursiveContainerArgument(): void
+    {
+        $container = new Container([
+            Container::class => function (Container $container): Container {
+                return $container;
+            }
+        ]);
+
+        $ret = $container->getObject(Container::class);
+
+        $this->assertSame($container, $ret);
+    }
+
+    public function testGetObjectReturnsSelfContainerIfFactoryFunctionUsesRecursiveGetObject(): void
+    {
+        $container = new Container([
+            Container::class => function (Container $container): Container {
+                return $container->getObject(Container::class);
+            }
+        ]);
 
         $ret = $container->getObject(Container::class);
 
@@ -2785,18 +2834,26 @@ class ContainerTest extends TestCase
         $container->getObject(AccessLogHandler::class);
     }
 
-    public function testGetObjectThrowsIfFactoryFunctionHasRecursiveContainerArgument(): void
+    public function testGetObjectThrowsIfConstructorRequiresContainerConfig(): void
     {
-        $line = __LINE__ + 2;
+        $container = new Container([]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($path) of ' . LogStreamHandler::class . '::__construct() requires container config with type string, none given');
+        $container->getObject(LogStreamHandler::class);
+    }
+
+    public function testGetObjectThrowsIfFactoryFunctionHasClassArgumentWithConstructorThatRequiresContainerConfig(): void
+    {
         $container = new Container([
-            Container::class => function (Container $container): Container {
-                return $container;
+            AccessLogHandler::class => function (LogStreamHandler $log) {
+                return new AccessLogHandler();
             }
         ]);
 
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Argument #1 ($container) of {closure:' . __FILE__ . ':' . $line .'}() for FrameworkX\Container is recursive');
-        $container->getObject(Container::class);
+        $this->expectExceptionMessage('Argument #1 ($path) of ' . LogStreamHandler::class . '::__construct() requires container config with type string, none given');
+        $container->getObject(AccessLogHandler::class);
     }
 
     public function testGetObjectThrowsIfConfigReferencesInterface(): void

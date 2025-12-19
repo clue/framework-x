@@ -245,12 +245,17 @@ class Container
 
                 $this->container[$name] = $value;
             } elseif ($this->container[$name] instanceof \Closure) {
-                // build list of factory parameters based on parameter types
-                $closure = new \ReflectionFunction($this->container[$name]);
-                $params = $this->loadFunctionParams($closure, $depth, true, \explode("\0", $name)[0]);
+                $factory = $this->container[$name];
+                $closure = new \ReflectionFunction($factory);
 
                 // invoke factory with list of parameters
-                $value = $params === [] ? ($this->container[$name])() : ($this->container[$name])(...$params);
+                // temporarily unset factory reference to allow loading recursive variables from environment
+                try {
+                    unset($this->container[$name]);
+                    $value = $factory(...$this->loadFunctionParams($closure, $depth, true, \explode("\0", $name)[0]));
+                } finally {
+                    $this->container[$name] = $factory;
+                }
 
                 if (\is_string($value)) {
                     if ($depth < 1) {
