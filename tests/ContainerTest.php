@@ -2126,6 +2126,28 @@ class ContainerTest extends TestCase
         $this->assertEquals('foo', $container->getEnv('X_FOO'));
     }
 
+    public function testGetEnvReturnsNullIfFactoryFunctionUsesRecursiveGetEnvForVariableNotSetInGlobalEnv(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (Container $container) { return $container->getEnv('X_FOO'); }
+        ]);
+
+        $this->assertNull($container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringIfFactoryFunctionUsesRecursiveGetEnvForVariableSetInGlobalEnv(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (Container $container) { return $container->getEnv('X_FOO'); }
+        ]);
+
+        $_ENV['X_FOO'] = 'foo';
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+
+        $this->assertEquals('foo', $ret);
+    }
+
     public function testGetEnvReturnsStringFromPsrContainer(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
