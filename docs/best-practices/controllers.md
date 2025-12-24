@@ -393,7 +393,7 @@ all uppercase in any factory function like this:
         // You may explicitly configure this built-in functionality like this:
         // 'X_LISTEN' => '0.0.0.0:8081'
         // 'X_LISTEN' => fn(int|string $PORT = 8080) => '0.0.0.0:' . $PORT
-        'X_LISTEN' => '127.0.0.1:8080'
+        'X_LISTEN' => fn(string $X_LISTEN = '127.0.0.1:8080') => $X_LISTEN
     ]);
 
     $app = new FrameworkX\App($container);

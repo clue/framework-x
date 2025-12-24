@@ -1268,7 +1268,7 @@ class ContainerTest extends TestCase
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line .'}() for $stdClass is recursive');
+        $this->expectExceptionMessage('Argument #1 ($stdClass) of {closure:' . __FILE__ . ':' . $line .'}() for $stdClass requires container config with type string, none given');
         $callable($request);
     }
 
@@ -2058,6 +2058,37 @@ class ContainerTest extends TestCase
         $this->assertEquals('foo', $ret);
     }
 
+    public function testGetEnvReturnsStringFromRecursiveFactoryReferencingStringFromGlobalEnv(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (string $X_FOO) { return strtoupper($X_FOO); }
+        ]);
+
+        $_ENV['X_FOO'] = 'foo';
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+
+        $this->assertEquals('FOO', $ret);
+    }
+
+    public function testGetEnvReturnsStringFromRecursiveFactoryWithNullableValueIfNotSetInGlobalEnv(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (?string $X_FOO = null) { return $X_FOO ?? 'foo'; }
+        ]);
+
+        $this->assertEquals('foo', $container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromRecursiveFactoryWithDefaultValueIfNotSetInGlobalEnv(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (string $X_FOO = 'foo') { return $X_FOO; }
+        ]);
+
+        $this->assertEquals('foo', $container->getEnv('X_FOO'));
+    }
+
     public function testGetEnvReturnsStringFromPsrContainer(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
@@ -2336,6 +2367,66 @@ class ContainerTest extends TestCase
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . '(' . $line . ') : eval()\'d code:1}() for $X_FOO requires container config with type (Traversable&Stringable)|string|float, none given');
         $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenRecursiveFactoryReferencesUndefinedVariable(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_UNDEFINED' => function (string $X_UNDEFINED) { return strtoupper($X_UNDEFINED); }
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($X_UNDEFINED) of {closure:' . __FILE__ . ':' . $line . '}() for $X_UNDEFINED requires container config with type string, none given');
+        $container->getEnv('X_UNDEFINED');
+    }
+
+    public function testGetEnvReturnsStringAfterFirstCallThrowsWhenRecursiveFactoryReferencesVariableDefinedOnlyOnSecondCall(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (string $X_FOO) { return strtoupper($X_FOO); }
+        ]);
+
+        try {
+            $container->getEnv('X_FOO');
+            $this->fail();
+        } catch (\Error $e) {
+            $this->assertEquals('Argument #1 ($X_FOO) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO requires container config with type string, none given', $e->getMessage());
+        }
+
+        $_ENV['X_FOO'] = 'defined';
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+
+        $this->assertEquals('DEFINED', $ret);
+    }
+
+    public function testGetEnvReturnsStringAfterFirstCallThrowsWhenRecursiveFactoryThrowsOnFirstCall(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (string $X_FOO) {
+                static $first = true;
+                if ($first) {
+                    $first = false;
+                    throw new \RuntimeException('First call');
+                }
+                return strtoupper($X_FOO);
+            }
+        ]);
+
+        try {
+            $_ENV['X_FOO'] = 'defined';
+            $container->getEnv('X_FOO');
+            $this->fail();
+        } catch (\RuntimeException $e) {
+            $this->assertEquals('First call', $e->getMessage());
+        }
+
+        $ret = $container->getEnv('X_FOO');
+        unset($_ENV['X_FOO']);
+
+        $this->assertEquals('DEFINED', $ret);
     }
 
     public function testGetEnvThrowsWhenFactoryFunctionExpectsNullableIntArgumentButGivenString(): void
