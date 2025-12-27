@@ -2,6 +2,7 @@
 
 namespace FrameworkX;
 
+use FrameworkX\Io\RouteHandler;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -163,6 +164,8 @@ class Container
             // fallback for missing required internal classes from PSR-11 adapter
             if ($class === Container::class) {
                 return $this; // @phpstan-ignore-line returns instanceof `T`
+            } elseif ($class === RouteHandler::class) {
+                return new RouteHandler($this); // @phpstan-ignore-line returns instanceof `T`
             }
             return new $class();
         }

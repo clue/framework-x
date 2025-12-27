@@ -5,6 +5,7 @@ namespace FrameworkX\Tests;
 use FrameworkX\AccessLogHandler;
 use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
+use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -2626,6 +2627,23 @@ class ContainerTest extends TestCase
         $this->assertSame($other, $ret);
     }
 
+    public function testGetObjectReturnsDefaultRouteHandlerInstance(): void
+    {
+        $container = new Container([]);
+
+        $router = $container->getObject(RouteHandler::class);
+
+        $this->assertInstanceOf(RouteHandler::class, $router);
+
+        $ref = new \ReflectionProperty($router, 'container');
+        if (\PHP_VERSION_ID < 801000) {
+            $ref->setAccessible(true);
+        }
+        $ret = $ref->getValue($router);
+
+        $this->assertSame($container, $ret);
+    }
+
     public function testGetObjectReturnsAccessLogHandlerInstanceFromPsrContainer(): void
     {
         $accessLogHandler = new AccessLogHandler();
@@ -2666,6 +2684,28 @@ class ContainerTest extends TestCase
         $container = new Container($psr);
 
         $ret = $container->getObject(Container::class);
+
+        $this->assertSame($container, $ret);
+    }
+
+    public function testGetObjectReturnsDefaultRouteHandlerInstanceIfPsrContainerHasNoEntry(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(RouteHandler::class)->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $router = $container->getObject(RouteHandler::class);
+
+        $this->assertInstanceOf(RouteHandler::class, $router);
+
+        $ref = new \ReflectionProperty($router, 'container');
+        if (\PHP_VERSION_ID < 801000) {
+            $ref->setAccessible(true);
+        }
+        $ret = $ref->getValue($router);
 
         $this->assertSame($container, $ret);
     }

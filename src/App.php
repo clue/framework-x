@@ -108,7 +108,7 @@ class App
             }
         }
 
-        $this->router = new RouteHandler($container);
+        $this->router = $container->getObject(RouteHandler::class);
         $handlers[] = $this->router;
         $this->handler = new MiddlewareHandler($handlers);
         $this->sapi = \PHP_SAPI === 'cli' ? new ReactiveHandler($container->getEnv('X_LISTEN')) : new SapiHandler();
