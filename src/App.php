@@ -53,10 +53,8 @@ class App
             $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
                 // load AccessLogHandler and ErrorHandler instance from last Container
-                if ($handler === AccessLogHandler::class) {
-                    $handler = $container->getAccessLogHandler();
-                } elseif ($handler === ErrorHandler::class) {
-                    $handler = $container->getErrorHandler();
+                if ($handler === AccessLogHandler::class || $handler === ErrorHandler::class) {
+                    $handler = $container->getObject($handler);
                 }
 
                 // ensure AccessLogHandler is always followed by ErrorHandler
@@ -99,12 +97,12 @@ class App
 
         // add default ErrorHandler as first handler unless it is already added explicitly
         if ($needsErrorHandler instanceof Container) {
-            \array_unshift($handlers, $needsErrorHandler->getErrorHandler());
+            \array_unshift($handlers, $needsErrorHandler->getObject(ErrorHandler::class));
         }
 
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
         if ($needsAccessLog instanceof Container) {
-            $handler = $needsAccessLog->getAccessLogHandler();
+            $handler = $needsAccessLog->getObject(AccessLogHandler::class);
             if (!$handler->isDevNull()) {
                 \array_unshift($handlers, $handler);
             }

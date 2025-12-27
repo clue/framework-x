@@ -135,45 +135,39 @@ class Container
     }
 
     /**
+     * [Internal] Get an object of given class from container
+     *
+     * @template T of object
+     * @param class-string<T> $class
+     * @return object returns an instance of given $class or throws if it can not be instantiated
+     * @phpstan-return T
      * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Error if object of type $class can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
      * @internal
      */
-    public function getAccessLogHandler(): AccessLogHandler
+    public function getObject(string $class) /*: object (PHP 7.2+) */
     {
-        if ($this->container instanceof ContainerInterface) {
-            if ($this->container->has(AccessLogHandler::class)) {
-                // @phpstan-ignore-next-line method return type will ensure correct type or throw `TypeError`
-                return $this->container->get(AccessLogHandler::class);
-            } else {
-                return new AccessLogHandler();
+        if ($this->container instanceof ContainerInterface && $this->container->has($class)) {
+            $value = $this->container->get($class);
+            if (!$value instanceof $class) {
+                throw new \TypeError(
+                    'Return value of ' . \explode("\0", \get_class($this->container))[0] . '::get() for ' . $class . ' must be of type ' . $class . ', ' . $this->gettype($value) . ' returned'
+                );
             }
+            return $value;
+        } elseif ($this->container instanceof ContainerInterface) {
+            return new $class();
         }
-        return $this->loadObject(AccessLogHandler::class);
-    }
 
-    /**
-     * @throws \TypeError if container config or factory returns an unexpected type
-     * @throws \Throwable if container factory function throws unexpected exception
-     * @internal
-     */
-    public function getErrorHandler(): ErrorHandler
-    {
-        if ($this->container instanceof ContainerInterface) {
-            if ($this->container->has(ErrorHandler::class)) {
-                // @phpstan-ignore-next-line method return type will ensure correct type or throw `TypeError`
-                return $this->container->get(ErrorHandler::class);
-            } else {
-                return new ErrorHandler();
-            }
-        }
-        return $this->loadObject(ErrorHandler::class);
+        return $this->loadObject($class);
     }
 
     /**
      * @template T of object
      * @param class-string<T> $name
-     * @return T
+     * @return object returns an instance of given class $name or throws if it can not be instantiated
+     * @phpstan-return T
      * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \Error if object of type $name can not be loaded
      * @throws \Throwable if container factory function throws unexpected exception
