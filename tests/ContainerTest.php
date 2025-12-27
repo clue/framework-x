@@ -289,6 +289,40 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"Alice"}', (string) $response->getBody());
     }
 
+    public function testCallableReturnsCallableForClassNameViaAutowiringWithFactoryFunctionWithContainerDependency(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            /** @var \stdClass */
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request): Response
+            {
+                return new Response(200, [], (string) json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (Container $container) {
+                return (object)['container' => spl_object_hash($container)];
+            }
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"container":"' . spl_object_hash($container) . '"}', (string) $response->getBody());
+    }
+
     public function testCallableTwiceReturnsCallableForClassNameViaAutowiringWithFactoryFunctionForDependencyWillCallFactoryOnlyOnce(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -2555,6 +2589,43 @@ class ContainerTest extends TestCase
         $this->assertSame($accessLogHandler, $ret);
     }
 
+    public function testGetObjectReturnsSelfContainerByDefault(): void
+    {
+        $container = new Container([]);
+
+        $ret = $container->getObject(Container::class);
+
+        $this->assertSame($container, $ret);
+    }
+
+    public function testGetObjectReturnsOtherContainerFromConfig(): void
+    {
+        $other = new Container();
+
+        $container = new Container([
+            Container::class => $other
+        ]);
+
+        $ret = $container->getObject(Container::class);
+
+        $this->assertSame($other, $ret);
+    }
+
+    public function testGetObjectReturnsOtherContainerFromFactoryFunction(): void
+    {
+        $other = new Container();
+
+        $container = new Container([
+            Container::class => function () use ($other) {
+                return $other;
+            }
+        ]);
+
+        $ret = $container->getObject(Container::class);
+
+        $this->assertSame($other, $ret);
+    }
+
     public function testGetObjectReturnsAccessLogHandlerInstanceFromPsrContainer(): void
     {
         $accessLogHandler = new AccessLogHandler();
@@ -2583,6 +2654,20 @@ class ContainerTest extends TestCase
         $accessLogHandler = $container->getObject(AccessLogHandler::class);
 
         $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
+    }
+
+    public function testGetObjectReturnsSelfContainerIfPsrContainerHasNoEntry(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->once())->method('has')->with(Container::class)->willReturn(false);
+        $psr->expects($this->never())->method('get');
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $ret = $container->getObject(Container::class);
+
+        $this->assertSame($container, $ret);
     }
 
     public function testGetObjectThrowsIfFactoryFunctionThrows(): void
@@ -2634,6 +2719,20 @@ class ContainerTest extends TestCase
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Container config for FrameworkX\AccessLogHandler is recursive');
         $container->getObject(AccessLogHandler::class);
+    }
+
+    public function testGetObjectThrowsIfFactoryFunctionHasRecursiveContainerArgument(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            Container::class => function (Container $container): Container {
+                return $container;
+            }
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Argument #1 ($container) of {closure:' . __FILE__ . ':' . $line .'}() for FrameworkX\Container is recursive');
+        $container->getObject(Container::class);
     }
 
     public function testGetObjectThrowsIfConfigReferencesInterface(): void

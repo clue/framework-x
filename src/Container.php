@@ -76,6 +76,9 @@ class Container
      */
     public function callable(string $class): callable
     {
+        // may be any class name except AccessLogHandler or Container itself
+        \assert(!\in_array($class, [AccessLogHandler::class, self::class], true));
+
         return function (ServerRequestInterface $request, ?callable $next = null) use ($class) {
             try {
                 if ($this->container instanceof ContainerInterface) {
@@ -157,6 +160,10 @@ class Container
             }
             return $value;
         } elseif ($this->container instanceof ContainerInterface) {
+            // fallback for missing required internal classes from PSR-11 adapter
+            if ($class === Container::class) {
+                return $this; // @phpstan-ignore-line returns instanceof `T`
+            }
             return new $class();
         }
 
@@ -223,6 +230,9 @@ class Container
             \assert($this->container[$name] instanceof $name);
 
             return $this->container[$name];
+        } elseif ($name === self::class) {
+            // return container itself for self-references unless explicitly configured (see above)
+            return $this; // @phpstan-ignore-line returns instanceof `T`
         }
 
         // Check `$name` references a valid class name that can be autoloaded
