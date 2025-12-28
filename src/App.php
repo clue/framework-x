@@ -49,11 +49,19 @@ class App
         // only log for built-in webserver and PHP development webserver by default, others have their own access log
         $needsAccessLog = (\PHP_SAPI === 'cli' || \PHP_SAPI === 'cli-server') ? $container : null;
 
+        // remember if RouteHandler is added explicitly
+        $router = null;
+
         if ($middleware) {
             $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
+                // if explicit RouteHandler is given, it must be last in the chain
+                if ($router !== null) {
+                    throw new \TypeError('RouteHandler must not be followed by other handlers');
+                }
+
                 // load required internal classes from last Container
-                if (\in_array($handler, [AccessLogHandler::class, ErrorHandler::class, Container::class], true)) {
+                if (\in_array($handler, [AccessLogHandler::class, ErrorHandler::class, Container::class, RouteHandler::class], true)) {
                     $handler = $container->getObject($handler);
                 }
 
@@ -88,6 +96,9 @@ class App
                         $needsAccessLog = null;
                         $needsErrorHandlerNext = true;
                     }
+                    if ($handler instanceof RouteHandler) {
+                        $router = $handler;
+                    }
                 }
             }
             if ($needsErrorHandlerNext) {
@@ -108,8 +119,12 @@ class App
             }
         }
 
-        $this->router = new RouteHandler($container);
-        $handlers[] = $this->router;
+        // add default RouteHandler as last handler in middleware chain
+        if ($router === null) {
+            $handlers[] = $router = $container->getObject(RouteHandler::class);
+        }
+
+        $this->router = $router;
         $this->handler = new MiddlewareHandler($handlers);
         $this->sapi = \PHP_SAPI === 'cli' ? new ReactiveHandler($container->getEnv('X_LISTEN')) : new SapiHandler();
     }

@@ -18,171 +18,126 @@ class AppMiddlewareTest extends TestCase
 {
     public function testGetMethodWithMiddlewareAddsGetRouteOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->get('/', $middleware, $controller);
     }
 
     public function testHeadMethodWithMiddlewareAddsHeadRouteOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['HEAD'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->head('/', $middleware, $controller);
     }
 
     public function testPostMethodWithMiddlewareAddsPostRouteOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['POST'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->post('/', $middleware, $controller);
     }
 
     public function testPutMethodWithMiddlewareAddsPutRouteOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['PUT'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->put('/', $middleware, $controller);
     }
 
     public function testPatchMethodWithMiddlewareAddsPatchRouteOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['PATCH'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->patch('/', $middleware, $controller);
     }
 
     public function testDeleteMethodWithMiddlewareAddsDeleteRouteOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['DELETE'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->delete('/', $middleware, $controller);
     }
 
     public function testOptionsMethodWithMiddlewareAddsOptionsRouteOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['OPTIONS'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->options('/', $middleware, $controller);
     }
 
     public function testAnyMethodWithMiddlewareAddsAllHttpMethodsOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->any('/', $middleware, $controller);
     }
 
     public function testMapMethodWithMiddlewareAddsGivenMethodsOnRouter(): void
     {
-        $app = $this->createAppWithoutLogger();
-
         $middleware = function () {};
         $controller = function () { };
 
         $router = $this->createMock(RouteHandler::class);
         $router->expects($this->once())->method('map')->with(['GET', 'POST'], '/', $middleware, $controller);
+        assert($router instanceof RouteHandler);
 
-        $ref = new \ReflectionProperty($app, 'router');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $router);
+        $app = new App($router);
 
         $app->map(['GET', 'POST'], '/', $middleware, $controller);
     }
