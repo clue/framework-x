@@ -92,15 +92,26 @@ class AppTest extends TestCase
         $errorHandler = new ErrorHandler();
         $routeHandler = $this->createMock(RouteHandler::class);
 
+        $sapi = $this->createMock(ReactiveHandler::class);
+
         $container = $this->createMock(Container::class);
         $container->expects($this->exactly(3))->method('getObject')->willReturnMap([
             [AccessLogHandler::class, $accessLogHandler],
             [ErrorHandler::class, $errorHandler],
             [RouteHandler::class, $routeHandler],
         ]);
-
+        $container->expects($this->once())->method('getSapi')->willReturn($sapi);
         assert($container instanceof Container);
+
         $app = new App($container);
+
+        $ref = new \ReflectionProperty($app, 'sapi');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $ret = $ref->getValue($app);
+
+        $this->assertSame($sapi, $ret);
 
         $ref = new ReflectionProperty($app, 'handler');
         if (PHP_VERSION_ID < 80100) {
@@ -126,6 +137,14 @@ class AppTest extends TestCase
     {
         $container = new Container([]);
         $app = new App($container);
+
+        $ref = new \ReflectionProperty($app, 'sapi');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $ret = $ref->getValue($app);
+
+        $this->assertSame($container->getSapi(), $ret);
 
         $ref = new ReflectionProperty($app, 'handler');
         if (PHP_VERSION_ID < 80100) {
@@ -900,19 +919,16 @@ class AppTest extends TestCase
         $this->assertEquals('0.0.0.0:8081', $listenAddress);
     }
 
-    public function testRunWillExecuteRunOnSapiHandler(): void
+    public function testRunWillExecuteRunOnSapiHandlerFromContainer(): void
     {
-        $app = new App();
-
         $sapi = $this->createMock(ReactiveHandler::class);
         $sapi->expects($this->once())->method('run');
 
-        // $app->sapi = $sapi;
-        $ref = new \ReflectionProperty($app, 'sapi');
-        if (PHP_VERSION_ID < 80100) {
-            $ref->setAccessible(true);
-        }
-        $ref->setValue($app, $sapi);
+        $container = new Container([
+            ReactiveHandler::class => $sapi
+        ]);
+
+        $app = new App($container);
 
         $app->run();
     }

@@ -29,10 +29,10 @@ class ReactiveHandler
     /** @var string */
     private $listenAddress;
 
-    public function __construct(?string $listenAddress)
+    /** @throws void */
+    public function __construct(LogStreamHandler $logger, ?string $listenAddress)
     {
-        /** @throws void */
-        $this->logger = new LogStreamHandler('php://output');
+        $this->logger = $logger;
         $this->listenAddress = $listenAddress ?? '127.0.0.1:8080';
     }
 

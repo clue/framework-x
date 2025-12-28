@@ -2,7 +2,10 @@
 
 namespace FrameworkX;
 
+use FrameworkX\Io\LogStreamHandler;
+use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RouteHandler;
+use FrameworkX\Io\SapiHandler;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -166,11 +169,26 @@ class Container
                 return $this; // @phpstan-ignore-line returns instanceof `T`
             } elseif ($class === RouteHandler::class) {
                 return new RouteHandler($this); // @phpstan-ignore-line returns instanceof `T`
+            } elseif ($class === ReactiveHandler::class) {
+                return new ReactiveHandler(new LogStreamHandler('php://output'), $this->getEnv('X_LISTEN')); // @phpstan-ignore-line returns instanceof `T`
             }
             return new $class();
         }
 
         return $this->loadObject($class);
+    }
+
+    /**
+     * [Internal] Get SAPI handler from container
+     *
+     * @return ReactiveHandler|SapiHandler
+     * @throws \TypeError if container config or factory returns an unexpected type
+     * @throws \Throwable if container factory function throws unexpected exception
+     * @internal
+     */
+    public function getSapi() /*: ReactiveHandler|SapiHandler (PHP 8.0+) */
+    {
+        return $this->getObject(\PHP_SAPI === 'cli' ? ReactiveHandler::class : SapiHandler::class);
     }
 
     /**
@@ -185,6 +203,13 @@ class Container
     private function loadObject(string $name, int $depth = 64) /*: object (PHP 7.2+) */
     {
         \assert(\is_array($this->container));
+
+        if ($name === ReactiveHandler::class && !\array_key_exists(ReactiveHandler::class, $this->container)) {
+            // special case: create ReactiveHandler with X_LISTEN environment variable
+            $this->container[ReactiveHandler::class] = static function (?string $X_LISTEN = null): ReactiveHandler {
+                return new ReactiveHandler(new LogStreamHandler('php://output'), $X_LISTEN);
+            };
+        }
 
         if (\array_key_exists($name, $this->container)) {
             if (\is_string($this->container[$name])) {
