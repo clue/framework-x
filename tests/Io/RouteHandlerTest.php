@@ -113,6 +113,31 @@ class RouteHandlerTest extends TestCase
         $handler->map(['GET'], '/', $container, \stdClass::class);
     }
 
+    public function testMapRouteWithContainerClassNameAndControllerClassNameAddsRouteOnRouterWithControllerCallableFromOtherContainer(): void
+    {
+        $controller = function () { };
+
+        $other = $this->createMock(Container::class);
+        $other->expects($this->once())->method('callable')->with('stdClass')->willReturn($controller);
+
+        $container = $this->createMock(Container::class);
+        $container->expects($this->once())->method('getObject')->with(Container::class)->willReturn($other);
+        assert($container instanceof Container);
+
+        $handler = new RouteHandler($container);
+
+        $router = $this->createMock(RouteCollector::class);
+        $router->expects($this->once())->method('addRoute')->with(['GET'], '/', $controller);
+
+        $ref = new \ReflectionProperty($handler, 'routeCollector');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $ref->setValue($handler, $router);
+
+        $handler->map(['GET'], '/', Container::class, \stdClass::class);
+    }
+
     public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -329,12 +354,24 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithContainerOnlyThrows(): void
+    public function testHandleRequestWithContainerInstanceOnlyThrows(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
         $handler = new RouteHandler();
         $handler->map(['GET'], '/', new Container());
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Container should not be used as final request handler');
+        $handler($request);
+    }
+
+    public function testHandleRequestWithContainerClassOnlyThrows(): void
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $handler = new RouteHandler();
+        $handler->map(['GET'], '/', Container::class);
 
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage('Container should not be used as final request handler');

@@ -52,8 +52,8 @@ class App
         if ($middleware) {
             $needsErrorHandlerNext = false;
             foreach ($middleware as $handler) {
-                // load AccessLogHandler and ErrorHandler instance from last Container
-                if ($handler === AccessLogHandler::class || $handler === ErrorHandler::class) {
+                // load required internal classes from last Container
+                if (\in_array($handler, [AccessLogHandler::class, ErrorHandler::class, Container::class], true)) {
                     $handler = $container->getObject($handler);
                 }
 

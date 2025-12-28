@@ -642,14 +642,15 @@ class AppTest extends TestCase
         $unused->expects($this->never())->method('getObject');
 
         $container = $this->createMock(Container::class);
-        $container->expects($this->exactly(2))->method('getObject')->willReturnMap([
+        $container->expects($this->exactly(3))->method('getObject')->willReturnMap([
             [AccessLogHandler::class, $accessLogHandler],
             [ErrorHandler::class, $errorHandler],
+            [Container::class, $container],
         ]);
 
         assert($unused instanceof Container);
         assert($container instanceof Container);
-        $app = new App($unused, $container, $middleware, $unused);
+        $app = new App($unused, $container, Container::class, $middleware, $unused);
 
         $ref = new ReflectionProperty($app, 'handler');
         if (PHP_VERSION_ID < 80100) {
