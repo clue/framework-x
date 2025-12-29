@@ -38,7 +38,11 @@ class HttpServerRunner
         $this->listenAddress = $listenAddress ?? '127.0.0.1:8080';
     }
 
-    public function run(callable $handler): void
+    /**
+     * @param callable(\Psr\Http\Message\ServerRequestInterface):(\Psr\Http\Message\ResponseInterface|\React\Promise\PromiseInterface<\Psr\Http\Message\ResponseInterface>) $handler
+     * @return void
+     */
+    public function __invoke(callable $handler): void
     {
         $socket = new SocketServer($this->listenAddress);
 

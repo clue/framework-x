@@ -251,14 +251,14 @@ class App
      * When executed behind traditional PHP SAPIs (PHP-FPM, FastCGI, Apache, etc.),
      * this will handle a single request and run until a single response is sent.
      * This is particularly useful because it allows you to run the exact same
-     * app in any environment.
+     * application code in any environment.
      *
-     * @see HttpServerRunner::run()
-     * @see SapiRunner::run()
+     * @see HttpServerRunner::__invoke()
+     * @see SapiRunner::__invoke()
      */
     public function run(): void
     {
-        $this->runner->run(\Closure::fromCallable([$this, 'handleRequest']));
+        ($this->runner)(\Closure::fromCallable([$this, 'handleRequest']));
     }
 
     /**

@@ -919,10 +919,10 @@ class AppTest extends TestCase
         $this->assertEquals('0.0.0.0:8081', $listenAddress);
     }
 
-    public function testRunWillExecuteRunOnRunnerFromContainer(): void
+    public function testRunWillInvokeRunnerFromContainer(): void
     {
         $runner = $this->createMock(HttpServerRunner::class);
-        $runner->expects($this->once())->method('run');
+        $runner->expects($this->once())->method('__invoke');
 
         $container = new Container([
             HttpServerRunner::class => $runner

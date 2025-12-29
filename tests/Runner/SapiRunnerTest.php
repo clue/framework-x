@@ -480,7 +480,7 @@ class SapiRunnerTest extends TestCase
     /**
      * @runInSeparateProcess
      */
-    public function testRunWillSendResponseHeadersFromHandler(): void
+    public function testInvokeWillSendResponseHeadersFromHandler(): void
     {
         $sapi = new SapiRunner();
 
@@ -488,7 +488,7 @@ class SapiRunnerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
 
         $this->expectOutputString('');
-        $sapi->run(function () {
+        $sapi(function () {
             return new Response();
         });
 
@@ -502,7 +502,7 @@ class SapiRunnerTest extends TestCase
     /**
      * @runInSeparateProcess
      */
-    public function testRunWillSendResponseHeadersFromDeferredHandler(): void
+    public function testInvokeWillSendResponseHeadersFromDeferredHandler(): void
     {
         $sapi = new SapiRunner();
 
@@ -510,7 +510,7 @@ class SapiRunnerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
 
         $this->expectOutputString('');
-        $sapi->run(function () {
+        $sapi(function () {
             return resolve(new Response());
         });
 

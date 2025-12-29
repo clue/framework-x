@@ -13,10 +13,10 @@ use React\Stream\ReadableStreamInterface;
 /**
  * [Internal] Application runner for traditional PHP SAPIs.
  *
- * This request runner will be used when executed behind traditional PHP SAPIs
+ * This application runner will be used when executed behind traditional PHP SAPIs
  * (PHP-FPM, FastCGI, Apache, etc.). It will handle a single request and run
  * until a single response is sent. This is particularly useful because it
- * allows you to run the exact same app in any environment.
+ * allows you to run the exact same application code in any environment.
  *
  * Note that this is an internal class only and nothing you should usually have
  * to care about. See also the `App` and `HttpServerRunner` for more details.
@@ -25,7 +25,11 @@ use React\Stream\ReadableStreamInterface;
  */
 class SapiRunner
 {
-    public function run(callable $handler): void
+    /**
+     * @param callable(ServerRequestInterface):(ResponseInterface|PromiseInterface<ResponseInterface>) $handler
+     * @return void
+     */
+    public function __invoke(callable $handler): void
     {
         $request = $this->requestFromGlobals();
 

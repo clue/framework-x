@@ -14,7 +14,7 @@ use function React\Async\await;
 
 class HttpServerRunnerTest extends TestCase
 {
-    public function testRunWillReportDefaultListeningAddressAndRunLoop(): void
+    public function testInvokeWillReportDefaultListeningAddressAndRunLoop(): void
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
         if ($socket === false) {
@@ -41,10 +41,12 @@ class HttpServerRunnerTest extends TestCase
             Loop::stop();
         });
 
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillReportGivenListeningAddressAndRunLoop(): void
+    public function testInvokeWillReportGivenListeningAddressAndRunLoop(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -70,10 +72,12 @@ class HttpServerRunnerTest extends TestCase
             Loop::stop();
         });
 
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillReportGivenListeningAddressWithRandomPortAndRunLoop(): void
+    public function testInvokeWillReportGivenListeningAddressWithRandomPortAndRunLoop(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive([$this->matches('Listening on http://127.0.0.1:%d')]);
@@ -93,10 +97,12 @@ class HttpServerRunnerTest extends TestCase
             Loop::stop();
         });
 
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillRestartLoopUntilSocketIsClosed(): void
+    public function testInvokeWillRestartLoopUntilSocketIsClosed(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
@@ -120,10 +126,12 @@ class HttpServerRunnerTest extends TestCase
             Loop::stop();
         });
 
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillListenForHttpRequestAndSendBackHttpResponseOverSocket(): void
+    public function testInvokeWillListenForHttpRequestAndSendBackHttpResponseOverSocket(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -163,12 +171,12 @@ class HttpServerRunnerTest extends TestCase
             });
         });
 
-        $runner->run(function (): Response {
+        $runner(function (): Response {
             return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
         });
     }
 
-    public function testRunWillOnlyRestartLoopAfterAwaitingWhenFibersAreNotAvailable(): void
+    public function testInvokeWillOnlyRestartLoopAfterAwaitingWhenFibersAreNotAvailable(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -216,7 +224,7 @@ class HttpServerRunnerTest extends TestCase
         });
 
         $done = false;
-        $runner->run(function () use (&$done): Response {
+        $runner(function () use (&$done): Response {
             $promise = new Promise(function (callable $resolve) use (&$done): void {
                 Loop::futureTick(function () use ($resolve, &$done): void {
                     $resolve(null);
@@ -232,7 +240,7 @@ class HttpServerRunnerTest extends TestCase
         $this->assertTrue($done);
     }
 
-    public function testRunWillReportHttpErrorForInvalidClientRequest(): void
+    public function testInvokeWillReportHttpErrorForInvalidClientRequest(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -269,14 +277,16 @@ class HttpServerRunnerTest extends TestCase
             });
         });
 
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
     /**
      * @requires function pcntl_signal
      * @requires function posix_kill
      */
-    public function testRunWillStopWhenReceivingSigint(): void
+    public function testInvokeWillStopWhenReceivingSigint(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->exactly(2))->method('log');
@@ -293,14 +303,16 @@ class HttpServerRunnerTest extends TestCase
         });
 
         $this->expectOutputRegex("#^\r?$#");
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
     /**
      * @requires function pcntl_signal
      * @requires function posix_kill
      */
-    public function testRunWillStopWhenReceivingSigterm(): void
+    public function testInvokeWillStopWhenReceivingSigterm(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
@@ -315,10 +327,12 @@ class HttpServerRunnerTest extends TestCase
             posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
         });
 
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWithEmptyAddressThrows(): void
+    public function testInvokeWithEmptyAddressThrows(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
@@ -326,10 +340,12 @@ class HttpServerRunnerTest extends TestCase
         $runner = new HttpServerRunner($logger, '');
 
         $this->expectException(\InvalidArgumentException::class);
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWithBusyPortThrows(): void
+    public function testInvokeWithBusyPortThrows(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -347,6 +363,8 @@ class HttpServerRunnerTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');
-        $runner->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 }
