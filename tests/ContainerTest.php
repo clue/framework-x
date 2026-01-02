@@ -2833,6 +2833,7 @@ class ContainerTest extends TestCase
 
         $this->assertInstanceOf(HttpServerRunner::class, $runner);
 
+        assert($runner instanceof HttpServerRunner);
         $ref = new \ReflectionProperty($runner, 'listenAddress');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
@@ -2852,6 +2853,7 @@ class ContainerTest extends TestCase
 
         $this->assertInstanceOf(HttpServerRunner::class, $runner);
 
+        assert($runner instanceof HttpServerRunner);
         $ref = new \ReflectionProperty($runner, 'listenAddress');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
@@ -2888,7 +2890,10 @@ class ContainerTest extends TestCase
         $runner = new HttpServerRunner(new LogStreamHandler('php://output'), null);
 
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->once())->method('has')->with(HttpServerRunner::class)->willReturn(true);
+        $psr->expects($this->exactly(2))->method('has')->willReturnMap([
+            ['X_EXPERIMENTAL_RUNNER', false],
+            [HttpServerRunner::class, true],
+        ]);
         $psr->expects($this->once())->method('get')->with(HttpServerRunner::class)->willReturn($runner);
 
         assert($psr instanceof ContainerInterface);
@@ -2902,7 +2907,8 @@ class ContainerTest extends TestCase
     public function testGetRunnerReturnsDefaultHttpServerRunnerInstanceWithDefaultListenAddressIfPsrContainerHasNoEntry(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->exactly(2))->method('has')->willReturnMap([
+        $psr->expects($this->exactly(3))->method('has')->willReturnMap([
+            ['X_EXPERIMENTAL_RUNNER', false],
             [HttpServerRunner::class, false],
             ['X_LISTEN', false],
         ]);
@@ -2915,6 +2921,7 @@ class ContainerTest extends TestCase
 
         $this->assertInstanceOf(HttpServerRunner::class, $runner);
 
+        assert($runner instanceof HttpServerRunner);
         $ref = new \ReflectionProperty($runner, 'listenAddress');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
@@ -2927,7 +2934,8 @@ class ContainerTest extends TestCase
     public function testGetRunnerReturnsDefaultHttpServerRunnerInstanceWithCustomListenAddressIfPsrContainerHasNoEntryButCustomListenAddress(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->exactly(2))->method('has')->willReturnMap([
+        $psr->expects($this->exactly(3))->method('has')->willReturnMap([
+            ['X_EXPERIMENTAL_RUNNER', false],
             [HttpServerRunner::class, false],
             ['X_LISTEN', true],
         ]);
@@ -2940,6 +2948,7 @@ class ContainerTest extends TestCase
 
         $this->assertInstanceOf(HttpServerRunner::class, $runner);
 
+        assert($runner instanceof HttpServerRunner);
         $ref = new \ReflectionProperty($runner, 'listenAddress');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);
@@ -2947,6 +2956,55 @@ class ContainerTest extends TestCase
         $listenAddress = $ref->getValue($runner);
 
         $this->assertEquals('127.0.0.1:8081', $listenAddress);
+    }
+
+    public function testGetRunnerReturnsCustomRunnerInstanceFromEnvironmentVariable(): void
+    {
+        $runner = new class {
+            public function __invoke(): void {}
+        };
+
+        $container = new Container([
+            'X_EXPERIMENTAL_RUNNER' => get_class($runner),
+            get_class($runner) => $runner
+        ]);
+
+        $ret = $container->getRunner();
+
+        $this->assertSame($runner, $ret);
+    }
+
+    public function testGetRunnerThrowsForInvalidEnvironmentVariableType(): void
+    {
+        $container = new Container([
+            'X_EXPERIMENTAL_RUNNER' => 42
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::getEnv() for $X_EXPERIMENTAL_RUNNER must be of type string|null, int returned');
+        $container->getRunner();
+    }
+
+    public function testGetRunnerThrowsForUnknownClassNameInEnvironmentVariable(): void
+    {
+        $container = new Container([
+            'X_EXPERIMENTAL_RUNNER' => 'UnknownClass'
+        ]);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Class UnknownClass not found');
+        $container->getRunner();
+    }
+
+    public function testGetRunnerThrowsForClassNotCallableInEnvironmentVariable(): void
+    {
+        $container = new Container([
+            'X_EXPERIMENTAL_RUNNER' => \stdClass::class
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of ' . Container::class . '::getRunner() must be of type callable, stdClass returned');
+        $container->getRunner();
     }
 
     public function testInvokeContainerAsMiddlewareReturnsFromNextRequestHandler(): void

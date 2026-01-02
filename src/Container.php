@@ -181,14 +181,32 @@ class Container
     /**
      * [Internal] Get the app runner appropriate for this environment from container
      *
-     * @return HttpServerRunner|SapiRunner
+     * By default, this method returns an instance of `HttpServerRunner` when
+     * running in CLI mode, and an instance of `SapiRunner` when running in a
+     * traditional web server environment.
+     *
+     * For more advanced use cases, this behavior can be overridden by setting
+     * the `X_EXPERIMENTAL_RUNNER` environment variable to the desired runner
+     * class name. The specified class must be invokable with the main request
+     * handler signature. Note that this is an experimental feature and the API
+     * may be subject to change in future releases.
+     *
+     * @return HttpServerRunner|SapiRunner|callable(callable(ServerRequestInterface):(\Psr\Http\Message\ResponseInterface|\React\Promise\PromiseInterface<\Psr\Http\Message\ResponseInterface>)):void
      * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \Throwable if container factory function throws unexpected exception
      * @internal
+     * @see App::run()
      */
-    public function getRunner() /*: HttpServerRunner|SapiRunner (PHP 8.0+) */
+    public function getRunner(): callable /*: HttpServerRunner|SapiRunner|callable (PHP 8.0+) */
     {
-        return $this->getObject(\PHP_SAPI === 'cli' ? HttpServerRunner::class : SapiRunner::class);
+        // @phpstan-ignore-next-line `getObject()` already performs type checks if `getEnv()` returns an invalid class
+        $runner = $this->getObject($this->getEnv('X_EXPERIMENTAL_RUNNER') ?? (\PHP_SAPI === 'cli' ? HttpServerRunner::class : SapiRunner::class));
+        if (!\is_callable($runner)) {
+            throw new \TypeError(
+                'Return value of ' . __METHOD__ . '() must be of type callable, ' . $this->gettype($runner) . ' returned'
+            );
+        }
+        return $runner;
     }
 
     /**
