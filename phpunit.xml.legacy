@@ -9,7 +9,8 @@
     <testsuites>
         <testsuite name="Framework X test suite">
             <directory>./tests/</directory>
-            <exclude>./tests/install-as-dep/</exclude>
+            <directory suffix=".phpt">./tests/</directory>
+            <exclude>./tests/integration/vendor/</exclude>
         </testsuite>
     </testsuites>
     <filter>
