@@ -22,7 +22,7 @@ class App
     /** @var RouteHandler */
     private $router;
 
-    /** @var HttpServerRunner|SapiRunner */
+    /** @var HttpServerRunner|SapiRunner|callable(callable(ServerRequestInterface):(ResponseInterface|PromiseInterface<ResponseInterface>)):void */
     private $runner;
 
     /**
@@ -253,8 +253,13 @@ class App
      * This is particularly useful because it allows you to run the exact same
      * application code in any environment.
      *
+     * For more advanced use cases, this behavior can be overridden by setting
+     * the `X_EXPERIMENTAL_RUNNER` environment variable to the desired runner
+     * class name ({@see Container::getRunner()}).
+     *
      * @see HttpServerRunner::__invoke()
      * @see SapiRunner::__invoke()
+     * @see Container::getRunner()
      */
     public function run(): void
     {

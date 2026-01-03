@@ -381,25 +381,30 @@ all uppercase in any factory function like this:
     // …
     ```
 
-=== "Built-in environment variables"
+Besides defining custom environment variables, you may also override built-in
+environment variables used by X itself like this:
 
-    ```php title="public/index.php"
-    <?php
+```php title="public/index.php"
+<?php
 
-    require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
-    $container = new FrameworkX\Container([
-        // Framework X also uses environment variables internally.
-        // You may explicitly configure this built-in functionality like this:
-        // 'X_LISTEN' => '0.0.0.0:8081'
-        // 'X_LISTEN' => fn(int|string $PORT = 8080) => '0.0.0.0:' . $PORT
-        'X_LISTEN' => fn(string $X_LISTEN = '127.0.0.1:8080') => $X_LISTEN
-    ]);
+$container = new FrameworkX\Container([
+    // Framework X also uses environment variables internally.
+    // You may explicitly configure this built-in functionality like this:
+    // 'X_LISTEN' => '0.0.0.0:8081'
+    // 'X_LISTEN' => fn(int|string $PORT = 8080) => '0.0.0.0:' . $PORT
+    'X_LISTEN' => fn(string $X_LISTEN = '127.0.0.1:8080') => $X_LISTEN,
 
-    $app = new FrameworkX\App($container);
+    // 'X_EXPERIMENTAL_RUNNER' => AcmeRunner::class
+    // 'X_EXPERIMENTAL_RUNNER' => fn(bool|string $ACME = false): ?string => $ACME ? AcmeRunner::class : null
+    'X_EXPERIMENTAL_RUNNER' => fn(?string $X_EXPERIMENTAL_RUNNER = null): ?string => $X_EXPERIMENTAL_RUNNER,
+]);
 
-    // …
-    ```
+$app = new FrameworkX\App($container);
+
+// …
+```
 
 > ℹ️ **Passing environment variables**
 >

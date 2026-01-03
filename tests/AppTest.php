@@ -933,6 +933,22 @@ class AppTest extends TestCase
         $app->run();
     }
 
+    public function testRunWillInvokeCustomRunnerFromContainerEnvironmentVariable(): void
+    {
+        $runner = $this->createMock(HttpServerRunner::class);
+        $runner->expects($this->once())->method('__invoke');
+
+        $container = new Container([
+            'X_EXPERIMENTAL_RUNNER' => get_class($runner),
+            get_class($runner) => $runner,
+            HttpServerRunner::class => function () { throw new \BadFunctionCallException('Should not be called'); }
+        ]);
+
+        $app = new App($container);
+
+        $app->run();
+    }
+
     public function testGetMethodAddsGetRouteOnRouter(): void
     {
         $router = $this->createMock(RouteHandler::class);
