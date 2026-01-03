@@ -3,9 +3,9 @@
 namespace FrameworkX;
 
 use FrameworkX\Io\LogStreamHandler;
-use FrameworkX\Io\ReactiveHandler;
 use FrameworkX\Io\RouteHandler;
-use FrameworkX\Io\SapiHandler;
+use FrameworkX\Runner\HttpServerRunner;
+use FrameworkX\Runner\SapiRunner;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -169,8 +169,8 @@ class Container
                 return $this; // @phpstan-ignore-line returns instanceof `T`
             } elseif ($class === RouteHandler::class) {
                 return new RouteHandler($this); // @phpstan-ignore-line returns instanceof `T`
-            } elseif ($class === ReactiveHandler::class) {
-                return new ReactiveHandler(new LogStreamHandler('php://output'), $this->getEnv('X_LISTEN')); // @phpstan-ignore-line returns instanceof `T`
+            } elseif ($class === HttpServerRunner::class) {
+                return new HttpServerRunner(new LogStreamHandler('php://output'), $this->getEnv('X_LISTEN')); // @phpstan-ignore-line returns instanceof `T`
             }
             return new $class();
         }
@@ -179,16 +179,16 @@ class Container
     }
 
     /**
-     * [Internal] Get SAPI handler from container
+     * [Internal] Get the app runner appropriate for this environment from container
      *
-     * @return ReactiveHandler|SapiHandler
+     * @return HttpServerRunner|SapiRunner
      * @throws \TypeError if container config or factory returns an unexpected type
      * @throws \Throwable if container factory function throws unexpected exception
      * @internal
      */
-    public function getSapi() /*: ReactiveHandler|SapiHandler (PHP 8.0+) */
+    public function getRunner() /*: HttpServerRunner|SapiRunner (PHP 8.0+) */
     {
-        return $this->getObject(\PHP_SAPI === 'cli' ? ReactiveHandler::class : SapiHandler::class);
+        return $this->getObject(\PHP_SAPI === 'cli' ? HttpServerRunner::class : SapiRunner::class);
     }
 
     /**
@@ -204,10 +204,10 @@ class Container
     {
         \assert(\is_array($this->container));
 
-        if ($name === ReactiveHandler::class && !\array_key_exists(ReactiveHandler::class, $this->container)) {
-            // special case: create ReactiveHandler with X_LISTEN environment variable
-            $this->container[ReactiveHandler::class] = static function (?string $X_LISTEN = null): ReactiveHandler {
-                return new ReactiveHandler(new LogStreamHandler('php://output'), $X_LISTEN);
+        if ($name === HttpServerRunner::class && !\array_key_exists(HttpServerRunner::class, $this->container)) {
+            // special case: create HttpServerRunner with X_LISTEN environment variable
+            $this->container[HttpServerRunner::class] = static function (?string $X_LISTEN = null): HttpServerRunner {
+                return new HttpServerRunner(new LogStreamHandler('php://output'), $X_LISTEN);
             };
         }
 

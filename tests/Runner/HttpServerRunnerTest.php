@@ -1,9 +1,9 @@
 <?php
 
-namespace FrameworkX\Tests\Io;
+namespace FrameworkX\Tests\Runner;
 
 use FrameworkX\Io\LogStreamHandler;
-use FrameworkX\Io\ReactiveHandler;
+use FrameworkX\Runner\HttpServerRunner;
 use PHPUnit\Framework\TestCase;
 use React\EventLoop\Loop;
 use React\Http\Message\Response;
@@ -12,9 +12,9 @@ use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
 use function React\Async\await;
 
-class ReactiveHandlerTest extends TestCase
+class HttpServerRunnerTest extends TestCase
 {
-    public function testRunWillReportDefaultListeningAddressAndRunLoop(): void
+    public function testInvokeWillReportDefaultListeningAddressAndRunLoop(): void
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
         if ($socket === false) {
@@ -27,7 +27,7 @@ class ReactiveHandlerTest extends TestCase
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://127.0.0.1:8080']);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, null);
+        $runner = new HttpServerRunner($logger, null);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -41,10 +41,12 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillReportGivenListeningAddressAndRunLoop(): void
+    public function testInvokeWillReportGivenListeningAddressAndRunLoop(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -56,7 +58,7 @@ class ReactiveHandlerTest extends TestCase
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive(['Listening on http://' . $addr]);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -70,16 +72,18 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillReportGivenListeningAddressWithRandomPortAndRunLoop(): void
+    public function testInvokeWillReportGivenListeningAddressWithRandomPortAndRunLoop(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->atLeastOnce())->method('log')->withConsecutive([$this->matches('Listening on http://127.0.0.1:%d')]);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () {
@@ -93,15 +97,17 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillRestartLoopUntilSocketIsClosed(): void
+    public function testInvokeWillRestartLoopUntilSocketIsClosed(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         // lovely: remove socket server on next tick to terminate loop
         Loop::futureTick(function () use ($logger) {
@@ -120,10 +126,12 @@ class ReactiveHandlerTest extends TestCase
             Loop::stop();
         });
 
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWillListenForHttpRequestAndSendBackHttpResponseOverSocket(): void
+    public function testInvokeWillListenForHttpRequestAndSendBackHttpResponseOverSocket(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -134,7 +142,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         Loop::futureTick(function () use ($addr): void {
             $connector = new Connector();
@@ -163,12 +171,12 @@ class ReactiveHandlerTest extends TestCase
             });
         });
 
-        $handler->run(function (): Response {
+        $runner(function (): Response {
             return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
         });
     }
 
-    public function testRunWillOnlyRestartLoopAfterAwaitingWhenFibersAreNotAvailable(): void
+    public function testInvokeWillOnlyRestartLoopAfterAwaitingWhenFibersAreNotAvailable(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -179,7 +187,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
@@ -216,7 +224,7 @@ class ReactiveHandlerTest extends TestCase
         });
 
         $done = false;
-        $handler->run(function () use (&$done): Response {
+        $runner(function () use (&$done): Response {
             $promise = new Promise(function (callable $resolve) use (&$done): void {
                 Loop::futureTick(function () use ($resolve, &$done): void {
                     $resolve(null);
@@ -232,7 +240,7 @@ class ReactiveHandlerTest extends TestCase
         $this->assertTrue($done);
     }
 
-    public function testRunWillReportHttpErrorForInvalidClientRequest(): void
+    public function testInvokeWillReportHttpErrorForInvalidClientRequest(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -243,7 +251,7 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         Loop::futureTick(function () use ($addr, $logger): void {
             $connector = new Connector();
@@ -269,20 +277,22 @@ class ReactiveHandlerTest extends TestCase
             });
         });
 
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
     /**
      * @requires function pcntl_signal
      * @requires function posix_kill
      */
-    public function testRunWillStopWhenReceivingSigint(): void
+    public function testInvokeWillStopWhenReceivingSigint(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         $logger->expects($this->exactly(2))->method('log');
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         Loop::futureTick(function () use ($logger) {
             $logger->expects($this->once())->method('log')->with('Received SIGINT, stopping loop');
@@ -293,19 +303,21 @@ class ReactiveHandlerTest extends TestCase
         });
 
         $this->expectOutputRegex("#^\r?$#");
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
     /**
      * @requires function pcntl_signal
      * @requires function posix_kill
      */
-    public function testRunWillStopWhenReceivingSigterm(): void
+    public function testInvokeWillStopWhenReceivingSigterm(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '127.0.0.1:0');
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0');
 
         Loop::futureTick(function () use ($logger) {
             $logger->expects($this->once())->method('log')->with('Received SIGTERM, stopping loop');
@@ -315,21 +327,25 @@ class ReactiveHandlerTest extends TestCase
             posix_kill($pid, defined('SIGTERM') ? SIGTERM : 15);
         });
 
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWithEmptyAddressThrows(): void
+    public function testInvokeWithEmptyAddressThrows(): void
     {
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, '');
+        $runner = new HttpServerRunner($logger, '');
 
         $this->expectException(\InvalidArgumentException::class);
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 
-    public function testRunWithBusyPortThrows(): void
+    public function testInvokeWithBusyPortThrows(): void
     {
         $socket = stream_socket_server('127.0.0.1:0');
         assert(is_resource($socket));
@@ -343,10 +359,12 @@ class ReactiveHandlerTest extends TestCase
         $logger = $this->createMock(LogStreamHandler::class);
         assert($logger instanceof LogStreamHandler);
 
-        $handler = new ReactiveHandler($logger, $addr);
+        $runner = new HttpServerRunner($logger, $addr);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to listen on');
-        $handler->run(function (): void { });
+        $runner(function (): void {
+            throw new \BadFunctionCallException('Should not be reached');
+        });
     }
 }

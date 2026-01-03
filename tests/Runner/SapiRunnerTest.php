@@ -1,18 +1,18 @@
 <?php
 
-namespace FrameworkX\Tests\Io;
+namespace FrameworkX\Tests\Runner;
 
-use FrameworkX\Io\SapiHandler;
+use FrameworkX\Runner\SapiRunner;
 use PHPUnit\Framework\TestCase;
 use React\Http\Message\Response;
 use React\Stream\ThroughStream;
 use function React\Promise\resolve;
 
-class SapiHandlerTest extends TestCase
+class SapiRunnerTest extends TestCase
 {
     public function testRequestFromGlobalsWithNoServerVariablesDefaultsToGetRequestToLocalhost(): void
     {
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('GET', $request->getMethod());
@@ -31,7 +31,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.0';
         $_SERVER['HTTP_HOST'] = 'example.com';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('HEAD', $request->getMethod());
@@ -50,7 +50,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['HTTP_HOST'] = 'localhost:8080';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('GET', $request->getMethod());
@@ -70,7 +70,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['HTTP_HOST'] = 'localhost';
         $_SERVER['HTTPS'] = 'on';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('GET', $request->getMethod());
@@ -89,7 +89,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['HTTP_HOST'] = 'localhost';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('OPTIONS', $request->getMethod());
@@ -109,7 +109,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['HTTP_HOST'] = 'example.com';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('GET', $request->getMethod());
@@ -129,7 +129,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['HTTP_HOST'] = 'example.com:443';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('CONNECT', $request->getMethod());
@@ -149,7 +149,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['HTTP_HOST'] = 'example.com';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('CONNECT', $request->getMethod());
@@ -168,7 +168,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['REQUEST_URI'] = 'example.com:8080';
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('CONNECT', $request->getMethod());
@@ -189,7 +189,7 @@ class SapiHandlerTest extends TestCase
         $_SERVER['HTTP_HOST'] = 'example.com:443';
         $_SERVER['HTTPS'] = 'on';
 
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $request = $sapi->requestFromGlobals();
 
         $this->assertEquals('CONNECT', $request->getMethod());
@@ -206,7 +206,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(200, [], '');
 
         $this->expectOutputString('');
@@ -226,7 +226,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(200, ['Content-Type' => 'application/json'], '{}');
 
         $this->expectOutputString('{}');
@@ -247,7 +247,7 @@ class SapiHandlerTest extends TestCase
         header_remove();
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(200, ['Content-Type' => 'application/json'], '{}');
 
         $this->expectOutputString('');
@@ -267,7 +267,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(204, ['Content-Type' => 'application/json'], '{}');
 
         $this->expectOutputString('');
@@ -287,7 +287,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(204, ['Content-Type' => 'application/json', 'Content-Length' => '2'], '{}');
 
         $this->expectOutputString('');
@@ -307,7 +307,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(304, ['Content-Type' => 'application/json'], 'null');
 
         $this->expectOutputString('');
@@ -327,7 +327,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(304, ['Content-Type' => 'application/json', 'Content-Length' => '2'], '');
 
         $this->expectOutputString('');
@@ -347,7 +347,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $body = new ThroughStream();
         $response = new Response(200, [], $body);
 
@@ -371,7 +371,7 @@ class SapiHandlerTest extends TestCase
         header_remove();
         $_SERVER['REQUEST_METHOD'] = 'HEAD';
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $body = new ThroughStream();
         $response = new Response(200, [], $body);
 
@@ -394,7 +394,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $body = new ThroughStream();
         $response = new Response(304, [], $body);
 
@@ -417,7 +417,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $body = new ThroughStream();
         $response = new Response(204, [], $body);
 
@@ -441,7 +441,7 @@ class SapiHandlerTest extends TestCase
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
         $_SERVER['SERVER_SOFTWARE'] = 'nginx/1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $body = new ThroughStream();
         $response = new Response(200, [], $body);
 
@@ -464,7 +464,7 @@ class SapiHandlerTest extends TestCase
     {
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
         $response = new Response(204, ['Set-Cookie' => ['1=1', '2=2']], '');
 
         $this->expectOutputString('');
@@ -480,15 +480,15 @@ class SapiHandlerTest extends TestCase
     /**
      * @runInSeparateProcess
      */
-    public function testRunWillSendResponseHeadersFromHandler(): void
+    public function testInvokeWillSendResponseHeadersFromHandler(): void
     {
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
 
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
 
         $this->expectOutputString('');
-        $sapi->run(function () {
+        $sapi(function () {
             return new Response();
         });
 
@@ -502,15 +502,15 @@ class SapiHandlerTest extends TestCase
     /**
      * @runInSeparateProcess
      */
-    public function testRunWillSendResponseHeadersFromDeferredHandler(): void
+    public function testInvokeWillSendResponseHeadersFromDeferredHandler(): void
     {
-        $sapi = new SapiHandler();
+        $sapi = new SapiRunner();
 
         header_remove();
         $_SERVER['SERVER_PROTOCOL'] = 'http/1.1';
 
         $this->expectOutputString('');
-        $sapi->run(function () {
+        $sapi(function () {
             return resolve(new Response());
         });
 
