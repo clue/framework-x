@@ -9,6 +9,7 @@ use FrameworkX\ErrorHandler;
 use FrameworkX\Io\MiddlewareHandler;
 use FrameworkX\Io\RouteHandler;
 use FrameworkX\Runner\HttpServerRunner;
+use FrameworkX\Runner\NullRunner;
 use FrameworkX\Tests\Fixtures\InvalidAbstract;
 use FrameworkX\Tests\Fixtures\InvalidConstructorInt;
 use FrameworkX\Tests\Fixtures\InvalidConstructorIntersection;
@@ -946,6 +947,18 @@ class AppTest extends TestCase
 
         $app = new App($container);
 
+        $app->run();
+    }
+
+    public function testRunReturnsImmediatelyWithNullRunnerFromContainerEnvironmentVariable(): void
+    {
+        $container = new Container([
+            'X_EXPERIMENTAL_RUNNER' => NullRunner::class
+        ]);
+
+        $app = new App($container);
+
+        $this->expectOutputString('');
         $app->run();
     }
 
