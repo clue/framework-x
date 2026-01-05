@@ -16,7 +16,7 @@
         "react/async": "^4.3 || ^3.1",
         "react/http": "^1.11",
         "react/promise": "^3.3",
-        "react/socket": "^1.15"
+        "react/socket": "^1.17"
     },
     "require-dev": {
         "phpstan/phpstan": "1.12.11 || 1.4.10",
