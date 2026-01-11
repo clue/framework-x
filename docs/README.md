@@ -29,7 +29,7 @@ If you want to generate a static HTML folder for deployment, you can again
 use a Docker container in the project root directory like this:
 
 ```bash
-docker compose -f docs/compose.yaml run -u $(id -u) build
+mkdir -p build/ && docker compose -f docs/compose.yaml run --rm -u $(id -u):$(id -g) build
 ```
 
 The resulting `build/docs/` should then be deployed behind a web server.

@@ -8,6 +8,7 @@ services:
     volumes:
       - ./mkdocs.yml:/project/mkdocs.yml:ro
       - ./:/project/docs/:ro
+    stop_signal: SIGINT
 
   build:
     extends: mkdocs
