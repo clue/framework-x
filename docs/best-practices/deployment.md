@@ -568,20 +568,18 @@ achieved by using a `Caddyfile` configuration with the following contents:
 
 ```
 example.com {
-    root * /var/www/html/public;
+	root * /var/www/html/public
 
-    @static {
-        file {path} {path}/
-        not path *.php
-    }
-    handle @static {
-        rewrite * {http.matchers.file.relative}
-        file_server
-    }
-    
-    handle {
-        reverse_proxy localhost:8080
-    }
+	encode gzip
+
+	@static `!path("*.php") && file() && {file_match.type} == "file"`
+	handle @static {
+		file_server
+	}
+
+	handle {
+		reverse_proxy localhost:8080
+	}
 }
 ```
 
