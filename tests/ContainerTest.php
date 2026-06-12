@@ -1734,21 +1734,6 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
-    public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresInvalidClassName(): void
-    {
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $container = new Container([
-            \stdClass::class => function (self $instance) { return $instance; }
-        ]);
-
-        $callable = $container->callable(\stdClass::class);
-
-        $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Class self not found');
-        $callable($request);
-    }
-
     public function testCallableReturnsCallableThatThrowsWhenFactoryRequiresUntypedArgument(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -2829,6 +2814,106 @@ class ContainerTest extends TestCase
         $ret = $container->getObject(\stdClass::class);
 
         $this->assertInstanceOf(\stdClass::class, $ret);
+    }
+
+    public function testGetObjectReturnsDefaultInstanceWhenFactoryFunctionHasSelfArgument(): void
+    {
+        $controller = new class {
+            public static function factory(): \Closure
+            {
+                return function (self $instance): self { return $instance; };
+            }
+        };
+
+        $container = new Container([
+            get_class($controller) => $controller::factory()
+        ]);
+
+        $ret = $container->getObject(get_class($controller));
+
+        $this->assertInstanceOf(get_class($controller), $ret);
+    }
+
+    public function testGetObjectReturnsDefaultStdclassInstanceWhenFactoryFunctionHasParentArgument(): void
+    {
+        $controller = new class extends \stdClass {
+            public static function factory(): \Closure
+            {
+                return function (parent $instance) { return $instance; };
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => $controller::factory()
+        ]);
+
+        $ret = $container->getObject(\stdClass::class);
+
+        $this->assertEquals(new \stdClass(), $ret);
+    }
+
+    public function testGetObjectReturnsInstanceFromConfigWhenFactoryFunctionHasSelfArgument(): void
+    {
+        $controller = new class {
+            public static function factory(): \Closure
+            {
+                return function (self $instance): self { return $instance; };
+            }
+        };
+
+        $container = new Container([
+            get_class($controller) => $controller::factory(),
+            'instance' => $controller
+        ]);
+
+        $ret = $container->getObject(get_class($controller));
+
+        $this->assertSame($controller, $ret);
+    }
+
+    public function testGetObjectReturnsStdclassInstanceFromConfigWhenFactoryFunctionHasParentArgument(): void
+    {
+        $controller = new class extends \stdClass {
+            public static function factory(): \Closure
+            {
+                return function (parent $instance) { return $instance; };
+            }
+        };
+
+        $instance = new \stdClass();
+        $container = new Container([
+            \stdClass::class => $controller::factory(),
+            'instance' => $instance
+        ]);
+
+        $ret = $container->getObject(\stdClass::class);
+
+        $this->assertSame($instance, $ret);
+    }
+
+    /**
+     * @requires PHP 8
+     */
+    public function testGetObjectReturnsInstanceFromConfigWhenFactoryFunctionHasSelfUnionArgument(): void
+    {
+        $controller = new class {
+            public static function factory(): \Closure
+            {
+                $fn = function () { }; // PHP < 8.0 workaround ignoring assignment on next line
+                $fn = #[PHP8] function (self|\stdClass $instance) { return $instance; };
+                $fn = $fn;
+                return $fn;
+            }
+        };
+
+        $container = new Container([
+            get_class($controller) => $controller::factory(),
+            'instance' => $controller
+        ]);
+
+        $ret = $container->getObject(get_class($controller));
+
+        $this->assertSame($controller, $ret);
     }
 
     public function testGetObjectReturnsSelfContainerByDefault(): void
