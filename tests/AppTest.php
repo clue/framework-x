@@ -1997,7 +1997,7 @@ class AppTest extends TestCase
     private function createAppWithoutLogger(callable ...$middleware): App
     {
         return new App(
-            new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul'),
+            new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : 'nul'),
             new ErrorHandler(),
             ...$middleware
         );

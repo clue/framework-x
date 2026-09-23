@@ -400,8 +400,8 @@ like this:
     // …
     ```
 
-Likewise, you can disable writing an access log by passing an absolute path to
-`/dev/null` (Unix) or `nul` (Windows) like this:
+Likewise, you can disable writing an access log by passing `/dev/null` (Unix) or
+`nul` (Windows) like this:
 
 ```php title="public/index.php"
 <?php
@@ -409,7 +409,7 @@ Likewise, you can disable writing an access log by passing an absolute path to
 require __DIR__ . '/../vendor/autoload.php';
 
 $container = new FrameworkX\Container([
-    'accesslog' => DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul'
+    'accesslog' => DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : 'nul',
     FrameworkX\AccessLogHandler::class => fn(string $accesslog) => new FrameworkX\AccessLogHandler($accesslog),
 ]);
 

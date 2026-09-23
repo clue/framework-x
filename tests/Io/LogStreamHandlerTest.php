@@ -85,14 +85,23 @@ class LogStreamHandlerTest extends TestCase
         ];
         yield [
             'nul',
+            DIRECTORY_SEPARATOR === '\\'
+        ];
+        yield [
+            'NUL',
+            DIRECTORY_SEPARATOR === '\\'
+        ];
+        yield [
+            'nul.txt',
             false
         ];
         yield [
             '\\\\.\\nul',
             false
         ];
-        if (DIRECTORY_SEPARATOR === '\\') {
+        if (DIRECTORY_SEPARATOR === '\\' && @fopen(__DIR__ . '\\nul', 'a') !== false) {
             // valid path on Windows, but we don't want to write here on Unix
+            // not supported on newer Windows versions due to https://github.com/php/php-src/security/advisories/GHSA-9f67-6fw4-hpfp
             yield [
                 __DIR__ . DIRECTORY_SEPARATOR . 'nul',
                 true
@@ -286,7 +295,7 @@ class LogStreamHandlerTest extends TestCase
      */
     public function testLogWithDevNullWritesNothing(): void
     {
-        $logger = new LogStreamHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul');
+        $logger = new LogStreamHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : 'nul');
 
         $logger->log('Hello');
     }

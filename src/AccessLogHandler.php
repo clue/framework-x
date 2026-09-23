@@ -21,8 +21,8 @@ class AccessLogHandler
     private $hasHighResolution;
 
     /**
-     * @param ?string $path (optional) absolute log file path or will log to console output by default
-     * @throws \InvalidArgumentException if given `$path` is not an absolute file path
+     * @param ?string $path (optional) logs to console output by default, otherwise can be an absolute log file path, a `nul` path on Windows or a `php://` stream
+     * @throws \InvalidArgumentException if given `$path` is not an absolute file path, `nul` on Windows or `php://` stream
      * @throws \RuntimeException if given `$path` can not be opened in append mode
      */
     public function __construct(?string $path = null)
