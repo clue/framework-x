@@ -321,6 +321,77 @@ $ sudoedit /etc/php/8.5/cli/php.ini
 + memory_limit = -1
 ```
 
+### Request body limit
+
+By default, the built-in web server buffers each request body in memory and
+limits each request body to 64 KiB. This applies to
+[JSON](../api/request.md#json), [form data](../api/request.md#form-data) and
+[file uploads](../api/request.md#uploads) alike.
+
+If your application needs to accept larger request bodies, you can pass a custom
+list of [ReactPHP HTTP middleware](https://reactphp.org/http/#middleware) to the
+HTTP server runner in your
+[Container configuration](controllers.md#container-configuration) like this:
+
+```php title="public/index.php"
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$container = new FrameworkX\Container([
+    FrameworkX\Runner\HttpServerRunner::class => function (?string $X_LISTEN = null) {
+        return new FrameworkX\Runner\HttpServerRunner(
+            new FrameworkX\Io\LogStreamHandler('php://output'),
+            $X_LISTEN,
+            [
+                new React\Http\Middleware\StreamingRequestMiddleware(),
+                new React\Http\Middleware\LimitConcurrentRequestsMiddleware(10),
+                new React\Http\Middleware\RequestBodyBufferMiddleware('8M'),
+                new React\Http\Middleware\RequestBodyParserMiddleware('2M')
+            ]
+        );
+    }
+]);
+
+$app = new FrameworkX\App($container);
+
+// …
+
+$app->run();
+```
+
+This example accepts request bodies of up to 8 MiB in total with file uploads of
+up to 2 MiB each, matching PHP's defaults, and processes at most 10 requests
+concurrently, so the server holds at most 80 MiB of buffered request bodies at
+any time. Make sure your [memory limit](#memory-limit) leaves room for this.
+Raising the limit requires a
+[`StreamingRequestMiddleware`](https://reactphp.org/http/#streamingrequestmiddleware)
+in the list, otherwise ReactPHP's own 64 KiB buffer runs first and the larger
+buffer never sees a request body above 64 KiB.
+
+> ⚠️ **Feature preview**
+>
+> Note that this is an experimental API that may be subject to change in future
+> releases. The given list runs in front of X, so any middleware can preprocess
+> or filter requests before X handles them (a middleware that does not call
+> `$next` means X never sees the request). Keep the resulting configuration sound:
+>
+> * A [`StreamingRequestMiddleware`](https://reactphp.org/http/#streamingrequestmiddleware)
+>   replaces *all* of ReactPHP's default middleware, so the order of the
+>   remaining middleware matters.
+> * Without [`LimitConcurrentRequestsMiddleware`](https://reactphp.org/http/#limitconcurrentrequestsmiddleware),
+>   the number of buffered requests is unbounded and concurrent uploads can
+>   exhaust your memory.
+> * Without [`RequestBodyParserMiddleware`](https://reactphp.org/http/#requestbodyparsermiddleware),
+>   [form data](../api/request.md#form-data) and
+>   [file uploads](../api/request.md#uploads) are no longer parsed.
+>
+> Behind a [traditional web server](#traditional-stacks), PHP's
+> [`post_max_size`](https://www.php.net/manual/en/ini.core.php#ini.post-max-size)
+> (default `8M`) and
+> [`upload_max_filesize`](https://www.php.net/manual/en/ini.core.php#ini.upload-max-filesize)
+> (default `2M`) settings apply instead.
+
 ### FD limits
 
 By default, many systems limit the number of file descriptors (FDs) that a

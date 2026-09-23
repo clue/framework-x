@@ -88,6 +88,14 @@ to be sure the client intended to send a JSON request body.
 This example returns a simple text response, you may also want to return a
 [JSON response](response.md#json) for common API usage.
 
+> ℹ️ **Info**
+>
+> Note that the [built-in web server](../best-practices/deployment.md#built-in-web-server)
+> limits HTTP request bodies to 64 KiB by default. Any JSON above this size will
+> show up as an empty request body. See
+> [request body limit](../best-practices/deployment.md#request-body-limit) for
+> how to change this limit.
+
 ## Form data
 
 You can access HTML form data from the HTTP request body like this:
@@ -115,6 +123,14 @@ Hello Alice!
 
 This method returns a possibly nested array of form fields, very similar to
 PHP's `$_POST` superglobal.
+
+> ℹ️ **Info**
+>
+> Note that the [built-in web server](../best-practices/deployment.md#built-in-web-server)
+> limits HTTP request bodies to 64 KiB by default. Any form data above this size
+> will show up as an empty request body with no form fields whatsoever. See
+> [request body limit](../best-practices/deployment.md#request-body-limit) for
+> how to change this limit.
 
 ## Uploads
 
@@ -169,9 +185,11 @@ assert(is_string($type) || $name === null);
 
 > ℹ️ **Info**
 >
-> Note that HTTP requests are currently limited to 64 KiB. Any uploads above
-> this size will currently show up as an empty request body with no file uploads
-> whatsoever.
+> Note that the [built-in web server](../best-practices/deployment.md#built-in-web-server)
+> limits HTTP request bodies to 64 KiB by default. Any uploads above this size
+> will show up as an empty request body with no file uploads whatsoever. See
+> [request body limit](../best-practices/deployment.md#request-body-limit) for
+> how to change this limit.
 
 ## Headers
 

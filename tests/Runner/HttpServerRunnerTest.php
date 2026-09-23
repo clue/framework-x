@@ -5,8 +5,11 @@ namespace FrameworkX\Tests\Runner;
 use FrameworkX\Io\LogStreamHandler;
 use FrameworkX\Runner\HttpServerRunner;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
 use React\Http\Message\Response;
+use React\Http\Middleware\RequestBodyBufferMiddleware;
+use React\Http\Middleware\StreamingRequestMiddleware;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
@@ -14,6 +17,26 @@ use function React\Async\await;
 
 class HttpServerRunnerTest extends TestCase
 {
+    public function testCtorWithHttpMiddlewareWithStringKeysThrows(): void
+    {
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #3 ($experimentalHttpMiddleware) must be of type list<callable>, array given');
+        new HttpServerRunner($logger, '127.0.0.1:0', ['foo' => function () { }]); // @phpstan-ignore-line
+    }
+
+    public function testCtorWithInvalidHttpMiddlewareThrows(): void
+    {
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #3 ($experimentalHttpMiddleware) for key 1 must be of type callable, stdClass given');
+        new HttpServerRunner($logger, '127.0.0.1:0', [function () { }, new \stdClass()]); // @phpstan-ignore-line
+    }
+
     public function testInvokeWillReportDefaultListeningAddressAndRunLoop(): void
     {
         $socket = @stream_socket_server('127.0.0.1:8080');
@@ -174,6 +197,93 @@ class HttpServerRunnerTest extends TestCase
         $runner(function (): Response {
             return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
         });
+    }
+
+    public function testInvokeWithHttpMiddlewareWillPassRequestThroughMiddlewareBeforeHandler(): void
+    {
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $middleware = function (ServerRequestInterface $request, callable $next) {
+            return $next($request->withAttribute('middleware', 'yes'));
+        };
+
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0', [$middleware]);
+
+        Loop::futureTick(function (): void {
+            $resources = get_resources();
+            $socket = end($resources);
+            assert(is_resource($socket));
+
+            $connector = new Connector();
+            $promise = $connector->connect((string) stream_socket_get_name($socket, false));
+
+            $promise->then(function (ConnectionInterface $connection) use ($socket): void {
+                // lovely: remove socket server on client connection close to terminate loop
+                $connection->on('close', function () use ($socket): void {
+                    Loop::removeReadStream($socket);
+                    fclose($socket);
+
+                    Loop::stop();
+                });
+
+                $connection->write("GET /unknown HTTP/1.0\r\nHost: localhost\r\n\r\n");
+            });
+        });
+
+        $attribute = null;
+        $runner(function (ServerRequestInterface $request) use (&$attribute): Response {
+            $attribute = $request->getAttribute('middleware');
+
+            return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
+        });
+
+        $this->assertEquals('yes', $attribute);
+    }
+
+    public function testInvokeWithHttpMiddlewareWillReceiveRequestBodyAboveDefaultBufferSize(): void
+    {
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $runner = new HttpServerRunner($logger, '127.0.0.1:0', [
+            new StreamingRequestMiddleware(),
+            new RequestBodyBufferMiddleware('1M')
+        ]);
+
+        $body = str_repeat('x', 100000);
+        Loop::futureTick(function () use ($body): void {
+            $resources = get_resources();
+            $socket = end($resources);
+            assert(is_resource($socket));
+
+            $connector = new Connector();
+            $promise = $connector->connect((string) stream_socket_get_name($socket, false));
+
+            $promise->then(function (ConnectionInterface $connection) use ($socket, $body): void {
+                // lovely: remove socket server on client connection close to terminate loop
+                $connection->on('close', function () use ($socket): void {
+                    Loop::removeReadStream($socket);
+                    fclose($socket);
+
+                    Loop::stop();
+                });
+
+                $connection->write("POST /unknown HTTP/1.0\r\nHost: localhost\r\nContent-Length: " . strlen($body) . "\r\n\r\n" . $body);
+            });
+        });
+
+        $length = null;
+        $fiber = null;
+        $runner(function (ServerRequestInterface $request) use (&$length, &$fiber): Response {
+            $length = $request->getBody()->getSize();
+            $fiber = \PHP_VERSION_ID >= 80100 ? \Fiber::getCurrent() : false;
+
+            return new Response(200, ['Date' => '', 'Server' => ''], "OK\n");
+        });
+
+        $this->assertEquals(100000, $length);
+        $this->assertNotNull($fiber);
     }
 
     public function testInvokeWillOnlyRestartLoopAfterAwaitingWhenFibersAreNotAvailable(): void
@@ -366,5 +476,42 @@ class HttpServerRunnerTest extends TestCase
         $runner(function (): void {
             throw new \BadFunctionCallException('Should not be reached');
         });
+    }
+
+    public function testInvokeWithInvalidMemoryLimitThrowsWithoutListeningOnAddress(): void
+    {
+        $socket = stream_socket_server('127.0.0.1:0');
+        assert(is_resource($socket));
+        $addr = stream_socket_get_name($socket, false);
+        assert(is_string($addr));
+        fclose($socket);
+
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $runner = new HttpServerRunner($logger, $addr);
+
+        // PHP accepts this invalid memory limit, but ReactPHP's HTTP server rejects it
+        $memoryLimit = ini_get('memory_limit');
+        assert(is_string($memoryLimit));
+        @ini_set('memory_limit', '-2G');
+
+        $exception = null;
+        try {
+            $runner(function (): void {
+                throw new \BadFunctionCallException('Should not be reached');
+            });
+        } catch (\InvalidArgumentException $e) {
+            $exception = $e;
+        } finally {
+            ini_set('memory_limit', $memoryLimit);
+        }
+
+        $this->assertInstanceOf(\InvalidArgumentException::class, $exception);
+
+        $socket = @stream_socket_server($addr);
+        $this->assertNotFalse($socket);
+        assert(is_resource($socket));
+        fclose($socket);
     }
 }
