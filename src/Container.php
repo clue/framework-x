@@ -346,7 +346,7 @@ class Container
 
             // skip type checks and allow all values if expected type is undefined or mixed (PHP 8+)
             // allow null values if parameter is marked nullable or untyped or mixed
-            if ($type === null || ($value === null && $parameter->allowsNull()) || ($type instanceof \ReflectionNamedType && $type->getName() === 'mixed') || $this->validateType($value, $type)) {
+            if ($type === null || ($value === null && $parameter->allowsNull()) || ($type instanceof \ReflectionNamedType && $type->getName() === 'mixed') || $this->validateType($value, $type, $parameter->getDeclaringClass())) {
                 return $value;
             }
 
@@ -355,23 +355,31 @@ class Container
             );
         }
 
+        // get class type (if any), resolve `self` and `parent` types against the parameter's declaring class
+        $class = $type instanceof \ReflectionNamedType && !$type->isBuiltin() ? $type->getName() : null;
+        if ($class === 'self' && ($declaring = $parameter->getDeclaringClass()) !== null) {
+            $class = $declaring->getName();
+        } elseif ($class === 'parent' && ($declaring = $parameter->getDeclaringClass()) !== null && ($parent = $declaring->getParentClass()) !== false) {
+            $class = $parent->getName();
+        }
+
         // use default argument if not loadable as container variable or by type
         if (
             $parameter->isDefaultValueAvailable() &&
-            (!$type instanceof \ReflectionNamedType || $type->isBuiltin() || !\array_key_exists($type->getName(), $this->container))
+            ($class === null || !\array_key_exists($class, $this->container))
         ) {
             return $parameter->getDefaultValue();
         }
 
         // abort if required container variable is not defined or for any other primitive types (array etc.)
-        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+        if ($class === null) {
             throw new \Error(
                 self::parameterError($parameter, $for) . ' requires container config' . ($type !== null ? ' with type ' . self::typeName($type) : '') . ', none given'
             );
         }
 
-        // @phpstan-ignore-next-line because `$type->getName()` is a `class-string` by definition
-        return $this->loadObject($type->getName(), $depth - 1);
+        // @phpstan-ignore-next-line because `$class` is a `class-string` by definition
+        return $this->loadObject($class, $depth - 1);
     }
 
     private function hasVariable(string $name): bool
@@ -430,9 +438,10 @@ class Container
     /**
      * @param mixed $value
      * @param \ReflectionType $type
+     * @param ?\ReflectionClass<object> $scope
      * @throws void
      */
-    private function validateType($value, \ReflectionType $type): bool
+    private function validateType($value, \ReflectionType $type, ?\ReflectionClass $scope): bool
     {
         // check union types (PHP 8.0+) and intersection types (PHP 8.1+) and DNF types (PHP 8.2+)
         if ($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType) { // @codeCoverageIgnoreStart
@@ -440,7 +449,7 @@ class Container
             foreach ($type->getTypes() as $type) {
                 // return early success if any union type matches
                 // return early failure if any intersection type doesn't match
-                if ($this->validateType($value, $type) === $early) {
+                if ($this->validateType($value, $type, $scope) === $early) {
                     return $early;
                 }
             }
@@ -453,6 +462,13 @@ class Container
 
         // nullable types and mixed already handled before entering this check
         \assert($type !== 'null' && $type !== 'mixed');
+
+        // resolve `self` and `parent` against the given class scope (e.g. as part of a union type)
+        if ($type === 'self' && $scope !== null) {
+            $type = $scope->getName();
+        } elseif ($type === 'parent' && $scope !== null && ($parent = $scope->getParentClass()) !== false) {
+            $type = $parent->getName();
+        }
 
         return (
             (\is_object($value) && ($value instanceof $type || $type === 'object')) || // instanceof or object for PHP 7.2+
