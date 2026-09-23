@@ -367,4 +367,41 @@ class HttpServerRunnerTest extends TestCase
             throw new \BadFunctionCallException('Should not be reached');
         });
     }
+
+    public function testInvokeWithInvalidMemoryLimitThrowsWithoutListeningOnAddress(): void
+    {
+        $socket = stream_socket_server('127.0.0.1:0');
+        assert(is_resource($socket));
+        $addr = stream_socket_get_name($socket, false);
+        assert(is_string($addr));
+        fclose($socket);
+
+        $logger = $this->createMock(LogStreamHandler::class);
+        assert($logger instanceof LogStreamHandler);
+
+        $runner = new HttpServerRunner($logger, $addr);
+
+        // PHP accepts this invalid memory limit, but ReactPHP's HTTP server rejects it
+        $memoryLimit = ini_get('memory_limit');
+        assert(is_string($memoryLimit));
+        @ini_set('memory_limit', '-2G');
+
+        $exception = null;
+        try {
+            $runner(function (): void {
+                throw new \BadFunctionCallException('Should not be reached');
+            });
+        } catch (\InvalidArgumentException $e) {
+            $exception = $e;
+        } finally {
+            ini_set('memory_limit', $memoryLimit);
+        }
+
+        $this->assertInstanceOf(\InvalidArgumentException::class, $exception);
+
+        $socket = @stream_socket_server($addr);
+        $this->assertNotFalse($socket);
+        assert(is_resource($socket));
+        fclose($socket);
+    }
 }

@@ -41,13 +41,15 @@ class HttpServerRunner
     /**
      * @param callable(\Psr\Http\Message\ServerRequestInterface):(\Psr\Http\Message\ResponseInterface|\React\Promise\PromiseInterface<\Psr\Http\Message\ResponseInterface>) $handler
      * @return void
+     * @throws \InvalidArgumentException if listen address or PHP's ini settings are invalid
+     * @throws \RuntimeException if listening on the given listen address fails
      */
     public function __invoke(callable $handler): void
     {
-        $socket = new SocketServer($this->listenAddress);
-
         // create HTTP server, automatically start new fiber for each request on PHP 8.1+
         $http = new HttpServer(...(\PHP_VERSION_ID >= 80100 ? [new FiberHandler(), $handler] : [$handler]));
+
+        $socket = new SocketServer($this->listenAddress);
         $http->listen($socket);
 
         $logger = $this->logger;
