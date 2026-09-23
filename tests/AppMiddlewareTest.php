@@ -647,12 +647,8 @@ class AppMiddlewareTest extends TestCase
     /** @param callable|class-string ...$middleware */
     private function createAppWithoutLogger(...$middleware): App
     {
-        if (DIRECTORY_SEPARATOR === '\\' && @fopen(__DIR__ . '\\nul', 'a') === false) {
-            $this->markTestSkipped('Not supported on Windows due to https://github.com/php/php-src/security/advisories/GHSA-9f67-6fw4-hpfp');
-        }
-
         return new App(
-            new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul'),
+            new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : 'nul'),
             new ErrorHandler(),
             ...$middleware
         );

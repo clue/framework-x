@@ -11,8 +11,8 @@ class LogStreamHandler
     private $stream;
 
     /**
-     * @param string $path absolute log file path
-     * @throws \InvalidArgumentException if given `$path` is not an absolute file path
+     * @param string $path absolute log file path, a `nul` path on Windows or a `php://` stream
+     * @throws \InvalidArgumentException if given `$path` is not an absolute file path, `nul` on Windows or `php://` stream
      * @throws \RuntimeException if given `$path` can not be opened in append mode
      */
     public function __construct(string $path)
@@ -90,6 +90,6 @@ class LogStreamHandler
 
     private function isAbsolutePath(string $path): bool
     {
-        return \DIRECTORY_SEPARATOR !== '\\' ? \substr($path, 0, 1) === '/' : (bool) \preg_match('#^[A-Z]:[/\\\\]#i', $path);
+        return \DIRECTORY_SEPARATOR !== '\\' ? \substr($path, 0, 1) === '/' : (bool) \preg_match('#^(?:[A-Z]:[/\\\\]|nul$)#i', $path);
     }
 }

@@ -29,7 +29,7 @@ function asleep(float $s): PromiseInterface
 $container = new FrameworkX\Container([
     FrameworkX\AccessLogHandler::class => function (?string $X_EXPERIMENTAL_RUNNER = null) {
         // log to /dev/null when running in experimental runner mode to avoid cluttering output
-        return new FrameworkX\AccessLogHandler($X_EXPERIMENTAL_RUNNER !== null ? (DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul') : null);
+        return new FrameworkX\AccessLogHandler($X_EXPERIMENTAL_RUNNER !== null ? (DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : 'nul') : null);
     }
 ]);
 

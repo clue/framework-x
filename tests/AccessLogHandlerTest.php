@@ -122,11 +122,7 @@ class AccessLogHandlerTest extends TestCase
      */
     public function testInvokeWithDevNullWritesNothing(): void
     {
-        if (DIRECTORY_SEPARATOR === '\\' && @fopen(__DIR__ . '\\nul', 'a') === false) {
-            $this->markTestSkipped('Not supported on Windows due to https://github.com/php/php-src/security/advisories/GHSA-9f67-6fw4-hpfp');
-        }
-
-        $handler = new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : __DIR__ . '\\nul');
+        $handler = new AccessLogHandler(DIRECTORY_SEPARATOR !== '\\' ? '/dev/null' : 'nul');
 
         $request = new ServerRequest('GET', 'http://localhost:8080/users', [], '', '1.1', ['REMOTE_ADDR' => '127.0.0.1']);
         $response = new Response(200, [], "Hello\n");
