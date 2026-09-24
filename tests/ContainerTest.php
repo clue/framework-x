@@ -3026,10 +3026,10 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(AccessLogHandler::class, $accessLogHandler);
     }
 
-    public function testGetObjectReturnsSelfContainerIfPsrContainerHasNoEntry(): void
+    public function testGetObjectReturnsSelfContainerWithoutLoadingFromPsrContainer(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->once())->method('has')->with(Container::class)->willReturn(false);
+        $psr->expects($this->never())->method('has');
         $psr->expects($this->never())->method('get');
 
         assert($psr instanceof ContainerInterface);
@@ -3040,10 +3040,10 @@ class ContainerTest extends TestCase
         $this->assertSame($container, $ret);
     }
 
-    public function testGetObjectReturnsDefaultRouteHandlerInstanceIfPsrContainerHasNoEntry(): void
+    public function testGetObjectReturnsDefaultRouteHandlerInstanceWithoutLoadingFromPsrContainer(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->once())->method('has')->with(RouteHandler::class)->willReturn(false);
+        $psr->expects($this->never())->method('has');
         $psr->expects($this->never())->method('get');
 
         assert($psr instanceof ContainerInterface);
@@ -3259,16 +3259,19 @@ class ContainerTest extends TestCase
         $this->assertSame($runner, $ret);
     }
 
-    public function testGetRunnerReturnsHttpServerRunnerInstanceFromPsrContainer(): void
+    public function testGetRunnerReturnsHttpServerRunnerInstanceFromPsrContainerIfExplicitlyRequested(): void
     {
         $runner = new HttpServerRunner(new LogStreamHandler('php://output'), null);
 
         $psr = $this->createMock(ContainerInterface::class);
         $psr->expects($this->exactly(2))->method('has')->willReturnMap([
-            ['X_EXPERIMENTAL_RUNNER', false],
+            ['X_EXPERIMENTAL_RUNNER', true],
             [HttpServerRunner::class, true],
         ]);
-        $psr->expects($this->once())->method('get')->with(HttpServerRunner::class)->willReturn($runner);
+        $psr->expects($this->exactly(2))->method('get')->willReturnMap([
+            ['X_EXPERIMENTAL_RUNNER', HttpServerRunner::class],
+            [HttpServerRunner::class, $runner],
+        ]);
 
         assert($psr instanceof ContainerInterface);
         $container = new Container($psr);
@@ -3278,12 +3281,29 @@ class ContainerTest extends TestCase
         $this->assertSame($runner, $ret);
     }
 
-    public function testGetRunnerReturnsDefaultHttpServerRunnerInstanceWithDefaultListenAddressIfPsrContainerHasNoEntry(): void
+    public function testGetRunnerReturnsDefaultHttpServerRunnerInstanceIfExplicitlyRequestedButPsrContainerHasNoEntry(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
         $psr->expects($this->exactly(3))->method('has')->willReturnMap([
-            ['X_EXPERIMENTAL_RUNNER', false],
+            ['X_EXPERIMENTAL_RUNNER', true],
             [HttpServerRunner::class, false],
+            ['X_LISTEN', false],
+        ]);
+        $psr->expects($this->once())->method('get')->with('X_EXPERIMENTAL_RUNNER')->willReturn(HttpServerRunner::class);
+
+        assert($psr instanceof ContainerInterface);
+        $container = new Container($psr);
+
+        $runner = $container->getRunner();
+
+        $this->assertInstanceOf(HttpServerRunner::class, $runner);
+    }
+
+    public function testGetRunnerReturnsDefaultHttpServerRunnerInstanceWithDefaultListenAddressWithoutLoadingFromPsrContainer(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->exactly(2))->method('has')->willReturnMap([
+            ['X_EXPERIMENTAL_RUNNER', false],
             ['X_LISTEN', false],
         ]);
         $psr->expects($this->never())->method('get');
@@ -3305,12 +3325,11 @@ class ContainerTest extends TestCase
         $this->assertEquals('127.0.0.1:8080', $listenAddress);
     }
 
-    public function testGetRunnerReturnsDefaultHttpServerRunnerInstanceWithCustomListenAddressIfPsrContainerHasNoEntryButCustomListenAddress(): void
+    public function testGetRunnerReturnsDefaultHttpServerRunnerInstanceWithCustomListenAddressWithoutLoadingFromPsrContainer(): void
     {
         $psr = $this->createMock(ContainerInterface::class);
-        $psr->expects($this->exactly(3))->method('has')->willReturnMap([
+        $psr->expects($this->exactly(2))->method('has')->willReturnMap([
             ['X_EXPERIMENTAL_RUNNER', false],
-            [HttpServerRunner::class, false],
             ['X_LISTEN', true],
         ]);
         $psr->expects($this->once())->method('get')->with('X_LISTEN')->willReturn('127.0.0.1:8081');

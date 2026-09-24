@@ -22,6 +22,7 @@ use FrameworkX\Tests\Fixtures\InvalidConstructorUntyped;
 use FrameworkX\Tests\Fixtures\InvalidInterface;
 use FrameworkX\Tests\Fixtures\InvalidTrait;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -167,6 +168,44 @@ class AppTest extends TestCase
         $this->assertInstanceOf(RouteHandler::class, $handlers[2]);
 
         $routeHandler = $handlers[2];
+        $ref = new ReflectionProperty($routeHandler, 'container');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $this->assertSame($container, $ref->getValue($routeHandler));
+    }
+
+    public function testConstructWithPsrContainerAssignsDefaultRunnerAndRouteHandlerWithoutLoadingFromPsrContainer(): void
+    {
+        $psr = $this->createMock(ContainerInterface::class);
+        $psr->expects($this->exactly(4))->method('has')->willReturnMap([
+            [AccessLogHandler::class, true],
+            [ErrorHandler::class, true],
+            ['X_EXPERIMENTAL_RUNNER', false],
+            ['X_LISTEN', false],
+        ]);
+        $psr->expects($this->exactly(2))->method('get')->willReturnMap([
+            [AccessLogHandler::class, new AccessLogHandler()],
+            [ErrorHandler::class, new ErrorHandler()],
+        ]);
+        assert($psr instanceof ContainerInterface);
+
+        $container = new Container($psr);
+        $app = new App($container);
+
+        $ref = new \ReflectionProperty($app, 'runner');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $this->assertInstanceOf(HttpServerRunner::class, $ref->getValue($app));
+
+        $ref = new ReflectionProperty($app, 'router');
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
+        $routeHandler = $ref->getValue($app);
+        assert($routeHandler instanceof RouteHandler);
+
         $ref = new ReflectionProperty($routeHandler, 'container');
         if (PHP_VERSION_ID < 80100) {
             $ref->setAccessible(true);

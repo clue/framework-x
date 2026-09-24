@@ -150,7 +150,8 @@ class Container
      */
     public function getObject(string $class) /*: object (PHP 7.2+) */
     {
-        if ($this->container instanceof ContainerInterface && $this->container->has($class)) {
+        // never load Container itself or RouteHandler from PSR-11 adapter, as autowiring containers may otherwise create these incorrectly
+        if ($this->container instanceof ContainerInterface && !\in_array($class, [self::class, RouteHandler::class], true) && $this->container->has($class)) {
             $value = $this->container->get($class);
             if (!$value instanceof $class) {
                 throw new \TypeError(
@@ -160,7 +161,7 @@ class Container
             return $value;
         } elseif ($this->container instanceof ContainerInterface) {
             // fallback for missing required internal classes from PSR-11 adapter
-            if ($class === Container::class) {
+            if ($class === self::class) {
                 return $this; // @phpstan-ignore-line returns instanceof `T`
             } elseif ($class === RouteHandler::class) {
                 return new RouteHandler($this); // @phpstan-ignore-line returns instanceof `T`
@@ -194,8 +195,14 @@ class Container
      */
     public function getRunner(): callable /*: HttpServerRunner|SapiRunner|callable (PHP 8.0+) */
     {
+        $class = $this->getEnv('X_EXPERIMENTAL_RUNNER');
+        if ($class === null && \PHP_SAPI === 'cli' && $this->container instanceof ContainerInterface) {
+            // always create default runner for PSR-11 adapter, as autowiring containers may otherwise fail to create it
+            return new HttpServerRunner(new LogStreamHandler('php://output'), $this->getEnv('X_LISTEN'));
+        }
+
         // @phpstan-ignore-next-line `getObject()` already performs type checks if `getEnv()` returns an invalid class
-        $runner = $this->getObject($this->getEnv('X_EXPERIMENTAL_RUNNER') ?? (\PHP_SAPI === 'cli' ? HttpServerRunner::class : SapiRunner::class));
+        $runner = $this->getObject($class ?? (\PHP_SAPI === 'cli' ? HttpServerRunner::class : SapiRunner::class));
         if (!\is_callable($runner)) {
             throw new \TypeError(
                 'Return value of ' . __METHOD__ . '() must be of type callable, ' . $this->gettype($runner) . ' returned'
