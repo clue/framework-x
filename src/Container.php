@@ -412,13 +412,8 @@ class Container
                 $this->container[$name] = $factory;
             }
 
-            if ($value instanceof \Closure) {
-                throw new \TypeError(
-                    'Return value of ' . self::functionName($closure) . ' for $' . $name . ' must not be of type Closure'
-                );
-            }
-
-            $this->container[$name] = $value;
+            // cache result, but wrap closure so it is not invoked as factory on next call
+            $this->container[$name] = $value instanceof \Closure ? static function () use ($value) { return $value; } : $value;
         } elseif (\is_array($this->container) && \array_key_exists($name, $this->container)) {
             $value = $this->container[$name];
         } elseif (isset($_ENV[$name])) {
