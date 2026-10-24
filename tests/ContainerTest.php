@@ -312,8 +312,8 @@ class ContainerTest extends TestCase
         };
 
         $container = new Container([
-            \stdClass::class => function (Container $container) {
-                return (object)['container' => spl_object_hash($container)];
+            \stdClass::class => function (Container $instance) use (&$container) {
+                return (object)['container' => $instance === $container];
             }
         ]);
 
@@ -323,7 +323,7 @@ class ContainerTest extends TestCase
         $response = $callable($request);
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('{"container":"' . spl_object_hash($container) . '"}', (string) $response->getBody());
+        $this->assertEquals('{"container":true}', (string) $response->getBody());
     }
 
     public function testCallableTwiceReturnsCallableForClassNameViaAutowiringWithFactoryFunctionForDependencyWillCallFactoryOnlyOnce(): void
