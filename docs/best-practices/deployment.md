@@ -414,11 +414,11 @@ Additionally, the default [event loop implementation](https://github.com/reactph
 in Framework X uses the `select()` system call, which is also limited to 1024
 file descriptors on most systems (`PHP_FD_SETSIZE` constant). If you want to use a
 higher limit, you need to install one of the supported event loop extensions
-from PECL:
+using [PIE](https://github.com/php/pie):
 
-* [`ext-ev`](https://pecl.php.net/package/ev) (recommended)
-* [`ext-event`](https://pecl.php.net/package/event)
-* [`ext-uv`](https://pecl.php.net/package/uv) (beta)
+* [`ext-ev`](https://packagist.org/packages/osmanov/pecl-ev) (recommended)
+* [`ext-event`](https://packagist.org/packages/osmanov/pecl-event)
+* [`ext-uv`](https://packagist.org/packages/amphp/uv) (beta)
 
 Besides your `ulimit` setting, no further configuration is required – these
 extensions will automatically be loaded when available. So, whether your
@@ -716,9 +716,10 @@ be achieved by using a `Dockerfile` with the following contents:
     # base build stage with build tools to compile extensions in parallel
     FROM php-version AS phpize
     RUN apk --no-cache add --virtual .phpize-deps autoconf gcc libc-dev linux-headers make
+    COPY --from=ghcr.io/php/pie:1-bin /pie /usr/local/bin/pie
 
     FROM phpize AS ext-ev
-    RUN MAKEFLAGS="-j$(nproc)" pecl install ev && docker-php-ext-enable ev
+    RUN pie install osmanov/pecl-ev
 
     FROM phpize AS ext-sockets
     RUN docker-php-ext-install -j$(nproc) sockets
