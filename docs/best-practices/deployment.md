@@ -716,11 +716,11 @@ be achieved by using a `Dockerfile` with the following contents:
     FROM php:8.5-alpine
 
     # recommended: install optional extensions ext-ev and ext-sockets
-    RUN apk --no-cache add ${PHPIZE_DEPS} libev linux-headers \ 
+    RUN apk --no-cache add --virtual .phpize-deps autoconf gcc libc-dev linux-headers make \
         && pecl install ev \
         && docker-php-ext-enable ev \
         && docker-php-ext-install sockets \
-        && apk del ${PHPIZE_DEPS} linux-headers \
+        && apk del --no-network .phpize-deps \
         && echo "memory_limit = -1" >> "$PHP_INI_DIR/conf.d/acme.ini"
 
     WORKDIR /app/
