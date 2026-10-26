@@ -690,7 +690,6 @@ be achieved by using a `Dockerfile` with the following contents:
 === "Dockerfile basics for development"
 
     ```docker title="Dockerfile"
-    # syntax=docker/dockerfile:1
     FROM php:8.5-cli
 
     WORKDIR /app/
@@ -706,12 +705,11 @@ be achieved by using a `Dockerfile` with the following contents:
 === "Dockerfile for minimal production image"
 
     ```docker title="Dockerfile"
-    # syntax=docker/dockerfile:1
+    # base PHP version for the build and final project
     FROM php:8.5-alpine AS php-version
 
-    FROM composer:2 AS build
-
-    WORKDIR /app/
+    # base composer stage to install dependencies in parallel
+    FROM composer:2 AS vendor
     COPY composer.json composer.lock ./
     RUN composer install --no-dev --ignore-platform-reqs --optimize-autoloader
 
@@ -725,7 +723,7 @@ be achieved by using a `Dockerfile` with the following contents:
     FROM phpize AS ext-sockets
     RUN docker-php-ext-install -j$(nproc) sockets
 
-    # recommended: install optional extensions ext-ev and ext-sockets
+    # base os stage with recommended extensions ext-ev and ext-sockets
     FROM php-version AS os
     COPY --from=ext-ev /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
     COPY --from=ext-ev /usr/local/etc/php/conf.d/docker-php-ext-ev.ini /usr/local/etc/php/conf.d/
@@ -733,11 +731,12 @@ be achieved by using a `Dockerfile` with the following contents:
     COPY --from=ext-sockets /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini /usr/local/etc/php/conf.d/
     RUN echo "memory_limit = -1" >> "$PHP_INI_DIR/conf.d/acme.ini"
 
+    # final project stage
     FROM os
     WORKDIR /app/
     COPY public/ public/
     # COPY src/ src/
-    COPY --from=build /app/vendor/ vendor/
+    COPY --from=vendor /app/vendor/ vendor/
 
     ENV X_LISTEN=0.0.0.0:8080
     EXPOSE 8080
