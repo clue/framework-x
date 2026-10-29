@@ -12,9 +12,10 @@ COPY vendor/ vendor/
 # base build stage with build tools to compile extensions in parallel
 FROM php-version AS phpize
 RUN apk --no-cache add --virtual .phpize-deps autoconf gcc libc-dev linux-headers make
+COPY --from=ghcr.io/php/pie:1-bin /pie /usr/local/bin/pie
 
 FROM phpize AS ext-ev
-RUN MAKEFLAGS="-j$(nproc)" pecl install ev && docker-php-ext-enable ev
+RUN pie install osmanov/pecl-ev
 
 FROM phpize AS ext-sockets
 RUN docker-php-ext-install -j$(nproc) sockets
