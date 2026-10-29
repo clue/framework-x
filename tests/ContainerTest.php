@@ -1936,6 +1936,23 @@ class ContainerTest extends TestCase
         $this->assertEquals('UTC', $container->getEnv('X_FOO'));
     }
 
+    public function testGetEnvReturnsStringFromFactoryFunctionWithClosureValueFromFactoryFunctionCalledOnlyOnce(): void
+    {
+        $calls = 0;
+        $closure = function () { };
+        $container = new Container([
+            'X_FOO' => function (\Closure $fn) use ($closure) { return var_export($fn === $closure, true); },
+            'X_BAR' => function (\Closure $fn) use ($closure) { return var_export($fn === $closure, true); },
+            'X_BAZ' => function (\Closure $fn) use ($closure) { return var_export($fn === $closure, true); },
+            'fn' => function () use ($closure, &$calls) { ++$calls; return $closure; }
+        ]);
+
+        $this->assertEquals('true', $container->getEnv('X_FOO'));
+        $this->assertEquals('true', $container->getEnv('X_BAR'));
+        $this->assertEquals('true', $container->getEnv('X_BAZ'));
+        $this->assertEquals(1, $calls);
+    }
+
     /**
      * @requires PHP 8.2
      */
@@ -2316,7 +2333,6 @@ class ContainerTest extends TestCase
 
     public function testGetEnvThrowsIfFactoryFunctionReturnsInvalidClosure(): void
     {
-        $line = __LINE__ + 2;
         $container = new Container([
             'X_FOO' => function () {
                 return function () {
@@ -2326,7 +2342,7 @@ class ContainerTest extends TestCase
         ]);
 
         $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must not be of type Closure');
+        $this->expectExceptionMessage('Return value of FrameworkX\Container::getEnv() for $X_FOO must be of type string|null, Closure returned');
         $container->getEnv('X_FOO');
     }
 
