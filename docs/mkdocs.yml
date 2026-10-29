@@ -12,13 +12,16 @@ edit_uri: "edit/main/docs/"
 theme:
   name: material
   features:
+    - content.action.edit
+    - content.code.copy
+    - navigation.footer
     - navigation.sections
   icon:
     repo: fontawesome/brands/github
 
 markdown_extensions:
   - pymdownx.tabbed:
-      alternate_style: true 
+      alternate_style: true
   - pymdownx.highlight
   - pymdownx.superfences
   - toc:
