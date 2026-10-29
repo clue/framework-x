@@ -176,4 +176,107 @@ class FiberHandlerTest extends TestCase
 
         $this->assertSame($response, $ret);
     }
+
+    public function testInvokeWithHandlerReturningPromiseAfterAwaitingPendingPromiseReturnsPromiseResolvingWithSameResponse(): void
+    {
+        // work around lack of actual fibers in PHP < 8.1
+        if (\method_exists(\Fiber::class, 'mockSuspend')) {
+            \Fiber::mockSuspend();
+        }
+
+        $handler = new FiberHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response();
+
+        $deferred = new Deferred();
+
+        $promise = $handler($request, function () use ($deferred, $response) {
+            // going the extra mile if using reactphp/async < 4 on PHP 8.1+
+            if (PHP_VERSION_ID >= 80100 && !function_exists('React\Async\async')) {
+                $fiber = \Fiber::getCurrent();
+                assert($fiber instanceof \Fiber);
+                $deferred->promise()->then(function () use ($fiber): void {
+                    $fiber->resume();
+                });
+                \Fiber::suspend();
+            } else {
+                await($deferred->promise());
+            }
+
+            return resolve($response);
+        });
+
+        /** @var PromiseInterface<Response> $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $ret = null;
+        $promise->then(function ($value) use (&$ret) {
+            $ret = $value;
+        });
+
+        $this->assertNull($ret);
+
+        $deferred->resolve(null);
+
+        // work around lack of actual fibers in PHP < 8.1
+        if (\method_exists(\Fiber::class, 'mockResume')) {
+            \Fiber::mockResume();
+        }
+
+        $this->assertSame($response, $ret);
+    }
+
+    public function testInvokeWithHandlerReturningPendingPromiseAfterAwaitingPendingPromiseReturnsPromiseResolvingWithSameResponseOnceFulfilled(): void
+    {
+        // work around lack of actual fibers in PHP < 8.1
+        if (\method_exists(\Fiber::class, 'mockSuspend')) {
+            \Fiber::mockSuspend();
+        }
+
+        $handler = new FiberHandler();
+
+        $request = new ServerRequest('GET', 'http://example.com/');
+        $response = new Response();
+
+        $deferred = new Deferred();
+        $pending = new Deferred();
+
+        $promise = $handler($request, function () use ($deferred, $pending) {
+            // going the extra mile if using reactphp/async < 4 on PHP 8.1+
+            if (PHP_VERSION_ID >= 80100 && !function_exists('React\Async\async')) {
+                $fiber = \Fiber::getCurrent();
+                assert($fiber instanceof \Fiber);
+                $deferred->promise()->then(function () use ($fiber): void {
+                    $fiber->resume();
+                });
+                \Fiber::suspend();
+            } else {
+                await($deferred->promise());
+            }
+
+            return $pending->promise();
+        });
+
+        /** @var PromiseInterface<Response> $promise */
+        $this->assertInstanceOf(PromiseInterface::class, $promise);
+
+        $ret = null;
+        $promise->then(function ($value) use (&$ret) {
+            $ret = $value;
+        });
+
+        $deferred->resolve(null);
+
+        // work around lack of actual fibers in PHP < 8.1
+        if (\method_exists(\Fiber::class, 'mockResume')) {
+            \Fiber::mockResume();
+        }
+
+        $this->assertNull($ret);
+
+        $pending->resolve($response);
+
+        $this->assertSame($response, $ret);
+    }
 }
