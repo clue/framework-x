@@ -2,6 +2,9 @@ site_name: Framework X documentation
 site_url: https://framework-x.org/docs/
 site_dir: build/docs
 
+extra:
+  homepage: /
+
 repo_url: https://github.com/clue/framework-x
 repo_name: clue/framework-x
 edit_uri: "edit/main/docs/"
