@@ -482,3 +482,14 @@ $app = new FrameworkX\App(new FrameworkX\Container($container));
 We expect most applications to work just fine with the built-in DI container.
 If you need to use a custom container, the above logic should work with any of the
 [PSR-11 container implementations](https://packagist.org/providers/psr/container-implementation).
+
+X requests any of your custom classes, such as your controllers and middleware,
+as well as any configuration such as environment variables from the given
+container, which is then responsible for loading these and their dependencies.
+X only creates some of its internal classes itself, such as its HTTP server
+runner, as autowiring containers may otherwise create these incorrectly.
+
+If you want to configure the HTTP server runner, such as for a larger
+[request body limit](deployment.md#request-body-limit), you can define it in
+your custom container and explicitly load it by setting `X_EXPERIMENTAL_RUNNER`
+to its class name instead of the default `null` value.
