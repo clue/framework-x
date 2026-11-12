@@ -46,8 +46,15 @@ class FiberHandler
             // if the next request handler suspends the fiber, we only reach this point after resuming the fiber, so the code below will have assigned a Deferred
             /** @var ?Deferred<ResponseInterface> $deferred */
             if ($deferred !== null) {
-                \assert($response instanceof ResponseInterface);
-                $deferred->resolve($response);
+                \assert($response instanceof ResponseInterface || $response instanceof PromiseInterface);
+
+                // if the next request handler returns a promise after resuming the fiber, the deferred must follow it
+                if ($response instanceof PromiseInterface) {
+                    /** @var PromiseInterface<ResponseInterface> $response */
+                    $response->then([$deferred, 'resolve'], [$deferred, 'reject']);
+                } else {
+                    $deferred->resolve($response);
+                }
             }
 
             return $response;
