@@ -96,6 +96,10 @@ class LogStreamHandlerTest extends TestCase
             false
         ];
         yield [
+            "nul\n",
+            false
+        ];
+        yield [
             '\\\\.\\nul',
             false
         ];
