@@ -90,6 +90,6 @@ class LogStreamHandler
 
     private function isAbsolutePath(string $path): bool
     {
-        return \DIRECTORY_SEPARATOR !== '\\' ? \substr($path, 0, 1) === '/' : (bool) \preg_match('#^(?:[A-Z]:[/\\\\]|nul$)#i', $path);
+        return \DIRECTORY_SEPARATOR !== '\\' ? \substr($path, 0, 1) === '/' : (bool) \preg_match('#^(?:[A-Z]:[/\\\\]|nul$)#iD', $path);
     }
 }
