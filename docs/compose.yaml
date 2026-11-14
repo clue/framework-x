@@ -1,6 +1,6 @@
 services:
   mkdocs:
-    image: squidfunk/mkdocs-material:9.8.0
+    image: squidfunk/mkdocs-material:9.8.1
     command: serve -a 0.0.0.0:8000
     ports:
       - ${PORT:-8000}:8000
