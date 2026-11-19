@@ -1,5 +1,5 @@
 # base PHP version for the build and final project
-FROM php:8.5-alpine AS php-version
+FROM php:8.6-alpine AS php-version
 
 # base composer stage to install dependencies in parallel
 FROM composer:2 AS vendor
