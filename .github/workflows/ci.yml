@@ -11,9 +11,10 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-24.04
+          - ubuntu-26.04
           - windows-2022
         php:
+          - 8.6
           - 8.5
           - 8.4
           - 8.3
@@ -25,7 +26,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -42,10 +43,11 @@ jobs:
 
   PHPStan:
     name: PHPStan (PHP ${{ matrix.php }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         php:
+          - 8.6
           - 8.5
           - 8.4
           - 8.3
@@ -57,7 +59,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -67,10 +69,11 @@ jobs:
 
   Built-in-webserver:
     name: Built-in webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         php:
+          - 8.6
           - 8.5
           - 8.4
           - 8.3
@@ -82,7 +85,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -93,17 +96,17 @@ jobs:
 
   Docker:
     name: Docker (${{ matrix.dockerfile }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         dockerfile:
           - "Dockerfile-basics"
           - "Dockerfile-production"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.5
+          php-version: 8.6
       - run: composer install -d tests/integration/
       - run: docker build -t fx -f tests/integration/${{ matrix.dockerfile }} tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json fx
@@ -115,7 +118,7 @@ jobs:
 
   nginx-reverse-proxy:
     name: nginx (${{ matrix.config.name }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         config:
@@ -124,10 +127,10 @@ jobs:
           - name: minimal reverse proxy
             path: nginx-reverse-proxy-minimal.conf
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.5
+          php-version: 8.6
       - run: composer install -d tests/integration/
       - run: docker build -t fx -f tests/integration/Dockerfile-basics tests/integration/
       - run: docker run -d -p 8080:8080 -v "$PWD/composer.json":/app/composer.json fx
@@ -142,10 +145,11 @@ jobs:
 
   nginx-fpm:
     name: nginx + PHP-FPM (PHP ${{ matrix.php }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         php:
+          - 8.6
           - 8.5
           - 8.4
           - 8.3
@@ -157,7 +161,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -171,10 +175,11 @@ jobs:
 
   Apache-webserver:
     name: Apache webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         php:
+          - 8.6
           - 8.5
           - 8.4
           - 8.3
@@ -186,7 +191,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -199,10 +204,11 @@ jobs:
 
   PHP-webserver:
     name: PHP webserver (PHP ${{ matrix.php }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         php:
+          - 8.6
           - 8.5
           - 8.4
           - 8.3
@@ -214,7 +220,7 @@ jobs:
           - 7.2
           - 7.1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -225,9 +231,9 @@ jobs:
 
   Docs:
     name: Docs
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: docker compose -f docs/compose.yaml pull
       - run: mkdir -p build/ && docker compose -f docs/compose.yaml run --rm -u $(id -u):$(id -g) build
       - run: ls -la build/docs/

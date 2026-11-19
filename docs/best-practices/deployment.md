@@ -229,7 +229,7 @@ If you're not already running an Apache server, you can run your X project with
 Apache in a temporary Docker container like this:
 
 ```bash
-$ docker run -it --rm -p 80:80 -v "$PWD":/srv php:8.5-apache sh -c "rmdir /var/www/html;ln -s /srv/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
+$ docker run -it --rm -p 80:80 -v "$PWD":/srv php:8.6-apache sh -c "rmdir /var/www/html;ln -s /srv/public /var/www/html;ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled; apache2-foreground"
 ```
 
 In order to check your web application responds as expected, you can use your
@@ -313,10 +313,10 @@ limit to match your concurrency workload. On Ubuntu- or Debian-based systems,
 you may change your PHP configuration like this:
 
 ```bash
-$ sudoedit /etc/php/8.5/cli/php.ini
+$ sudoedit /etc/php/8.6/cli/php.ini
 ```
 
-```diff title="/etc/php/8.5/cli/php.ini"
+```diff title="/etc/php/8.6/cli/php.ini"
 - memory_limit = 128M
 + memory_limit = -1
 ```
@@ -690,7 +690,7 @@ be achieved by using a `Dockerfile` with the following contents:
 === "Dockerfile basics for development"
 
     ```docker title="Dockerfile"
-    FROM php:8.5-cli
+    FROM php:8.6-cli
 
     WORKDIR /app/
     COPY public/ public/
@@ -706,7 +706,7 @@ be achieved by using a `Dockerfile` with the following contents:
 
     ```docker title="Dockerfile"
     # base PHP version for the build and final project
-    FROM php:8.5-alpine AS php-version
+    FROM php:8.6-alpine AS php-version
 
     # base composer stage to install dependencies in parallel
     FROM composer:2 AS vendor
